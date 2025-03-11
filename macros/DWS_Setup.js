@@ -91,21 +91,24 @@ async function setPrimaryState(state)
   // CREATE MACRO BODY
   const dataStr = `
 /*========================================================================//
-This file is part of the \"Divisible Workspace\" blueprint for Two-Way 
+This file is part of the "Divisible Workspace" blueprint for Two-Way 
 Divisible Rooms leveraging Cisco IP Microphones.
 
 Macro Author:  
 Mark Lula
-Technical Solutions Architect
 Cisco Systems
 
 Contributing Engineers:
 Svein Terje Steffensen
-William Mills
+Chase Voisin
 Robert(Bobby) McGonigle Jr
+William Mills
+
+Version: 0.9
+Released: 03/31/2025
 
 Complete details for this macro are available on Github:
-https://marklula.github.com/Divisible-Workspaces
+https://cs.co/divisibleworkspaceblueprint
 
 //=========================================================================//
 //                     **** DO NOT EDIT BELOW HERE ****                    //
@@ -131,16 +134,19 @@ Divisible Rooms leveraging Cisco IP Microphones.
 
 Macro Author:  
 Mark Lula
-Technical Solutions Architect
 Cisco Systems
 
 Contributing Engineers:
 Svein Terje Steffensen
-William Mills
+Chase Voisin
 Robert(Bobby) McGonigle Jr
+William Mills
+
+Version: 0.9
+Released: 03/31/2025
 
 Complete details for this macro are available on Github:
-https://marklula.github.com/Divisible-Workspaces
+https://cs.co/divisibleworkspaceblueprint
 
 //=========================================================================//
 //                     **** DO NOT EDIT BELOW HERE ****                    //
@@ -191,16 +197,19 @@ Divisible Rooms leveraging Cisco IP Microphones.
 
 Macro Author:  
 Mark Lula
-Technical Solutions Architect
 Cisco Systems
 
 Contributing Engineers:
 Svein Terje Steffensen
-William Mills
+Chase Voisin
 Robert(Bobby) McGonigle Jr
+William Mills
+
+Version: 0.9
+Released: 03/31/2025
 
 Complete details for this macro are available on Github:
-https://marklula.github.com/Divisible-Workspaces
+https://cs.co/divisibleworkspaceblueprint
 
 //=========================================================================//
 //                     **** DO NOT EDIT BELOW HERE ****                    //
