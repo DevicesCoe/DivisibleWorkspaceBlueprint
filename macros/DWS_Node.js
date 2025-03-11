@@ -4,19 +4,19 @@ Divisible Rooms leveraging Cisco IP Microphones.
 
 Macro Author:  
 Mark Lula
+Technical Solutions Architect
 Cisco Systems
 
 Contributing Engineers:
 Svein Terje Steffensen
-Chase Voisin
-Robert(Bobby) McGonigle Jr
 William Mills
+Robert(Bobby) McGonigle Jr
 
-Version: 0.9
-Released: 03/31/2025
+Version: 0.1
+Released: 1/15/2024
 
 Complete details for this macro are available on Github:
-https://cs.co/divisibleworkspaceblueprint
+https://marklula.github.com/Divisible-Workspaces
 
 //=========================================================================//
 //                     **** DO NOT EDIT BELOW HERE ****                    //
@@ -113,25 +113,25 @@ function listenForMessage () {
           console.log('DWS: Combine request received. Applying combined configuration.');
 
           // RUN ALL COMMANDS
-          xapi.Command.Conference.DoNotDisturb.Activate({ Timeout: "20000" });
-          xapi.Command.Video.SelfView.set({FullscreenMode: "On", Mode: "On", OnMonitorRole:"Third"});
+          try { xapi.Command.Conference.DoNotDisturb.Activate({ Timeout: "20000" }) } catch(error) { console.error('DWS: Error Setting DND: ' + error.message); }
+          try { xapi.Command.Video.SelfView.Set({FullscreenMode: "On", Mode: "On", OnMonitorRole:"Third"}) } catch(error) { console.error('DWS: Error Setting SelfView: ' + error.message); }
           if(DWS_SEC.SCREENS == 1)
           {
-            xapi.Command.Video.Matrix.Assign({Mode: "Replace", Output: "1", SourceId: "3"});
+            try { xapi.Command.Video.Matrix.Assign({Mode: "Replace", Output: "1", SourceId: "3"}) } catch(error) { console.error('DWS: Error Setting 1S Matrix: ' + error.message); }
           }
           else if(DWS_SEC.SCREENS == 2)
           {
-            xapi.Command.Video.Matrix.Assign({Mode: "Replace", Output: "1", SourceId: "3"});
-            xapi.Command.Video.Matrix.Assign({Mode: "Replace", Output: "2", SourceId: "4"});
+            try { xapi.Command.Video.Matrix.Assign({Mode: "Replace", Output: "1", SourceId: "3"}) } catch(error) { console.error('DWS: Error Setting 2S Matrix 1: ' + error.message); }
+            try { xapi.Command.Video.Matrix.Assign({Mode: "Replace", Output: "2", SourceId: "4"}) } catch(error) { console.error('DWS: Error Setting 2S Matrix 2: ' + error.message); }
           }
           
           // SET ALL CONFIGURATIONS
-          xapi.Config.Peripherals.Profile.TouchPanels.set("0");
-          xapi.Config.Standby.Control.set("Off");
-          xapi.Config.Standby.Halfwake.Mode.set("Manual");
-          xapi.Config.Audio.Input.HDMI[3].Mode.set("On");
-          xapi.Config.Audio.Input.HDMI[3].VideoAssociation.MuteOnInactiveVideo.set("Off");
-          xapi.Config.Audio.Ultrasound.MaxVolume.set("0");
+          try { xapi.Config.Peripherals.Profile.TouchPanels.set("0") } catch(error) { console.error('DWS: Error Setting Panels: ' + error.message); } 
+          try { xapi.Config.Standby.Control.set("Off") } catch(error) { console.error('DWS: Error Setting Standby Control: ' + error.message); } 
+          try { xapi.Config.Standby.Halfwake.Mode.set("Manual") } catch(error) { console.error('DWS: Error Setting Halfwake: ' + error.message); } 
+          try { xapi.Config.Audio.Input.HDMI[3].Mode.set("On") } catch(error) { console.error('DWS: Error Setting HDMI Audio Mode: ' + error.message); } 
+          try { xapi.Config.Audio.Input.HDMI[3].VideoAssociation.MuteOnInactiveVideo.set("Off") } catch(error) { console.error('DWS: Error Setting HDMI Audio: ' + error.message); } 
+          try { xapi.Config.Audio.Ultrasound.MaxVolume.set("0") } catch(error) { console.error('DWS: Error Setting Ultrasound: ' + error.message); } 
 
           // UPDATE STATE MACRO
           setSecondaryState("Combined");
@@ -144,25 +144,25 @@ function listenForMessage () {
         case 'Split':
           console.log('DWS: Split request received. Applying split configuration.');
 
-          xapi.Command.Conference.DoNotDisturb.Deactivate();
-          xapi.Command.Video.SelfView.set({FullscreenMode: "Off", Mode: "On", OnMonitorRole:"First"});
+          try { xapi.Command.Conference.DoNotDisturb.Deactivate() } catch(error) { console.error('DWS: Error Setting DND: ' + error.message); }
+          try { xapi.Command.Video.SelfView.Set({FullscreenMode: "Off", Mode: "On", OnMonitorRole:"First"}) } catch(error) { console.error('DWS: Error Setting SelfView: ' + error.message); }
           if(DWS_SEC.SCREENS == 1)
           {
-            xapi.Command.Video.Matrix.Reset({Output: "1"});
+            try { xapi.Command.Video.Matrix.Reset({Output: "1"}) } catch(error) { console.error('DWS: Error Setting 1S Matrix: ' + error.message); }
           }
           else if(DWS_SEC.SCREENS == 2)
           {
-            xapi.Command.Video.Matrix.Reset({Output: "1"});
-            xapi.Command.Video.Matrix.Reset({Output: "2"});
+            try { xapi.Command.Video.Matrix.Reset({Output: "1"}) } catch(error) { console.error('DWS: Error Setting 2S Matrix 1: ' + error.message); }
+            try { xapi.Command.Video.Matrix.Reset({Output: "2"}) } catch(error) { console.error('DWS: Error Setting 2S Matrix 2: ' + error.message); }
           }
 
           // SET ALL CONFIGURATIONS
-          xapi.Config.Peripherals.Profile.TouchPanels.set("1");
-          xapi.Config.Standby.Control.set("On");
-          xapi.Config.Standby.Halfwake.Mode.set("Auto");
-          xapi.Config.Audio.Input.HDMI[3].Mode.set("Off");
-          xapi.Config.Audio.Input.HDMI[3].VideoAssociation.MuteOnInactiveVideo.set("On");
-          xapi.Config.Audio.Ultrasound.MaxVolume.set("70");
+          try { xapi.Config.Peripherals.Profile.TouchPanels.set("1") } catch(error) { console.error('DWS: Error Setting Panels: ' + error.message); }
+          try { xapi.Config.Standby.Control.set("On") } catch(error) { console.error('DWS: Error Setting Standby Control: ' + error.message); }
+          try { xapi.Config.Standby.Halfwake.Mode.set("Auto") } catch(error) { console.error('DWS: Error Setting Halfwake: ' + error.message); }
+          try { xapi.Config.Audio.Input.HDMI[3].Mode.set("Off") } catch(error) { console.error('DWS: Error Setting HDMI Audio Mode: ' + error.message); }
+          try { xapi.Config.Audio.Input.HDMI[3].VideoAssociation.MuteOnInactiveVideo.set("On") } catch(error) { console.error('DWS: Error Setting HDMI Audio: ' + error.message); }
+          try { xapi.Config.Audio.Ultrasound.MaxVolume.set("70") } catch(error) { console.error('DWS: Error Setting Ultrasound: ' + error.message); } 
 
           // UPDATE STATE MACRO
           setSecondaryState("Split");
@@ -195,18 +195,6 @@ function listenForMessage () {
 
 function listenForNavs() {
 
-  let pairedControl = 0;
-  let pairedScheduler;
-
-  if(DWS_SEC.NAV_SCHEDULER != '')
-  {
-    pairedScheduler = 0;
-  }
-  else
-  {
-    pairedScheduler = 1;
-  }
-
   // LISTEN FOR NAVIGATORS PAIRING
   xapi.Status.Peripherals.ConnectedDevice
   .on(device => {
@@ -220,25 +208,26 @@ function listenForNavs() {
           xapi.Command.Peripherals.TouchPanel.Configure({ ID: DWS_SEC.NAV_CONTROL, Location: "InsideRoom", Mode: "Controller"})
             .on(() => {
               console.log("DWS: Paired Control Navigator succesfully.");
-              pairedControl = 1;
+            })
+            .catch((error) => {
+              console.error(`DWS: Failed to pair Control Touch Panel ${panelId}`, error);
             });
           }, 1500);
       }
-      if (hasScheduler)
+      if (device.ID === DWS_SEC.NAV_SCHEDULER) 
       {
-        if (device.ID === DWS_SEC.NAV_SCHEDULER) 
-        {
-          console.log("DWS: Re-discovered Room Navigator: " + device.SerialNumber + " / " + device.ID);
-          
-          // PAIR CONTROL NAVIGATOR AFTER 1500ms Delay
-          setTimeout(() => { 
-            xapi.Command.Peripherals.TouchPanel.Configure({ ID: DWS_SEC.NAV_SCHEDULER, Location: "OutsideRoom", Mode: "RoomScheduler"})
-              .on(() => {
-                console.log("DWS: Paired Scheduler Navigator succesfully.");
-                pairedScheduler = 1;
-              });
-            }, 1500);
-        }
+        console.log("DWS: Re-discovered Room Navigator: " + device.SerialNumber + " / " + device.ID);
+        
+        // PAIR CONTROL NAVIGATOR AFTER 1500ms Delay
+        setTimeout(() => { 
+          xapi.Command.Peripherals.TouchPanel.Configure({ ID: DWS_SEC.NAV_SCHEDULER, Location: "OutsideRoom", Mode: "RoomScheduler"})
+            .on(() => {
+              console.log("DWS: Paired Scheduler Navigator succesfully.");
+            })
+            .catch((error) => {
+              console.error(`DWS: Failed to pair Scheduler Touch Panel ${panelId}:`, error);
+            });
+          }, 1500);
       }
     }
   });
@@ -249,24 +238,21 @@ function setSecondaryState(state)
   // CREATE MACRO BODY
   const dataStr = `
 /*========================================================================//
-This file is part of the "Divisible Workspace" blueprint for Two-Way 
+This file is part of the \"Divisible Workspace\" blueprint for Two-Way 
 Divisible Rooms leveraging Cisco IP Microphones.
 
 Macro Author:  
 Mark Lula
+Technical Solutions Architect
 Cisco Systems
 
 Contributing Engineers:
 Svein Terje Steffensen
-Chase Voisin
-Robert(Bobby) McGonigle Jr
 William Mills
-
-Version: 0.9
-Released: 03/31/2025
+Robert(Bobby) McGonigle Jr
 
 Complete details for this macro are available on Github:
-https://cs.co/divisibleworkspaceblueprint
+https://marklula.github.com/Divisible-Workspaces
 
 //=========================================================================//
 //                     **** DO NOT EDIT BELOW HERE ****                    //
