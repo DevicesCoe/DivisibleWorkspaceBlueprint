@@ -94,12 +94,7 @@ function init() {
     setSecondaryState("Split");
   }
 
-  listenForMessage();
-}
-
-function listenForMessage () {
-
-    xapi.event.on('Message Send Text', event => {
+  xapi.event.on('Message Send Text', event => {
     var captureCommand = event.replace(/'/g,'"');
     var decodeCommand = captureCommand.split(':');
     try 
@@ -181,6 +176,7 @@ function listenForMessage () {
           xapi.Command.Cameras.SpeakerTrack.Activate();
           xapi.Command.Cameras.SpeakerTrack.Closeup.Activate();           
           break;
+
         case 'DisableST':
           console.log('DWS: Deactivating SpeakerTrack');
           xapi.Command.Cameras.SpeakerTrack.Deactivate();             
@@ -191,9 +187,6 @@ function listenForMessage () {
       console.error("DWS Error with message receive: " + error);
     }
   });
-}
-
-function listenForNavs() {
 
   // LISTEN FOR NAVIGATORS PAIRING
   xapi.Status.Peripherals.ConnectedDevice
@@ -206,9 +199,7 @@ function listenForNavs() {
         // PAIR CONTROL NAVIGATOR AFTER 1500ms Delay
         setTimeout(() => { 
           xapi.Command.Peripherals.TouchPanel.Configure({ ID: DWS_SEC.NAV_CONTROL, Location: "InsideRoom", Mode: "Controller"})
-            .on(() => {
-              console.log("DWS: Paired Control Navigator succesfully.");
-            })
+            .on(() => { console.log("DWS: Paired Control Navigator succesfully.") } )
           }, 1500);
       }
       if (device.ID === DWS_SEC.NAV_SCHEDULER) 
@@ -218,9 +209,7 @@ function listenForNavs() {
         // PAIR CONTROL NAVIGATOR AFTER 1500ms Delay
         setTimeout(() => { 
           xapi.Command.Peripherals.TouchPanel.Configure({ ID: DWS_SEC.NAV_SCHEDULER, Location: "OutsideRoom", Mode: "RoomScheduler"})
-            .on(() => {
-              console.log("DWS: Paired Scheduler Navigator succesfully.");
-            })
+            .on(() => { console.log("DWS: Paired Scheduler Navigator succesfully.") } )
           }, 1500);
       }
     }
