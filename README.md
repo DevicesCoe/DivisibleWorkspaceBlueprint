@@ -56,7 +56,7 @@ Select one of the following configurations:
 Steps to be completed:
 1.	Physically wire the rooms according the provided wiring diagram that matches your configuration. 
 2.	Format a USB Key to have 4G Partition with FAT32.
-3.	Load the ciscortr.cfg file for your respective switch into the base directory of the USB Key. Do **Not** rename this file or put into into folders.
+3.	Load the ciscortr.cfg file for your respective switch into the base directory of the USB Key. **Do NOT rename this file or put it into subfolders.**
 4.	Plug the USB Key into the port on the front of the 9200CX.
 5.	Power on the switch. The auto-configuration will take **6 minutes** to complete from power on.
 6.	Log in to Control Hub (admin.webex.com) and select **Devices** from the left hand menu.
