@@ -1,4 +1,4 @@
-## Divisible Workspaces
+## Two Way Divisible Workspaces
 
 The Divisible Workspaces design blueprint provides a drastically simplified installation for two-way combinable rooms while leveraging Cisco Pro Series Microphones (Ceiling and Table). 
 
