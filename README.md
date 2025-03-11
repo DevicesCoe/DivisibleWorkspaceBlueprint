@@ -29,7 +29,7 @@ The solution leverages the following:
 | Secondary/Secondary Codec | References the codec/room that will **not** have an active role in a combined state. |
 | Audience Camera | Refers to the Quad Camera at the front of each room. |
 | Presenter Camera| Refers to the Speaker Tracking enabled PTZ camera in each room. |
-| AZM_Lib.js | The Audio Zone Manager Library macro. This library contains the logic needed for clean audio based events. |
+| DWS_AZM_Lib.js | The Audio Zone Manager Library macro. This library contains the logic needed for clean audio based events. |
 | DWS_Wizard.js | The initial setup wizard functionality loaded from RoomOS.Cisco.com. |
 | DWS_Setup.js | A background macro that handles the confirmation and base configuration. |
 | DWS_Core.js | The "main" macro that handles all logic. Installed on Primary Codec. |
