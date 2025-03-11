@@ -81,14 +81,11 @@ Steps to be completed:
 15.	Add a new user with the **"Admin"** role. Be sure to **Uncheck** the box for the "Require passphrase change on next user sign in".
 16.	Log out of the Secondary Codec.
 17.	Launch the **Local Web Interface** of the Primary Room Codec via the device page in Control Hub.
-18.	On the left hand menu, Select **Users** and click **Create User** in the top right.
-19.	Add a new user with the **"Admin"** role. Be sure to **Uncheck** the box for the "Require passphrase change on next user sign in".
-20.	On the left hand menu, Select **Macro Editor** then click **Import from file**.
-21.	Select the **DWS_Wizard.js** file from this repository.
-22.	Click the Save Icon next to DWS_Wizard on the left menu.
-23.	Toggle on the Macro.
-24.	Log out of the Primary Codec.
-25.	On the Navigator, select **DWS Setup Wizard** from the homescreen and follow the on screen prompts. 
+18.	On the left hand menu, Select **Macro Editor** then click **Import from file**.
+19.	Select the **DWS_Wizard.js** file from this repository.
+20.	Click the **Save icon** next to DWS_Wizard on the left menu then toggle **ON** the Macro.
+21.	Log out of the Primary Codec.
+22.	On the Navigator, select **DWS Setup Wizard** from the homescreen and follow the on screen prompts. 
 
 The setup process will install the Divisible Workspace Macros, configure the Switch to best practices configuration and initilize your divisible workspaces.
   
