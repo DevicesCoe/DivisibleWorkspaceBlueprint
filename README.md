@@ -8,8 +8,7 @@ The solution leverages the following:
 - Cisco Codec EQs or Codec Pros
 - Cisco Table or Ceiling Microphone Pros (up to 8)
 - A 9200CX switch
-- Custom Macros
-- [Audio Zone Manager Library](https://github.com/ctg-tme/audio-zone-manager-library-macro?tab=readme-ov-file)
+- Custom Macros including a modified [Audio Zone Manager Library](https://github.com/ctg-tme/audio-zone-manager-library-macro?tab=readme-ov-file)
 
 ---
 ## Table of Contents
