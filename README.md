@@ -77,7 +77,7 @@ Steps to be completed:
 | Video > Input > CameraConfigMode | Auto |
 
 11.	**Power on your codecs** and register them to their respective Workspaces.
-12.	Once fully registered, Apply the Configuration Template created above.
+12.	Once fully registered, Apply the Configuration Template created above to **both** devices.
 13.	Launch the **Local Web Interface** of the **Secondary Room** Codec via the device page in Control Hub.
 14.	On the left hand menu, Select **Users** and click **Create User** in the top right.
 15.	Add a new user with the **"Admin"** role. Be sure to **Uncheck** the box for the "Require passphrase change on next user sign in".
