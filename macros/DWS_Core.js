@@ -865,8 +865,10 @@ async function handleAZMZoneEvents(event) {
     const IN_PRESENTER = await xapi.Status.Cameras.PresenterTrack.Status.get()
     const ACTIVE_PRESENTER = await xapi.Status.Cameras.PresenterTrack.PresenterDetected.get();
 
-    console.log("IP "+IN_PRESENTER)
-    console.log("AP "+ACTIVE_PRESENTER)
+    if (DWS.DEBUG == 'true') {
+      console.debug ("In Presenter Mode: "+IN_PRESENTER);
+      console.debug ("Active Presenter?: "+ACTIVE_PRESENTER);
+    }
   
     if (ACTIVE_PRESENTER == 'True' && IN_PRESENTER == 'Persistent')
     {
