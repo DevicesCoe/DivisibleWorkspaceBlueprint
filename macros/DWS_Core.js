@@ -934,7 +934,7 @@ async function handleAZMZoneEvents(event) {
         if (DWS.DEBUG == 'true') {console.debug ('DWS DEBUG: Presenter Detected. Setting PIP with PTZ & ' + event.Zone.Label)};
 
         await xapi.Command.Video.Input.SetMainVideoSource({
-          ConnectorId: [event.Assets.Camera.InputConnector, 5],
+          ConnectorId: [5, event.Assets.Camera.InputConnector],
           Layout: 'PIP',
           PIPPosition: 'Lowerright',
           PIPSize: 'Large'
