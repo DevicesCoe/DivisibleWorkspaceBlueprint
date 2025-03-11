@@ -79,11 +79,11 @@ Steps to be completed:
 
 11.	**Power on your codecs** and register them to their respective Workspaces.
 12.	Once fully registered, Apply the Configuration Template created above.
-13.	Launch the **Local Web Interface** of the Secondary Room Codec via the device page in Control Hub.
+13.	Launch the **Local Web Interface** of the **Secondary Room** Codec via the device page in Control Hub.
 14.	On the left hand menu, Select **Users** and click **Create User** in the top right.
 15.	Add a new user with the **"Admin"** role. Be sure to **Uncheck** the box for the "Require passphrase change on next user sign in".
 16.	Log out of the Secondary Codec.
-17.	Launch the **Local Web Interface** of the Primary Room Codec via the device page in Control Hub.
+17.	Launch the **Local Web Interface** of the **Primary Room** Codec via the device page in Control Hub.
 18.	On the left hand menu, Select **Macro Editor** then click **Import from file**.
 19.	Select the **DWS_Wizard.js** file from this repository.
 20.	Click the **Save icon** next to DWS_Wizard on the left menu then toggle **ON** the Macro.
