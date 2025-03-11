@@ -51,7 +51,7 @@ Select one of the following configurations:
 | 2 x Codec Pros | Two (2) | 9200CX 8 Port | [Diagram](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/images/Pro%202S%20C9K-8P.png) |
 | 2 x Codec Pros | Two (2) | 9200CX 12 Port | [Diagram](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/images/Pro%202S%20C9K-12P.png) |
 
-** NOTE: Do NOT power on your Codecs or Switch until instructed to.**
+**NOTE: Do NOT power on your Codecs or Switch until instructed to!**
 
 Steps to be completed:
 1.	Physically wire the rooms according the provided wiring diagram that matches your configuration. 
