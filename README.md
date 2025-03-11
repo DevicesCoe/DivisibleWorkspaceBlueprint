@@ -51,8 +51,10 @@ Select one of the following configurations:
 | 2 x Codec Pros | Two (2) | 9200CX 8 Port | [Diagram](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/images/Pro%202S%20C9K-8P.png) |
 | 2 x Codec Pros | Two (2) | 9200CX 12 Port | [Diagram](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/images/Pro%202S%20C9K-12P.png) |
 
+** NOTE: Do NOT power on your Codecs or Switch until instructed to.**
+
 Steps to be completed:
-1.	Physically wire the rooms according the provided wiring diagram that matches your configuration. Do **not** power on your Codecs yet.
+1.	Physically wire the rooms according the provided wiring diagram that matches your configuration. 
 2.	Format a USB Key to have 4G Partition with FAT32.
 3.	Load the ciscortr.cfg file for your respective switch into the base directory of the USB Key. Do **Not** rename this file or put into into folders.
 4.	Plug the USB Key into the port on the front of the 9200CX.
