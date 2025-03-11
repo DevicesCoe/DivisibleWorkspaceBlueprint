@@ -209,9 +209,6 @@ function listenForNavs() {
             .on(() => {
               console.log("DWS: Paired Control Navigator succesfully.");
             })
-            .catch((error) => {
-              console.error(`DWS: Failed to pair Control Touch Panel ${panelId}`, error);
-            });
           }, 1500);
       }
       if (device.ID === DWS_SEC.NAV_SCHEDULER) 
@@ -224,9 +221,6 @@ function listenForNavs() {
             .on(() => {
               console.log("DWS: Paired Scheduler Navigator succesfully.");
             })
-            .catch((error) => {
-              console.error(`DWS: Failed to pair Scheduler Touch Panel ${panelId}:`, error);
-            });
           }, 1500);
       }
     }
