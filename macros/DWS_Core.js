@@ -363,124 +363,126 @@ export default {
 function createPanels(curState) {
   if(curState == 'Combined') 
   {
+    DWS_PANEL = 'Combined') 
+  {
     DWS_PANEL = `<Extensions>
-      <Version>1.11</Version>
-      <Panel>
-        <Order>1</Order>
-        <PanelId>dws_controls</PanelId>
-        <Origin>local</Origin>
-        <Location>HomeScreen</Location>
-        <Icon>Custom</Icon>
-        <Name>Room Controls</Name>
-        <ActivityType>Custom</ActivityType>
-        <CustomIcon>
-      <Content>${controlsIcon}</Content>
-      <Id>03f5056a23ef85070954bc371a7b64e97d809899ba6fb0b1c01c4d9fdc1faad7</Id>
-    </CustomIcon>
-        <Page>
-          <Name>Room Controls</Name>
-          <Row>
-            <Name>Current Room Status:</Name>
-            <Widget>
-              <WidgetId>dws_state</WidgetId>
-              <Name>Text</Name>
-              <Type>Text</Type>
-              <Options>size=4;fontSize=normal;align=center</Options>
-            </Widget>
-          </Row>
-          <Row>
-            <Name>Manual Control</Name>
-            <Widget>
-              <WidgetId>dws_split</WidgetId>
-              <Name>Split Rooms</Name>
-              <Type>Button</Type>
-              <Options>size=4</Options>
-            </Widget>
-          </Row>
-          <PageId>dws_room_control</PageId>
-          <Options/>
-        </Page>
-        <Page>
-          <Name>Camera Controls</Name>
-          <Row>
-            <Name>Automatic Camera Switching:</Name>
-            <Widget>
-              <WidgetId>widget_30</WidgetId>
-              <Name>Enabled:</Name>
-              <Type>Text</Type>
-              <Options>size=1;fontSize=normal;align=right</Options>
-            </Widget>
-            <Widget>
-              <WidgetId>dws_cam_state</WidgetId>
-              <Type>ToggleButton</Type>
-              <Options>size=1</Options>
-            </Widget>
-            <Widget>
-              <WidgetId>widget_39</WidgetId>
-              <Name></Name>
-              <Type>Text</Type>
-              <Options>size=1;fontSize=normal;align=center</Options>
-            </Widget>
-            <Widget>
-              <WidgetId>widget_31</WidgetId>
-              <Name>Automate camera switching based on active audience microphones. Uses automatic detection in Presenter Mode for compositing.</Name>
-              <Type>Text</Type>
-              <Options>size=4;fontSize=small;align=center</Options>
-            </Widget>
-          </Row>
-          <Row>
-            <Name>Start Presenter & Audience:</Name>
-            <Widget>
-              <WidgetId>dws_cam_presenter</WidgetId>
-              <Name>Presenter & Audience</Name>
-              <Type>Button</Type>
-              <Options>size=4</Options>
-            </Widget>
-          </Row>
-          <Row>
-            <Name>Fixed Compositions:</Name>
-            <Widget>
-              <WidgetId>dws_cam_sxs</WidgetId>
-              <Name>Side by Side</Name>
-              <Type>Button</Type>
-              <Options>size=2</Options>
-            </Widget>
-            <Widget>
-              <WidgetId>dws_cam_panda</WidgetId>
-              <Name>Rooms & Presenter</Name>
-              <Type>Button</Type>
-              <Options>size=2</Options>
-            </Widget>
-          </Row>
-          <Row>
-            <Name/>
-            <Widget>
-              <WidgetId>widget_7</WidgetId>
-              <Name>Side by Side sends only Audience Cameras. Presenter and Audience will send the Presenter and both Audience Cameras.</Name>
-              <Type>Text</Type>
-              <Options>size=4;fontSize=small;align=center</Options>
-            </Widget>
-          </Row>
-          <Row>
-            <Name>Single Camera Mode</Name>
-            <Widget>
-              <WidgetId>dws_cam_primary</WidgetId>
-              <Name>Primary Audience</Name>
-              <Type>Button</Type>
-              <Options>size=2</Options>
-            </Widget>
-            <Widget>
-              <WidgetId>dws_cam_secondary</WidgetId>
-              <Name>Secondary Audience</Name>
-              <Type>Button</Type>
-              <Options>size=2</Options>
-            </Widget>
-          </Row>
-          <PageId>dws_cam_control</PageId>
-          <Options/>
-        </Page>
-      </Panel>
-    </Extensions>`;
+       <Version>1.11</Version>
+       <Panel>
+         <Order>1</Order>
+         <PanelId>dws_controls</PanelId>
+         <Origin>local</Origin>
+         <Location>HomeScreen</Location>
+         <Icon>Custom</Icon>
+         <Name>Room Controls</Name>
+         <ActivityType>Custom</ActivityType>
+         <CustomIcon>
+       <Content>${controlsIcon}</Content>
+       <Id>03f5056a23ef85070954bc371a7b64e97d809899ba6fb0b1c01c4d9fdc1faad7</Id>
+     </CustomIcon>
+         <Page>
+           <Name>Room Controls</Name>
+           <Row>
+             <Name>Current Room Status:</Name>
+             <Widget>
+               <WidgetId>dws_state</WidgetId>
+               <Name>Text</Name>
+               <Type>Text</Type>
+               <Options>size=4;fontSize=normal;align=center</Options>
+             </Widget>
+           </Row>
+           <Row>
+             <Name>Manual Control:</Name>
+             <Widget>
+               <WidgetId>dws_split</WidgetId>
+               <Name>Split Rooms</Name>
+               <Type>Button</Type>
+               <Options>size=4</Options>
+             </Widget>
+           </Row>
+           <PageId>dws_room_control</PageId>
+           <Options/>
+         </Page>
+         <Page>
+           <Name>Camera Controls</Name>
+           <Row>
+             <Name>Automatic Camera Switching:</Name>
+             <Widget>
+               <WidgetId>widget_30</WidgetId>
+               <Name>Enabled:</Name>
+               <Type>Text</Type>
+               <Options>size=1;fontSize=normal;align=right</Options>
+             </Widget>
+             <Widget>
+               <WidgetId>dws_cam_state</WidgetId>
+               <Type>ToggleButton</Type>
+               <Options>size=1</Options>
+             </Widget>
+             <Widget>
+               <WidgetId>widget_39</WidgetId>
+               <Name></Name>
+               <Type>Text</Type>
+               <Options>size=1;fontSize=normal;align=center</Options>
+             </Widget>
+             <Widget>
+               <WidgetId>widget_31</WidgetId>
+               <Name>Automate camera switching based on active audience microphones. Uses automatic detection in Presenter Mode for compositing.</Name>
+               <Type>Text</Type>
+               <Options>size=4;fontSize=small;align=center</Options>
+             </Widget>
+           </Row>
+           <Row>
+             <Name>Start Presenter and Audience:</Name>
+             <Widget>
+               <WidgetId>dws_cam_presenter</WidgetId>
+               <Name>Presenter and Audience</Name>
+               <Type>Button</Type>
+               <Options>size=4</Options>
+             </Widget>
+           </Row>
+           <Row>
+             <Name>Fixed Compositions:</Name>
+             <Widget>
+               <WidgetId>dws_cam_sxs</WidgetId>
+               <Name>Side by Side</Name>
+               <Type>Button</Type>
+               <Options>size=2</Options>
+             </Widget>
+             <Widget>
+               <WidgetId>dws_cam_panda</WidgetId>
+               <Name>Rooms and Presenter</Name>
+               <Type>Button</Type>
+               <Options>size=2</Options>
+             </Widget>
+           </Row>
+           <Row>
+             <Name/>
+             <Widget>
+               <WidgetId>widget_7</WidgetId>
+               <Name>Side by Side sends only Audience Cameras. Presenter and Audience will send the Presenter and both Audience Cameras.</Name>
+               <Type>Text</Type>
+               <Options>size=4;fontSize=small;align=center</Options>
+             </Widget>
+           </Row>
+           <Row>
+             <Name>Single Camera Modes:</Name>
+             <Widget>
+               <WidgetId>dws_cam_primary</WidgetId>
+               <Name>Primary Audience</Name>
+               <Type>Button</Type>
+               <Options>size=2</Options>
+             </Widget>
+             <Widget>
+               <WidgetId>dws_cam_secondary</WidgetId>
+               <Name>Secondary Audience</Name>
+               <Type>Button</Type>
+               <Options>size=2</Options>
+             </Widget>
+           </Row>
+           <PageId>dws_cam_control</PageId>
+           <Options/>
+         </Page>
+       </Panel>
+     </Extensions>`;
   } 
   else if(curState == 'InCall') 
   {
@@ -527,10 +529,10 @@ function createPanels(curState) {
             </Widget>
           </Row>
           <Row>
-            <Name>Start Presenter & Audience:</Name>
+            <Name>Start Presenter and Audience:</Name>
             <Widget>
               <WidgetId>dws_cam_presenter</WidgetId>
-              <Name>Presenter & Audience</Name>
+              <Name>Presenter and Audience</Name>
               <Type>Button</Type>
               <Options>size=4</Options>
             </Widget>
@@ -545,7 +547,7 @@ function createPanels(curState) {
             </Widget>
             <Widget>
               <WidgetId>dws_cam_panda</WidgetId>
-              <Name>Rooms & Presenter</Name>
+              <Name>Rooms and Presenter</Name>
               <Type>Button</Type>
               <Options>size=2</Options>
             </Widget>
@@ -560,7 +562,7 @@ function createPanels(curState) {
             </Widget>
           </Row>
           <Row>
-            <Name>Single Camera Mode</Name>
+            <Name>Single Camera Modes:</Name>
             <Widget>
               <WidgetId>dws_cam_primary</WidgetId>
               <Name>Primary Audience</Name>
