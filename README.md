@@ -54,15 +54,16 @@ Select one of the following configurations:
 **NOTE: Do NOT power on your Codecs or Switch until instructed to!**
 
 Steps to be completed:
-1.	Physically wire the rooms according the provided wiring diagram that matches your configuration. 
-2.	Format a USB Key to have 4G Partition with FAT32.
-3.	Load the ciscortr.cfg file for your respective switch into the base directory of the USB Key. **Do NOT rename this file or put it into subfolders.**
-4.	Plug the USB Key into the port on the front of the 9200CX.
-5.	Power on the switch. The auto-configuration will take **6 minutes** to complete from power on.
-6.	Log in to Control Hub (admin.webex.com) and select **Devices** from the left hand menu.
-7.	Select **Templates** at the top and click **"Create Template"**.
-8.	Name the template something descriptive such as "Divisible Workspaces".
-9.	Select the following configurations and values:
+1.  Download the switch configuration that matches your configuration and the **DWS_Wizard.js** file.
+2.	Physically wire the rooms according the wiring diagram that matches your configuration. 
+3.	Format a USB Key to have 4G Partition with FAT32.
+4.	Load the ciscortr.cfg file for your respective switch into the base directory of the USB Key. **Do NOT rename this file or put it into subfolders.**
+5.	Plug the USB Key into the port on the front of the 9200CX.
+6.	Power on the switch. The auto-configuration will take **6 minutes** to complete from power on.
+7.	Log in to Control Hub (admin.webex.com) and select **Devices** from the left hand menu.
+8.	Select **Templates** at the top and click **"Create Template"**.
+9.	Name the template something descriptive such as "Divisible Workspaces".
+10.	Select the following configurations and values:
 
 | **Configuration** | **Value** |
 |---|---|
@@ -73,19 +74,21 @@ Steps to be completed:
 | Macros > EvaluateTranspiled | False |
 | Video > Input > CameraConfigMode | Auto |
 
-10.	**Power on your codecs** and register them to their respective Workspaces.
-11.	Once fully registered, Apply the Configuration Template created above.
-12.	Launch the **Local Web Interface** of the Primary Room Codec via the device page in Control Hub.
-13.	On the left hand menu, Select **Users** and click **Create User** in the top right.
-14.	Add a new user with the **"Admin"** role. Be sure to **Uncheck** the box for the "Require passphrase change on next user sign in".
-15.	Log out of the Primary Codec.
-16.	Launch the **Local Web Interface** of the Secondary Room Codec via the device page in Control Hub.
-17.	On the left hand menu, Select **Users** and click **Create User** in the top right.
-18.	Add a new user with the **"Admin"** role. Be sure to **Uncheck** the box for the "Require passphrase change on next user sign in".
-19.	Log out of the Secondary Codec.
-20.	From this Roomos.cisco.com page, Connect to the Primary Codec using the **Connect** button in the top right. Use the log in details from Step 15.
-21.	Click the **Install** Button.
-22.	On the Navigator, select DWS Setup Wizard from the homescreen and follow the on screen prompts. 
+11.	**Power on your codecs** and register them to their respective Workspaces.
+12.	Once fully registered, Apply the Configuration Template created above.
+13.	Launch the **Local Web Interface** of the Secondary Room Codec via the device page in Control Hub.
+14.	On the left hand menu, Select **Users** and click **Create User** in the top right.
+15.	Add a new user with the **"Admin"** role. Be sure to **Uncheck** the box for the "Require passphrase change on next user sign in".
+16.	Log out of the Secondary Codec.
+17.	Launch the **Local Web Interface** of the Primary Room Codec via the device page in Control Hub.
+18.	On the left hand menu, Select **Users** and click **Create User** in the top right.
+19.	Add a new user with the **"Admin"** role. Be sure to **Uncheck** the box for the "Require passphrase change on next user sign in".
+20.	On the left hand menu, Select **Macro Editor** then click **Import from file**.
+21.	Select the **DWS_Wizard.js** file from this repository.
+22.	Click the Save Icon next to DWS_Wizard on the left menu.
+23.	Toggle on the Macro.
+24.	Log out of the Primary Codec.
+25.	On the Navigator, select **DWS Setup Wizard** from the homescreen and follow the on screen prompts. 
 
 The setup process will install the Divisible Workspace Macros, configure the Switch to best practices configuration and initilize your divisible workspaces.
   
