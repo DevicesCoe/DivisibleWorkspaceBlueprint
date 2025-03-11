@@ -55,6 +55,7 @@ Select one of the following configurations:
 
 Steps to be completed:
 1.  Download the switch configuration that matches your configuration and the **DWS_Wizard.js** file.
+**NOTE: You do not need to download any other macro files. These are automatically loaded by the setup process.**
 2.	Physically wire the rooms according the wiring diagram that matches your configuration. 
 3.	Format a USB Key to have 4G Partition with FAT32.
 4.	Load the ciscortr.cfg file for your respective switch into the base directory of the USB Key. **Do NOT rename this file or put it into subfolders.**
