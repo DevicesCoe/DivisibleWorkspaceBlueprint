@@ -98,8 +98,7 @@ The setup process will install the Divisible Workspace Macros, configure the Swi
 - The Camera Control Tab provides the end user with the ability to manage the camera automation in combined states. 
 - Enabling Automatic Mode will enable the Quad Cameras in the respective rooms to be presented to the remote call/meeting based on the most active microphone. Disabling it will revert to the Primary Room's Quad Camera.
 - Selecting any manual camera or fixed video composition will disable the automation for automatic switching based on microphones. You can re-enable by toggling Automatic Mode back to "On".
-- **(FUTURE STATE)** The Audio tab provides a simple method for enabling or disabling third party microphones (ex. Lapel, Handheld) that may be used in addition to the Cisco IP Microphones. 
-
+  
 ---
 ## Support Information: [Top](#table-of-contents)
 
