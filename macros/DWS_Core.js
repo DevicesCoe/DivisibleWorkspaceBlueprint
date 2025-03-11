@@ -403,7 +403,7 @@ function createPanels(curState) {
         <Page>
           <Name>Camera Controls</Name>
           <Row>
-            <Name>Automatic Camera Switching</Name>
+            <Name>Automatic Camera Switching:</Name>
             <Widget>
               <WidgetId>widget_30</WidgetId>
               <Name>Enabled:</Name>
@@ -429,16 +429,16 @@ function createPanels(curState) {
             </Widget>
           </Row>
           <Row>
-            <Name>Start Presenter Mode</Name>
+            <Name>Start Presenter & Audience:</Name>
             <Widget>
               <WidgetId>dws_cam_presenter</WidgetId>
-              <Name>Presenter</Name>
+              <Name>Presenter & Audience</Name>
               <Type>Button</Type>
               <Options>size=4</Options>
             </Widget>
           </Row>
           <Row>
-            <Name>Fixed Compositions</Name>
+            <Name>Fixed Compositions:</Name>
             <Widget>
               <WidgetId>dws_cam_sxs</WidgetId>
               <Name>Side by Side</Name>
@@ -447,7 +447,7 @@ function createPanels(curState) {
             </Widget>
             <Widget>
               <WidgetId>dws_cam_panda</WidgetId>
-              <Name>Presenter + Audience</Name>
+              <Name>Rooms & Presenter</Name>
               <Type>Button</Type>
               <Options>size=2</Options>
             </Widget>
@@ -477,36 +477,6 @@ function createPanels(curState) {
             </Widget>
           </Row>
           <PageId>dws_cam_control</PageId>
-          <Options/>
-        </Page>
-        <Page>
-          <Name>Audio Controls</Name>
-          <Row>
-            <Name>Microphone Settings:</Name>
-            <Widget>
-              <WidgetId>widget_13</WidgetId>
-              <Name>Ceiling Mics Active?</Name>
-              <Type>Text</Type>
-              <Options>size=3;fontSize=normal;align=center</Options>
-            </Widget>
-            <Widget>
-              <WidgetId>dws_mic_ceiling</WidgetId>
-              <Type>ToggleButton</Type>
-              <Options>size=1</Options>
-            </Widget>
-            <Widget>
-              <WidgetId>widget_14</WidgetId>
-              <Name>Wireless Microphones Active?</Name>
-              <Type>Text</Type>
-              <Options>size=3;fontSize=normal;align=center</Options>
-            </Widget>
-            <Widget>
-              <WidgetId>dws_mic_wireless</WidgetId>
-              <Type>ToggleButton</Type>
-              <Options>size=1</Options>
-            </Widget>
-          </Row>
-          <PageId>dws_audio_control</PageId>
           <Options/>
         </Page>
       </Panel>
@@ -531,7 +501,7 @@ function createPanels(curState) {
         <Page>
           <Name>Camera Controls</Name>
           <Row>
-            <Name>Automatic Camera Switching</Name>
+            <Name>Automatic Camera Switching:</Name>
             <Widget>
               <WidgetId>widget_30</WidgetId>
               <Name>Enabled:</Name>
@@ -557,16 +527,16 @@ function createPanels(curState) {
             </Widget>
           </Row>
           <Row>
-            <Name>Start Presenter Mode</Name>
+            <Name>Start Presenter & Audience:</Name>
             <Widget>
               <WidgetId>dws_cam_presenter</WidgetId>
-              <Name>Presenter</Name>
+              <Name>Presenter & Audience</Name>
               <Type>Button</Type>
               <Options>size=4</Options>
             </Widget>
           </Row>
           <Row>
-            <Name>Fixed Compositions</Name>
+            <Name>Fixed Compositions:</Name>
             <Widget>
               <WidgetId>dws_cam_sxs</WidgetId>
               <Name>Side by Side</Name>
@@ -575,7 +545,7 @@ function createPanels(curState) {
             </Widget>
             <Widget>
               <WidgetId>dws_cam_panda</WidgetId>
-              <Name>Presenter + Audience</Name>
+              <Name>Rooms & Presenter</Name>
               <Type>Button</Type>
               <Options>size=2</Options>
             </Widget>
@@ -605,36 +575,6 @@ function createPanels(curState) {
             </Widget>
           </Row>
           <PageId>dws_cam_control</PageId>
-          <Options/>
-        </Page>
-        <Page>
-          <Name>Audio Controls</Name>
-          <Row>
-            <Name>Microphone Settings:</Name>
-            <Widget>
-              <WidgetId>widget_13</WidgetId>
-              <Name>Ceiling Mics Active?</Name>
-              <Type>Text</Type>
-              <Options>size=3;fontSize=normal;align=center</Options>
-            </Widget>
-            <Widget>
-              <WidgetId>dws_mic_ceiling</WidgetId>
-              <Type>ToggleButton</Type>
-              <Options>size=1</Options>
-            </Widget>
-            <Widget>
-              <WidgetId>widget_14</WidgetId>
-              <Name>Wireless Microphones Active?</Name>
-              <Type>Text</Type>
-              <Options>size=3;fontSize=normal;align=center</Options>
-            </Widget>
-            <Widget>
-              <WidgetId>dws_mic_wireless</WidgetId>
-              <Type>ToggleButton</Type>
-              <Options>size=1</Options>
-            </Widget>
-          </Row>
-          <PageId>dws_audio_control</PageId>
           <Options/>
         </Page>
       </Panel>
@@ -978,6 +918,7 @@ async function handleCallStatus(event) {
     AZM.Command.Zone.Monitor.Start()
 
     if(DWS_CUR_STATE == 'Combined'){
+      // DRAW IN CALL PANEL
       createPanels ("InCall");
     }
   } 
