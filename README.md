@@ -44,12 +44,12 @@ Select one of the following configurations:
 
 | **Codecs** | **# of Secondary Displays** | **Switch Model** | **Wire Diagram** | **Switch Config** |
 |---|---|---|---|---|
-| 2 x Codec EQs | One (1) | 9200CX 8 Port | [Diagram](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/images/EQ%201S%20C9K-8P.png) | [Config](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/switch-config/C9200CX-8P/ciscortr.cfg) |
-| 2 x Codec EQs | One (1) | 9200CX 12 Port | [Diagram](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/images/EQ%201S%20C9K-12P.png) | [Config](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/switch-config/C9200CX-12P/ciscortr.cfg) |
-| 2 x Codec Pros | One (1) | 9200CX 8 Port | [Diagram](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/images//Pro%201S%20C9K-8P.png) | [Config](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/switch-config/C9200CX-8P/ciscortr.cfg) |
-| 2 x Codec Pros | One (1) | 9200CX 12 Port | [Diagram](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/images/Pro%201S%20C9K-12P.png) | [Config](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/switch-config/C9200CX-12P/ciscortr.cfg) |
-| 2 x Codec Pros | Two (2) | 9200CX 8 Port | [Diagram](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/images/Pro%202S%20C9K-8P.png) | [Config](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/switch-config/C9200CX-8P/ciscortr.cfg) |
-| 2 x Codec Pros | Two (2) | 9200CX 12 Port | [Diagram](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/images/Pro%202S%20C9K-12P.png) | [Config](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/switch-config/C9200CX-12P/ciscortr.cfg) |
+| 2 x Codec EQs | One (1) | 9200CX 8 Port | [Diagram](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/images/EQ%201S%20C9K-8P.png) | [Config](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/switch-configs/C9200CX-8P/ciscortr.cfg) |
+| 2 x Codec EQs | One (1) | 9200CX 12 Port | [Diagram](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/images/EQ%201S%20C9K-12P.png) | [Config](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/switch-configs/C9200CX-12P/ciscortr.cfg) |
+| 2 x Codec Pros | One (1) | 9200CX 8 Port | [Diagram](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/images//Pro%201S%20C9K-8P.png) | [Config](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/switch-configs/C9200CX-8P/ciscortr.cfg) |
+| 2 x Codec Pros | One (1) | 9200CX 12 Port | [Diagram](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/images/Pro%201S%20C9K-12P.png) | [Config](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/switch-configs/C9200CX-12P/ciscortr.cfg) |
+| 2 x Codec Pros | Two (2) | 9200CX 8 Port | [Diagram](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/images/Pro%202S%20C9K-8P.png) | [Config](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/switch-configs/C9200CX-8P/ciscortr.cfg) |
+| 2 x Codec Pros | Two (2) | 9200CX 12 Port | [Diagram](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/images/Pro%202S%20C9K-12P.png) | [Config](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/switch-configs/C9200CX-12P/ciscortr.cfg) |
 
 **NOTE: Do NOT power on your Codecs or Switch until instructed to!**
 
