@@ -4,26 +4,26 @@ Divisible Rooms leveraging Cisco IP Microphones.
 
 Macro Author:  
 Mark Lula
+Technical Solutions Architect
 Cisco Systems
 
 Contributing Engineers:
 Svein Terje Steffensen
-Chase Voisin
-Robert(Bobby) McGonigle Jr
 William Mills
+Robert(Bobby) McGonigle Jr
 
-Version: 0.9
-Released: 03/31/2025
+Version: 0.1
+Released: 1/15/2024
 
 Complete details for this macro are available on Github:
-https://cs.co/divisibleworkspaceblueprint
+https://marklula.github.com/Divisible-Workspaces
 
 //=========================================================================//
 //                     **** DO NOT EDIT BELOW HERE ****                    //
 //=========================================================================*/
 
 import xapi from 'xapi';
-import { AZM } from './AZM_Lib';
+import { AZM } from './DWS_AZM_Lib';
 import DWS from './DWS_Config';
 import SAVED_STATE from './DWS_State';
 
@@ -323,24 +323,21 @@ function setPrimaryState(state)
   // CREATE MACRO BODY
   const dataStr = `
 /*========================================================================//
-This file is part of the "Divisible Workspace" blueprint for Two-Way 
+This file is part of the \"Divisible Workspace\" blueprint for Two-Way 
 Divisible Rooms leveraging Cisco IP Microphones.
 
 Macro Author:  
 Mark Lula
+Technical Solutions Architect
 Cisco Systems
 
 Contributing Engineers:
 Svein Terje Steffensen
-Chase Voisin
-Robert(Bobby) McGonigle Jr
 William Mills
-
-Version: 0.9
-Released: 03/31/2025
+Robert(Bobby) McGonigle Jr
 
 Complete details for this macro are available on Github:
-https://cs.co/divisibleworkspaceblueprint
+https://marklula.github.com/Divisible-Workspaces
 
 //=========================================================================//
 //                     **** DO NOT EDIT BELOW HERE ****                    //

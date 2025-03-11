@@ -4,19 +4,19 @@ Divisible Rooms leveraging Cisco IP Microphones.
 
 Macro Author:  
 Mark Lula
+Technical Solutions Architect
 Cisco Systems
 
 Contributing Engineers:
 Svein Terje Steffensen
-Chase Voisin
-Robert(Bobby) McGonigle Jr
 William Mills
+Robert(Bobby) McGonigle Jr
 
-Version: 0.9
-Released: 03/31/2025
+Version: 0.1
+Released: 1/15/2024
 
 Complete details for this macro are available on Github:
-https://cs.co/divisibleworkspaceblueprint
+https://marklula.github.com/Divisible-Workspaces
 
 //=========================================================================//
 //                     **** DO NOT EDIT BELOW HERE ****                    //
@@ -447,7 +447,7 @@ async function loadMacros()
 
   // DOWNLOAD THE MACROS
   try {
-    const getSetup = await xapi.Command.HttpClient.Get({ Url:'https://raw.githubusercontent.com/marklula/lawl/refs/heads/main/DWS_Setup.js' })
+    const getSetup = await xapi.Command.HttpClient.Get({ Url:'https://raw.githubusercontent.com/DevicesCoe/DivisibleWorkspace/refs/heads/main/macros/DWS_Setup.js' })
       .then( result => {
         console.debug("DWS: Setup Macro Downloaded Successfully.");
         setupMacro = result.Body;
@@ -463,7 +463,7 @@ async function loadMacros()
 
   // LOAD CORE MACRO FROM GITHUB
   try {
-    const getCore = await xapi.Command.HttpClient.Get({ Url:'https://raw.githubusercontent.com/marklula/lawl/refs/heads/main/DWS_Core.js' })
+    const getCore = await xapi.Command.HttpClient.Get({ Url:'https://raw.githubusercontent.com/DevicesCoe/DivisibleWorkspace/refs/heads/main/macros/DWS_Core.js' })
       .then( result => {
         console.debug("DWS: Core Macro Downloaded Successfully.");
         coreMacro = result.Body;
@@ -479,7 +479,7 @@ async function loadMacros()
 
   // LOAD AZM MACRO FROM GITHUB
   try {
-    const getAZM = await xapi.Command.HttpClient.Get({ Url: 'https://raw.githubusercontent.com/marklula/lawl/refs/heads/main/AZM_Lib.js' })
+    const getAZM = await xapi.Command.HttpClient.Get({ Url: 'https://raw.githubusercontent.com/DevicesCoe/DivisibleWorkspace/refs/heads/main/macros/DWS_AZM_Lib.js' })
       .then( result => {
         console.debug("DWS: AZM Macro Downloaded Successfully.");
         azmMacro = result.Body;
@@ -504,7 +504,7 @@ async function loadMacros()
     xapi.Command.Macros.Macro.Save({ Name: 'DWS_Core', Overwrite: 'True' }, coreMacro);
 
     // LOAD THE MACRO
-    xapi.Command.Macros.Macro.Save({ Name: 'AZM_Lib', Overwrite: 'True' }, azmMacro);
+    xapi.Command.Macros.Macro.Save({ Name: 'DWS_AZM_Lib', Overwrite: 'True' }, azmMacro);
 
     return true;
   }
