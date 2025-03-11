@@ -114,7 +114,7 @@ function listenForMessage () {
 
           // RUN ALL COMMANDS
           xapi.Command.Conference.DoNotDisturb.Activate({ Timeout: "20000" });
-          xapi.Command.Video.SelfView.set({FullScreenMode: "On", Mode: "On", OnMonitorRole:"Third"});
+          xapi.Command.Video.SelfView.set({FullscreenMode: "On", Mode: "On", OnMonitorRole:"Third"});
           if(DWS_SEC.SCREENS == 1)
           {
             xapi.Command.Video.Matrix.Assign({Mode: "Replace", Output: "1", SourceId: "3"});
@@ -145,7 +145,7 @@ function listenForMessage () {
           console.log('DWS: Split request received. Applying split configuration.');
 
           xapi.Command.Conference.DoNotDisturb.Deactivate();
-          xapi.Command.Video.SelfView.set({FullScreenMode: "Off", Mode: "On", OnMonitorRole:"First"});
+          xapi.Command.Video.SelfView.set({FullscreenMode: "Off", Mode: "On", OnMonitorRole:"First"});
           if(DWS_SEC.SCREENS == 1)
           {
             xapi.Command.Video.Matrix.Reset({Output: "1"});
