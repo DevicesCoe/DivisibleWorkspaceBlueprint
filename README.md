@@ -53,7 +53,8 @@ Select one of the following configurations:
 **NOTE: Do NOT power on your Codecs or Switch until instructed to!**
 
 Steps to be completed:
-1.  Download the switch configuration that matches your configuration and the **DWS_Wizard.js** file.
+1.  **Mandatory** Please factory reset your switch (write erase) if it is **NOT** in a factory state before beginning. Power it off when the factory reset has been completed.
+2.  Download the switch configuration that matches your configuration and the **DWS_Wizard.js** file.
 
 **NOTE: You do not need to download any other macro files. These are automatically loaded by the setup process.**
 
