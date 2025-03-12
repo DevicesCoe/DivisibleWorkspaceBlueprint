@@ -71,7 +71,6 @@ function init() {
 
   console.log ("DWS: Starting up as Primary Node.");
 
-  console.log (SAVED_STATE.STATE);
   // PERFORM CHECK ON CURRENTLY SAVED STATE IN CASE OF CODEC / MACRO REBOOT DURING COMBINED STATE
   if (SAVED_STATE.STATE == 'Combined') {
     console.log ('DWS: Combined State Detected. Re-applying Configuration.');
@@ -211,13 +210,13 @@ function init() {
                       if (device.ID === DWS.SECONDARY_NAV_CONTROL) {
                         if (DWS.DEBUG == 'true') {console.debug("DWS DEBUG: Discovered Navigator: " + device.SerialNumber + " / " + device.ID)};
                         // PAIR FOUND NAV AFTER 1500 MS  DELAY
-                        setTimeout(() => {pairSecondaryNav(device.ID, 'InsideRoom', 'Controller'), 1500});
+                        setTimeout(() => {pairSecondaryNav(device.ID, 'InsideRoom', 'Controller')}, 1500);
                         allCounter = DWS_ALL_SEC.push(device.SerialNumber);
                       }
                       if (device.ID === DWS.SECONDARY_NAV_SCHEDULER) {
                         if (DWS.DEBUG == 'true') {console.debug("DWS DEBUG: Discovered Navigator: " + device.SerialNumber + " / " + device.ID)};
                         // PAIR FOUND NAV AFTER 1500 MS DELAY
-                        setTimeout(() => {pairSecondaryNav(device.ID, 'OutsideRoom', 'RoomScheduler'), 1500});
+                        setTimeout(() => {pairSecondaryNav(device.ID, 'OutsideRoom', 'RoomScheduler')}, 1500);
                         allCounter = DWS_ALL_SEC.push(device.SerialNumber);
                       }
                     }
@@ -362,8 +361,6 @@ export default {
 //==================================//
 function createPanels(curState) {
   if(curState == 'Combined') 
-  {
-    DWS_PANEL = 'Combined') 
   {
     DWS_PANEL = `<Extensions>
        <Version>1.11</Version>
