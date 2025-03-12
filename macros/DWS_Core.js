@@ -786,7 +786,7 @@ async function setVLANs(state) {
 
         await submitRESTCONF(payload); 
 
-        if (p == 7)
+        if (p == 11)
         {
           // SET SECONDARY STATE FOR SPLIT OPERATION
           sendMessage(DWS.SECONDARY_HOST,"Split");
