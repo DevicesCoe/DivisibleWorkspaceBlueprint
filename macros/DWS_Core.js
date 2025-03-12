@@ -1016,8 +1016,6 @@ async function handleAZMZoneEvents(event) {
       else{
         // INCREMENT THE DROP AUDIENCE COUNTER
         DWS_DROP_AUDIENCE++;
-
-        console.log(DWS_DROP_AUDIENCE);
       }
     }
     else 
