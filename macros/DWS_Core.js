@@ -188,9 +188,6 @@ function init() {
                 // UPDATE VLANS FOR ACCESSORIES
                 setVLANs('Combine');
 
-                // SET SECONDARY STATE FOR SPLIT OPERATION
-                sendMessage(DWS.SECONDARY_HOST,"Combine");
-
                 // UPDATE SAVED STATE IN CASE OF MACRO RESET / REBOOT
                 setPrimaryState('Combined');
 
@@ -290,10 +287,6 @@ function init() {
 
                 // MAKE AUDIENCE CAM FROM SECONDARY HIDDEN
                 xapi.Config.Video.Input.Connector[2].Visibility.set("Never");
-
-                // SET SECONDARY STATE FOR SPLIT OPERATION
-                //secondaryState('Split');
-                sendMessage(DWS.SECONDARY_HOST, "Split");
 
                 // UPDATE STATUS ALERT
                 updateStatus('Split');
@@ -722,8 +715,11 @@ async function triggerMessage(codec, payload) {
   .catch((error) => {
     console.error(`DWS: Error sending command:`, error);
 
-    // WAIT 500ms THEN RETRY WITH SAME PAYLOAD
-    setTimeout(() => { triggerMessage(codec, payload)}, 500 );
+    // WAIT 1000ms THEN RETRY WITH SAME PAYLOAD
+    setTimeout(() => { 
+      triggerMessage(codec, payload); 
+      if (DWS.DEBUG == 'true') {console.debug('DWS DEBUG: HTTP session limit. Resending Command:', `${payload}`)}
+    }, 1000 );
   });
 }
 
@@ -745,6 +741,9 @@ async function setVLANs(state) {
         const payload = {"Cisco-IOS-XE-native:GigabitEthernet":[{"name":"1/0/"+p,"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}]};
 
         await submitRESTCONF(payload);
+
+        // SET SECONDARY STATE FOR COMBINE OPERATION
+        sendMessage(DWS.SECONDARY_HOST,"Combine");
       }
     }
     else {
@@ -753,6 +752,9 @@ async function setVLANs(state) {
         const payload = {"Cisco-IOS-XE-native:GigabitEthernet":[{"name":"1/0/"+p,"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.SECONDARY_VLAN}}}}]};
 
         await submitRESTCONF(payload);
+
+        // SET SECONDARY STATE FOR SPLIT OPERATION
+        sendMessage(DWS.SECONDARY_HOST,"Split");
       }
     }    
   }
@@ -762,7 +764,10 @@ async function setVLANs(state) {
       {
         const payload = {"Cisco-IOS-XE-native:GigabitEthernet":[{"name":"1/0/"+p,"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}]};
 
-        await submitRESTCONF(payload);        
+        await submitRESTCONF(payload);
+
+        // SET SECONDARY STATE FOR COMBINE OPERATION
+        sendMessage(DWS.SECONDARY_HOST,"Combine");        
       }
     }
     else {
@@ -771,6 +776,9 @@ async function setVLANs(state) {
         const payload = {"Cisco-IOS-XE-native:GigabitEthernet":[{"name":"1/0/"+p,"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.SECONDARY_VLAN}}}}]};
 
         await submitRESTCONF(payload); 
+
+        // SET SECONDARY STATE FOR SPLIT OPERATION
+        sendMessage(DWS.SECONDARY_HOST,"Split");
       }
     }   
   }    
