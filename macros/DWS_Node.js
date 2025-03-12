@@ -162,9 +162,6 @@ function init() {
           // UPDATE STATE MACRO
           setSecondaryState("Split");
 
-          // LISTEN FOR NAV PAIRING 
-          listenForNavs();
-
           break;
 
         //========================================//
