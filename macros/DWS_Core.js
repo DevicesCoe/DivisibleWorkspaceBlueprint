@@ -108,18 +108,19 @@ function init() {
           // SET VIDEO COMPOSITON
           DWS_AUTOMODE_STATE = event.Value;
 
-          if (DWS_AUTOMODE_STATE == 'on') {
-              console.log("DWS: Automatic Mode Activated.");
+          if (DWS_AUTOMODE_STATE == 'on') 
+          {
+            console.log("DWS: Automatic Mode Activated.");
 
-              // RESET VIEW TO PRIMARY ROOM QUAD TO CLEAR ANY COMPOSITION FROM PREVIOUS SELECTION
-              xapi.Command.Video.Input.SetMainVideoSource({ ConnectorId: 1});
+            // RESET VIEW TO PRIMARY ROOM QUAD TO CLEAR ANY COMPOSITION FROM PREVIOUS SELECTION
+            xapi.Command.Video.Input.SetMainVideoSource({ ConnectorId: 1});
 
-              // SET LOCAL SPEAKERTRACK MODE
-              xapi.Command.Cameras.SpeakerTrack.Activate();
-              xapi.Command.Cameras.SpeakerTrack.Closeup.Activate();
+            // SET LOCAL SPEAKERTRACK MODE
+            xapi.Command.Cameras.SpeakerTrack.Activate();
+            xapi.Command.Cameras.SpeakerTrack.Closeup.Activate();
 
-              // ACTIVE REMOVE SPEAKERTRACK
-              sendMessage("EnableST");
+            // ACTIVE REMOVE SPEAKERTRACK
+            sendMessage(DWS.SECONDARY_HOST, "EnableST");
           } 
           else {
             console.log("DWS: Automatic Mode Deactived.");
@@ -128,8 +129,7 @@ function init() {
             xapi.Command.Cameras.SpeakerTrack.Deactivate();
 
             // DEACTIVE REMOVE SPEAKERTRACK
-            sendMessage("DisableST");
-
+            sendMessage(DWS.SECONDARY_HOST, "DisableST");
           }
           break;
         case 'dws_cam_sxs': // LISTEN FOR SIDE BY SIDE COMPOSITION BUTTON PRESS  
@@ -139,6 +139,12 @@ function init() {
 
           // DISABLE AUTO MODE IF MANUALLY SELECTING AUDIENCE CAMERAS
           xapi.Command.UserInterface.Extensions.Widget.SetValue({ WidgetId: 'dws_cam_state', Value:'off'});
+
+          // DEACTIVE LOCAL SPEAKERTRACK
+          xapi.Command.Cameras.SpeakerTrack.Deactivate();
+
+          // DEACTIVE REMOVE SPEAKERTRACK
+          sendMessage(DWS.SECONDARY_HOST, "DisableST");
           break;
         case 'dws_cam_panda': // LISTEN FOR PANDA COMPOSITION BUTTON PRESS  
           console.log("DWS: Presenter and Audience Composition Selected.");
@@ -160,6 +166,12 @@ function init() {
 
           // DISABLE AUTO MODE IF MANUALLY SELECTING AUDIENCE CAMERAS
           xapi.Command.UserInterface.Extensions.Widget.SetValue({ WidgetId: 'dws_cam_state', Value:'off'});
+
+          // DEACTIVE LOCAL SPEAKERTRACK
+          xapi.Command.Cameras.SpeakerTrack.Deactivate();
+
+          // DEACTIVE REMOVE SPEAKERTRACK
+          sendMessage(DWS.SECONDARY_HOST, "DisableST");
           break;
         case 'dws_cam_secondary': // LISTEN FOR SECONDARY CAM BUTTON PRESS  
           console.log("DWS: Secondary Room Camera Selected.");
@@ -168,6 +180,12 @@ function init() {
 
           // DISABLE AUTO MODE IF MANUALLY SELECTING AUDIENCE CAMERAS
           xapi.Command.UserInterface.Extensions.Widget.SetValue({ WidgetId: 'dws_cam_state', Value:'off'});
+
+          // DEACTIVE LOCAL SPEAKERTRACK
+          xapi.Command.Cameras.SpeakerTrack.Deactivate();
+
+          // DEACTIVE REMOVE SPEAKERTRACK
+          sendMessage(DWS.SECONDARY_HOST, "DisableST");
           break
         case 'dws_combine': // LISTEN FOR INITIAL COMBINE BUTTON PRESS
           console.log ("DWS: Combine Requested. Confirming with user before beginning.");
