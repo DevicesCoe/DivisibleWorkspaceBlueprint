@@ -196,7 +196,7 @@ function init() {
         // PAIR CONTROL NAVIGATOR AFTER 1500ms Delay
         setTimeout(() => { 
           xapi.Command.Peripherals.TouchPanel.Configure({ ID: DWS_SEC.NAV_CONTROL, Location: "InsideRoom", Mode: "Controller"})
-            .on(() => { console.log("DWS: Paired Control Navigator succesfully.") } )
+            .then(() => { console.log("DWS: Paired Control Navigator succesfully.") } )
           }, 1500);
       }
       if (device.ID === DWS_SEC.NAV_SCHEDULER) 
@@ -206,7 +206,7 @@ function init() {
         // PAIR CONTROL NAVIGATOR AFTER 1500ms Delay
         setTimeout(() => { 
           xapi.Command.Peripherals.TouchPanel.Configure({ ID: DWS_SEC.NAV_SCHEDULER, Location: "OutsideRoom", Mode: "RoomScheduler"})
-            .on(() => { console.log("DWS: Paired Scheduler Navigator succesfully.") } )
+            .then(() => { console.log("DWS: Paired Scheduler Navigator succesfully.") } )
           }, 1500);
       }
     }
