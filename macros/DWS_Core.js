@@ -172,7 +172,7 @@ function init() {
           xapi.Command.UserInterface.Message.Prompt.Display({ FeedbackId: 'confirmCombine', "Option.1": "Yes", "Option.2": "No", Text: 'This process takes approximately 2 minutes to complete. Do you want to proceed?', Title: 'Confirm Combine Room Request' })
           .then(() => {
             xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
-              if (value.OptionId == "1") 
+              if (value.OptionId == "1" && value.FeedbackId == 'confirmCombine') 
               {                          
                 console.log ("DWS: Combine action confirmed. Combining rooms.");
 
@@ -256,7 +256,7 @@ function init() {
                   }
                 })
               }
-              else {
+              else if (value.FeedbackId != 'confirmSplit'){
                 console.log ("DWS: Combine request dismissed. No action taken.");
               }
             })
@@ -269,7 +269,7 @@ function init() {
           xapi.Command.UserInterface.Message.Prompt.Display({ FeedbackId: 'confirmSplit', "Option.1": "Yes", "Option.2": "No", Text: 'This process takes approximately 2 minutes to complete. Do you want to proceed?', Title: 'Confirm Split Room Request' })
           .then(() => {
             xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
-              if (value.OptionId == '1') 
+              if (value.OptionId == '1' && value.FeedbackId == 'confirmSplit') 
               { 
                 console.log ("DWS: Started Splitting Rooms.");
 
@@ -305,7 +305,8 @@ function init() {
                 // UPDATE SAVED STATE IN CASE OF MACRO RESET / REBOOT
                 setPrimaryState("Split");
               }
-              else {
+              else if (value.FeedbackId != 'confirmCombine')
+              {
                 console.log ("DWS: Split request dismissed. No action taken.");
               }
             })
@@ -720,6 +721,9 @@ async function triggerMessage(codec, payload) {
   })
   .catch((error) => {
     console.error(`DWS: Error sending command:`, error);
+
+    // WAIT 500ms THEN RETRY WITH SAME PAYLOAD
+    setTimeout(() => { triggerMessage(codec, payload)}, 500 );
   });
 }
 
