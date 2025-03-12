@@ -455,7 +455,7 @@ function createPanels(curState) {
              <Name/>
              <Widget>
                <WidgetId>widget_7</WidgetId>
-               <Name>Side by Side sends only Audience Cameras. Presenter and Audience will send the Presenter and both Audience Cameras.</Name>
+               <Name>Side by Side sends only Audience Cameras. Rooms and Presenter will send the Presenter and both Audience Cameras.</Name>
                <Type>Text</Type>
                <Options>size=4;fontSize=small;align=center</Options>
              </Widget>
@@ -553,7 +553,7 @@ function createPanels(curState) {
             <Name/>
             <Widget>
               <WidgetId>widget_7</WidgetId>
-              <Name>Side by Side sends only Audience Cameras. Presenter and Audience will send the Presenter and both Audience Cameras.</Name>
+              <Name>Side by Side sends only Audience Cameras. Rooms and Presenter will send the Presenter and both Audience Cameras.</Name>
               <Type>Text</Type>
               <Options>size=4;fontSize=small;align=center</Options>
             </Widget>

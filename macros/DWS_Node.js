@@ -258,7 +258,13 @@ export default {
         ;
 
   // SAVE STATE MACRO
-  xapi.Command.Macros.Macro.Save({ Name: 'DWS_State', Overwrite: 'True' }, dataStr);
+  xapi.Command.Macros.Macro.Save({ Name: 'DWS_State', Overwrite: 'True' }, dataStr)
+  .then(() => {
+    console.log ('DWS: Saved state set to: '+state);
+  })
+  .catch (error => {
+    console.error('DWS: Error saving state macro: '+error);
+  })
 }
 
 // START THE MACRO
