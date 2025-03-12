@@ -41,6 +41,7 @@ let DWS_TEMP_MICS = [];
 let DWS_ALL_SEC = [];
 let DWS_SEC_PER_COUNT = DWS.SECONDARY_MICS.length;
 let DWS_DROP_AUDIENCE = 0;
+let DWS_PANDA_STATE = '';
 
 if (DWS.SECONDARY_NAV_SCHEDULER != '') {
   DWS_SEC_PER_COUNT += 2;
@@ -130,6 +131,26 @@ function init() {
 
             // DEACTIVE REMOVE SPEAKERTRACK
             sendMessage(DWS.SECONDARY_HOST, "DisableST");
+            
+            // TURN OFF PANDA IF ENABLED
+            xapi.Command.UserInterface.Extensions.Widget.SetValue({ WidgetId: 'dws_cam_panda', Value:'off'});
+          }
+          break;
+        case 'dws_cam_panda': // LISTEN FOR PRESENTER AND AUDIENCE
+          DWS_PANDA_STATE = event.Value;
+
+          if (DWS_PANDA_STATE == 'on')
+          {
+            console.log("DWS: Presenter and Audience Enabled.");
+            // SET VIEW TO PRESENTER PTZ ON INPUT 5
+            xapi.Command.Video.Input.SetMainVideoSource({ ConnectorId: 5});
+            xapi.Command.Cameras.PresenterTrack.Set({ Mode: 'Persistent' });
+          }
+          else{
+            console.log ('DWS: Presenter and Audience Disabled.');
+            // RESET VIEW TO PRIMARY ROOM QUAD TO CLEAR ANY COMPOSITION FROM PREVIOUS SELECTION
+            xapi.Command.Video.Input.SetMainVideoSource({ ConnectorId: 1});
+            xapi.Command.Cameras.PresenterTrack.Set({ Mode: 'Off' });
           }
           break;
         case 'dws_cam_sxs': // LISTEN FOR SIDE BY SIDE COMPOSITION BUTTON PRESS  
@@ -139,6 +160,7 @@ function init() {
 
           // DISABLE AUTO MODE IF MANUALLY SELECTING AUDIENCE CAMERAS
           xapi.Command.UserInterface.Extensions.Widget.SetValue({ WidgetId: 'dws_cam_state', Value:'off'});
+          xapi.Command.UserInterface.Extensions.Widget.SetValue({ WidgetId: 'dws_cam_panda', Value:'off'});
 
           // DEACTIVE LOCAL SPEAKERTRACK
           xapi.Command.Cameras.SpeakerTrack.Deactivate();
@@ -146,19 +168,15 @@ function init() {
           // DEACTIVE REMOVE SPEAKERTRACK
           sendMessage(DWS.SECONDARY_HOST, "DisableST");
           break;
-        case 'dws_cam_panda': // LISTEN FOR PANDA COMPOSITION BUTTON PRESS  
-          console.log("DWS: Presenter and Audience Composition Selected.");
+        case 'dws_cam_randp': // LISTEN FOR PANDA COMPOSITION BUTTON PRESS  
+          console.log("DWS: Rooms and Presenter Composition Selected.");
           // SET VIDEO COMPOSITON
           xapi.Command.Video.Input.SetMainVideoSource({ ConnectorId: [1,2,5], Layout: 'Equal'});
 
           // DISABLE AUTO MODE IF MANUALLY SELECTING AUDIENCE CAMERAS
           xapi.Command.UserInterface.Extensions.Widget.SetValue({ WidgetId: 'dws_cam_state', Value:'off'});
-          break;
-        case 'dws_cam_presenter': // LISTEN FOR PRESENTER CAM BUTTON PRESS  
-          console.log("DWS: Presenter Track PTZ Camera Selected.");
-          xapi.Command.Video.Input.SetMainVideoSource({ ConnectorId: 5});
-          xapi.Command.Cameras.PresenterTrack.Set({ Mode: 'Persistent' });
-          break;
+          xapi.Command.UserInterface.Extensions.Widget.SetValue({ WidgetId: 'dws_cam_panda', Value:'off'});
+          break;        
         case 'dws_cam_primary': // LISTEN FOR PRIMARY CAM BUTTON PRESS  
           console.log("DWS: Primary Room Camera Selected.");
           // SET VIDEO INPUT
@@ -166,6 +184,7 @@ function init() {
 
           // DISABLE AUTO MODE IF MANUALLY SELECTING AUDIENCE CAMERAS
           xapi.Command.UserInterface.Extensions.Widget.SetValue({ WidgetId: 'dws_cam_state', Value:'off'});
+          xapi.Command.UserInterface.Extensions.Widget.SetValue({ WidgetId: 'dws_cam_panda', Value:'off'});
 
           // DEACTIVE LOCAL SPEAKERTRACK
           xapi.Command.Cameras.SpeakerTrack.Deactivate();
@@ -180,6 +199,7 @@ function init() {
 
           // DISABLE AUTO MODE IF MANUALLY SELECTING AUDIENCE CAMERAS
           xapi.Command.UserInterface.Extensions.Widget.SetValue({ WidgetId: 'dws_cam_state', Value:'off'});
+          xapi.Command.UserInterface.Extensions.Widget.SetValue({ WidgetId: 'dws_cam_panda', Value:'off'});
 
           // DEACTIVE LOCAL SPEAKERTRACK
           xapi.Command.Cameras.SpeakerTrack.Deactivate();
@@ -452,14 +472,19 @@ function createPanels(curState)
     else
     {
       PRES_CONF = `<Row>
-                      <Name>Start Presenter and Audience:</Name>
-                      <Widget>
-                        <WidgetId>dws_cam_presenter</WidgetId>
-                        <Name>Presenter and Audience</Name>
-                        <Type>Button</Type>
-                        <Options>size=4</Options>
-                      </Widget>
-                    </Row>`;
+                    <Name>Presenter and Audience:</Name>
+                    <Widget>
+                      <WidgetId>dws_cam_panda</WidgetId>
+                      <Type>ToggleButton</Type>
+                      <Options>size=1</Options>
+                    </Widget>
+                    <Widget>
+                      <WidgetId>widget_33</WidgetId>
+                      <Name>Uses automated detection of a presenter for compositing with automatic audience cameras.</Name>
+                      <Type>Text</Type>
+                      <Options>size=3;fontSize=small;align=center</Options>
+                    </Widget>
+                  </Row>`;
     }
      
 
@@ -508,27 +533,15 @@ function createPanels(curState)
             <Row>
               <Name>Automatic Camera Switching:</Name>
               <Widget>
-                <WidgetId>widget_30</WidgetId>
-                <Name>Enabled:</Name>
-                <Type>Text</Type>
-                <Options>size=1;fontSize=normal;align=right</Options>
-              </Widget>
-              <Widget>
                 <WidgetId>dws_cam_state</WidgetId>
                 <Type>ToggleButton</Type>
                 <Options>size=1</Options>
               </Widget>
               <Widget>
-                <WidgetId>widget_39</WidgetId>
-                <Name></Name>
-                <Type>Text</Type>
-                <Options>size=1;fontSize=normal;align=center</Options>
-              </Widget>
-              <Widget>
                 <WidgetId>widget_31</WidgetId>
-                <Name>Automate camera switching based on active audience microphones. Uses automatic detection in Presenter Mode for compositing.</Name>
+                <Name>Automate camera switching based on active audience microphones across both workspaces.</Name>
                 <Type>Text</Type>
-                <Options>size=4;fontSize=small;align=center</Options>
+                <Options>size=3;fontSize=small;align=center</Options>
               </Widget>
             </Row>
             ${PRES_CONF}
@@ -598,27 +611,15 @@ function createPanels(curState)
             <Row>
               <Name>Automatic Camera Switching:</Name>
               <Widget>
-                <WidgetId>widget_30</WidgetId>
-                <Name>Enabled:</Name>
-                <Type>Text</Type>
-                <Options>size=1;fontSize=normal;align=right</Options>
-              </Widget>
-              <Widget>
                 <WidgetId>dws_cam_state</WidgetId>
                 <Type>ToggleButton</Type>
                 <Options>size=1</Options>
               </Widget>
               <Widget>
-                <WidgetId>widget_39</WidgetId>
-                <Name></Name>
-                <Type>Text</Type>
-                <Options>size=1;fontSize=normal;align=center</Options>
-              </Widget>
-              <Widget>
                 <WidgetId>widget_31</WidgetId>
-                <Name>Automate camera switching based on active audience microphones. Uses automatic detection in Presenter Mode for compositing.</Name>
+                <Name>Automate camera switching based on active audience microphones across both workspaces.</Name>
                 <Type>Text</Type>
-                <Options>size=4;fontSize=small;align=center</Options>
+                <Options>size=3;fontSize=small;align=center</Options>
               </Widget>
             </Row>
             ${PRES_CONF}
@@ -1052,11 +1053,11 @@ async function handleCallStatus(event) {
 
     if(DWS_CUR_STATE == 'Combined'){
       createPanels ("Combined");
-      xapi.Command.UserInterface.Extensions.Widget.SetValue({ WidgetId: 'dws_state', Value:'Combined' });
+      setTimeout (() => { xapi.Command.UserInterface.Extensions.Widget.SetValue({ WidgetId: 'dws_state', Value:'Combined' }) }, 300);
     }
     else{
       createPanels ("Split");
-      xapi.Command.UserInterface.Extensions.Widget.SetValue({ WidgetId: 'dws_state', Value:'Split' });
+      setTimeout (() => { xapi.Command.UserInterface.Extensions.Widget.SetValue({ WidgetId: 'dws_state', Value:'Split' }) }, 300);
     }
   }
 }
