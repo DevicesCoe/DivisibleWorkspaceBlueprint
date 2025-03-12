@@ -71,6 +71,9 @@ function init() {
 
   console.log ("DWS: Starting up as Primary Node.");
 
+  // START LINK LOCAL SWITCH REPORTING TO CONTROL HUB
+  registerLinkLocal();
+
   // PERFORM CHECK ON CURRENTLY SAVED STATE IN CASE OF CODEC / MACRO REBOOT DURING COMBINED STATE
   if (SAVED_STATE.STATE == 'Combined') {
     console.log ('DWS: Combined State Detected. Re-applying Configuration.');
@@ -205,13 +208,13 @@ function init() {
                     // MONITOR FOR TOUCH PANELS
                     if (device.Type === 'TouchPanel') {
                       if (device.ID === DWS.SECONDARY_NAV_CONTROL) {
-                        if (DWS.DEBUG == 'true') {console.debug("DWS DEBUG: Discovered Navigator: " + device.SerialNumber + " / " + device.ID)};
+                        if (DWS.DEBUG == 'true') {console.debug("DWS: Discovered Navigator: " + device.SerialNumber + " / " + device.ID)};
                         // PAIR FOUND NAV AFTER 1500 MS  DELAY
                         setTimeout(() => {pairSecondaryNav(device.ID, 'InsideRoom', 'Controller')}, 1500);
                         allCounter = DWS_ALL_SEC.push(device.SerialNumber);
                       }
                       if (device.ID === DWS.SECONDARY_NAV_SCHEDULER) {
-                        if (DWS.DEBUG == 'true') {console.debug("DWS DEBUG: Discovered Navigator: " + device.SerialNumber + " / " + device.ID)};
+                        if (DWS.DEBUG == 'true') {console.debug("DWS: Discovered Navigator: " + device.SerialNumber + " / " + device.ID)};
                         // PAIR FOUND NAV AFTER 1500 MS DELAY
                         setTimeout(() => {pairSecondaryNav(device.ID, 'OutsideRoom', 'RoomScheduler')}, 1500);
                         allCounter = DWS_ALL_SEC.push(device.SerialNumber);
@@ -221,7 +224,7 @@ function init() {
                     // MONITOR FOR ALL SECONDARY MICS TO BE CONNECTED
                     if (device.Type === 'AudioMicrophone') {      
                       if (DWS.SECONDARY_MICS.includes(device.SerialNumber)) {
-                        if (DWS.DEBUG == 'true') {console.debug("DWS DEBUG: Discovered Microphone: " + device.SerialNumber)};
+                        if (DWS.DEBUG == 'true') {console.debug("DWS: Discovered Microphone: " + device.SerialNumber)};
 
                         // STORE FOUND MIC TEMP ARRAY IN NOT ALREADY THERE
                         if (!(DWS_TEMP_MICS.includes(device.SerialNumber))) {                
@@ -233,7 +236,7 @@ function init() {
                             if (DWS.AUTOMODE_DEFAULT == 'On') {
                               setTimeout(() => {startAZM()}, 5000);
                             }                    
-                            if (DWS.DEBUG == 'true') {console.debug("DWS DEBUG: All Secondary Microphones Detected. Starting AZM.")};
+                            if (DWS.DEBUG == 'true') {console.debug("DWS: All Secondary Microphones Detected. Starting AZM.")};
                           }
                         }
                       }
@@ -241,7 +244,7 @@ function init() {
 
                     // CHECK IF THIS IS ALL OF THE CONFIGURED PERIPHERALS            
                     if (allCounter == DWS_SEC_PER_COUNT) {
-                      setTimeout(() => {if (DWS.DEBUG == 'true') {console.debug("DWS DEBUG: All Secondary Peripherals Migrated.")};}, 2000);
+                      setTimeout(() => {if (DWS.DEBUG == 'true') {console.debug("DWS: All Secondary Peripherals Migrated.")};}, 2000);
 
                       // CREATE COMBINED PANELS AND SET DEFAULTS BASED ON CONFIGURATION WITH 2 SECOND DELAY
                       setTimeout(() => {createPanels('Combined')}, 2000);
@@ -309,6 +312,54 @@ function init() {
     }
   });
 
+}
+
+// Function to get the hostname using RESTCONF
+function registerLinkLocal() 
+{
+  const url = `https://169.254.1.254/restconf/data/Cisco-IOS-XE-device-hardware-oper:device-hardware-data/device-hardware/device-inventory/`;
+
+  xapi.command('HttpClient Get', { 
+    Url: url, 
+    Header: [
+      `Content-Type: application/yang-data+json`,
+      'Accept: application/yang-data+json',
+      `Authorization: Basic ${btoa(`${DWS.SWITCH_USERNAME}:${DWS.SWITCH_PASSWORD}`)}`
+    ],
+    AllowInsecureHTTPS: true
+  })
+  .then(response => {
+    const jsonResponse = JSON.parse(response.Body);
+    const hostname = jsonResponse['Cisco-IOS-XE-device-hardware-oper:device-inventory'];
+    let result = [];
+
+    for(var i in hostname)
+      for(var d in hostname[i])
+        result.push([hostname[i][d]])
+
+    let SWITCH_MODEL = result[3];
+    let SWITCH_SERIAL = result[4];
+
+    if (DWS.DEBUG == 'true') {console.debug("DWS: Link Local Switch Serial:", SWITCH_SERIAL)};
+    if (DWS.DEBUG == 'true') {console.debug("DWS: Link Local Switch Model:", SWITCH_MODEL)};
+
+    xapi.Command.Peripherals.Connect({ HardwareInfo: SWITCH_MODEL, ID: SWITCH_SERIAL, Name: SWITCH_MODEL, NetworkAddress: "169.254.1.254", SerialNumber: SWITCH_SERIAL, Type: 'ControlSystem' })
+    .then (() => {
+      if (DWS.DEBUG == 'true') {console.debug('DWS: Link Local Switch registered to Control Hub.')};
+
+      // SET REPORTING HEART BEAT TO 5.5 MINUTES
+      xapi.Command.Peripherals.HeartBeat( { ID: SWITCH_SERIAL, Timeout: 330 });
+
+      // WAIT 5 MINUTES THEN RERUN THIS SAME FUNCTION
+      setTimeout (() => { registerLinkLocal() }, 300000);
+    })  
+    .catch (error => {
+      console.error ('Failed to register switch to Control Hub: ', error.message);
+    })
+  })
+  .catch(error => {
+    console.error('Failed to get switch details:', error.message);
+  });
 }
 
 function setPrimaryState(state)
@@ -706,11 +757,11 @@ async function triggerMessage(codec, payload) {
   Params.Header = ['Authorization: Basic ' + btoa(`${DWS.MACRO_USERNAME}:${DWS.MACRO_PASSWORD}`), 'Content-Type: application/json']; // CONVERT TO BASE64 ENCODED
 
   // ENABLE THIS LINE TO SEE THE COMMANDS BEING SENT TO FAR END
-  if (DWS.DEBUG == 'true') {console.debug('DWS DEBUG: Sending:', `${payload}`)}
+  if (DWS.DEBUG == 'true') {console.debug('DWS: Sending:', `${payload}`)}
 
   xapi.Command.HttpClient.Post(Params, payload)
   .then(() => {
-    if (DWS.DEBUG == 'true') {console.debug(`DWS DEBUG: Command sent to ${codec} successfully`)}
+    if (DWS.DEBUG == 'true') {console.debug(`DWS: Command sent to ${codec} successfully`)}
   })
   .catch((error) => {
     console.error(`DWS: Error sending command:`, error);
@@ -718,7 +769,7 @@ async function triggerMessage(codec, payload) {
     // WAIT 1000ms THEN RETRY WITH SAME PAYLOAD
     setTimeout(() => { 
       triggerMessage(codec, payload); 
-      if (DWS.DEBUG == 'true') {console.debug('DWS DEBUG: HTTP session limit. Resending Command:', `${payload}`)}
+      if (DWS.DEBUG == 'true') {console.debug('DWS: HTTP session limit. Resending Command:', `${payload}`)}
     }, 1000 );
   });
 }
@@ -812,7 +863,7 @@ async function submitRESTCONF(payload) {
     },JSON.stringify(payload));
 
     if (response.StatusCode == "204") {
-        if (DWS.DEBUG == 'true') {console.debug (`DWS DEBUG: VLAN changed successfully.`)}
+        if (DWS.DEBUG == 'true') {console.debug (`DWS: VLAN changed successfully.`)}
     } else {
 	console.error (`DWS: VLAN change failed: ${error.message}`);
         throw new Error(`HTTP Error: ${response.StatusCode} - ${response.StatusText}`);
@@ -826,12 +877,12 @@ async function submitRESTCONF(payload) {
 //  NAVIGATOR PAIRING FUNCTIONS  //
 //===============================//
 function pairSecondaryNav(panelId, location, mode) {
-  if (DWS.DEBUG == 'true') {console.debug (`DWS DEBUG: Attempting to configure Secondary Touch Panel: ${panelId}`)}
+  if (DWS.DEBUG == 'true') {console.debug (`DWS: Attempting to configure Secondary Touch Panel: ${panelId}`)}
 
   // Command to set the panel to control mode
   xapi.Command.Peripherals.TouchPanel.Configure({ ID: panelId, Location: location, Mode: mode})
   .then(() => {
-    if (DWS.DEBUG == 'true') {console.debug (`DWS DEBUG: Secondary Room Touch Panel ${panelId} configured successfully`)}
+    if (DWS.DEBUG == 'true') {console.debug (`DWS: Secondary Room Touch Panel ${panelId} configured successfully`)}
   })
   .catch((error) => {
     console.error(`DWS: Failed to pair Touch Panel ${panelId} to Primary`, error);
@@ -923,7 +974,7 @@ async function handleAZMZoneEvents(event) {
       // SET COMPOSITION TO INCLUDE PRESENTER TRACK PTZ AS LARGE PIP
       if (event.Zone.State == 'High') 
       {
-        if (DWS.DEBUG == 'true') {console.debug ('DWS DEBUG: Presenter Detected. Setting PIP with PTZ & ' + event.Zone.Label)};
+        if (DWS.DEBUG == 'true') {console.debug ('DWS: Presenter Detected. Setting PIP with PTZ & ' + event.Zone.Label)};
 
         await xapi.Command.Video.Input.SetMainVideoSource({
           ConnectorId: [5, event.Assets.Camera.InputConnector],
@@ -953,7 +1004,7 @@ async function handleAZMZoneEvents(event) {
     else 
     {
       if (event.Zone.State == 'High') {
-        if (DWS.DEBUG == 'true') {console.debug ('DWS DEBUG: No Presenter Detected. Switching to ' + event.Zone.Label)};
+        if (DWS.DEBUG == 'true') {console.debug ('DWS: No Presenter Detected. Switching to ' + event.Zone.Label)};
 
         await xapi.Command.Video.Input.SetMainVideoSource({
           ConnectorId: event.Assets.Camera.InputConnector,
