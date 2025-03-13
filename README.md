@@ -7,7 +7,11 @@ Note, this concept is **not** a Cisco native feature but a **validated blueprint
 The solution leverages the following: 
 - Cisco Codec EQs or Codec Pros
 - Cisco Table or Ceiling Microphone Pros (up to 8)
-- A 9200CX switch
+- A validated 9200CX switch:
+  - C9200CX-8P-2X2G
+  - C9200CX-12P-2X2G
+  - C9200CX-8P-2XGH
+  - C9200CX-12P-2XGH   
 - Custom Macros including a modified [Audio Zone Manager Library](https://github.com/ctg-tme/audio-zone-manager-library-macro?tab=readme-ov-file)
 
 ---
