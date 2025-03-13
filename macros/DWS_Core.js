@@ -74,6 +74,7 @@ function init() {
 
   // START LINK LOCAL SWITCH REPORTING TO CONTROL HUB
   registerLinkLocal();
+  xapi.Config.Peripherals.Profile.ControlSystems.set('1');
 
   // PERFORM CHECK ON CURRENTLY SAVED STATE IN CASE OF CODEC / MACRO REBOOT DURING COMBINED STATE
   if (SAVED_STATE.STATE == 'Combined') {
