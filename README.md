@@ -110,6 +110,8 @@ The setup process will install the Divisible Workspace Macros, configure the Swi
 - All Macros are considered **Custom Code** and are **NOT** supported by Cisco through the Technical Assistance Center (TAC).
 - If you're considering deploying the Divisible Workspace blueprint, we recommend you engage a Cisco AV Integration Partner, not only for installation, but for configuration and ongoing support.
 - The Divisible Workspace blueprint is provided AS IS, please reference the code license included above.
+
+### Please join this Webex messaging space for best effort support: https://eurl.io/#nakTe_Vn3
   
 ---
 ## FAQ: [Top](#table-of-contents)
