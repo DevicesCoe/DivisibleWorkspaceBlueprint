@@ -14,7 +14,7 @@ The solution leverages the following:
   - C9200CX-12P-2XGH   
 - Custom Macros including a modified [Audio Zone Manager Library](https://github.com/ctg-tme/audio-zone-manager-library-macro?tab=readme-ov-file)
 
-| Minimum RoomOs Version | Webex Cloud | Webex Edge (Hybrid Cloud) | On-Premise | Microsoft Teams Room<br>On Cisco Devices |
+| Minimum RoomOS Version | Webex Cloud | Webex Edge (Hybrid Cloud) | On-Premise | Microsoft Teams Room<br>On Cisco Devices |
 |:-----------------------|:------------|:--------------------------|:-----------|:-----------------------------------------|
 | 11.24              | ✅ Yes      | ✅ Yes                    | ✅ Yes**     | ❌ Not Supported   | 
 
