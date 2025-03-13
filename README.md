@@ -16,7 +16,9 @@ The solution leverages the following:
 
 | Minimum RoomOs Version | Webex Cloud | Webex Edge (Hybrid Cloud) | On-Premise | Microsoft Teams Room<br>On Cisco Devices |
 |:-----------------------|:------------|:--------------------------|:-----------|:-----------------------------------------|
-| 11.24              | ✅ Yes      | ✅ Yes                    | ✅ Yes     | ❌ Not Supported   | 
+| 11.24              | ✅ Yes      | ✅ Yes                    | ✅ Yes**     | ❌ Not Supported   | 
+
+** Premise deployments will require manual deployment of macros and additional configuration. Documentation pending.
 
 ---
 ## Table of Contents
