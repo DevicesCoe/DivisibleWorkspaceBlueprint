@@ -85,7 +85,16 @@ Steps to be completed:
 12.	Once fully registered, Apply the Configuration Template created above to **both** devices.
 13.	Open the device page for the **Secondary Room** and click the **Actions** button.
 14.	Select **Run xCommand**. Select **UserManagement** from the left menu and then select **Add** from the right side.
-15.	Select the **"Admin"** role. Set **Active** to **True**. Enter the desired **Username** and **Password** you want to use (You will need these later). Set **PassphraseChangeRequired** to **false**.
+15.	Set the following items:
+
+|Attribute | Value|
+|---|---|
+| Roles | Admin |
+| Active | True |
+| Username | YOUR USERNAME |
+| Password | YOUR PASSWORD |
+| PassphraseChangeRequired | False |
+
 16.	Click **Execute**.
 17.	Open the device page for the **Primary Room** and select **Macros**.
 18.	Click **Add Macro**. Upload the **DWS_Wizard.js** downloaded from this repository. 
