@@ -83,11 +83,11 @@ Steps to be completed:
 
 11.	**Power on your codecs** and register them to their respective Workspaces.
 12.	Once fully registered, Apply the Configuration Template created above to **both** devices.
-13.	Launch the **Local Web Interface** of the **Secondary Room** Codec via the device page in Control Hub.
-14.	On the left hand menu, Select **Users** and click **Create User** in the top right.
-15.	Add a new user with the **"Admin"** role. Be sure to **Uncheck** the box for the "Require passphrase change on next user sign in".
-16.	Log out of the Secondary Codec. 
-17.	In Control Hub, Select **Macros** on the device page for the **Primary Room**.
+13.	Open the device page for the **Secondary Room** and click the **Actions** button.
+14.	Select **Run xCommand**. Select **UserManagement** from the left menu and then select **Add** from the right side.
+15.	Select the **"Admin"** role. Set **Active** to **True**. Enter the desired **Username** and **Password** you want to use (You will need these later). Set **PassphraseChangeRequired** to **false**.
+16.	Click **Execute**.
+17.	Open the device page for the **Primary Room** and select **Macros**.
 18.	Click **Add Macro**. Upload the **DWS_Wizard.js** downloaded from this repository. 
 19.	Do **NOT** rename this macro. Ensure the **Enabled** toggle is selected. Click **Save**.
 20.	On the Navigator, select **DWS Setup Wizard** from the homescreen and follow the on screen prompts. 
