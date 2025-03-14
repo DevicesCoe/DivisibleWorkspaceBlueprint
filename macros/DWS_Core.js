@@ -42,6 +42,7 @@ let DWS_ALL_SEC = [];
 let DWS_SEC_PER_COUNT = DWS.SECONDARY_MICS.length;
 let DWS_DROP_AUDIENCE = 0;
 let DWS_PANDA_STATE = '';
+let productPlatform = '';
 
 if (DWS.SECONDARY_NAV_SCHEDULER != '') {
   DWS_SEC_PER_COUNT += 2;
@@ -72,8 +73,8 @@ function init() {
 
   console.log ("DWS: Starting up as Primary Node.");
 
-  const value = xapi.Status.SystemUnit.ProductPlatform.get()
-  console.log(value)
+  const getPlatform = xapi.Status.SystemUnit.ProductPlatform.get()
+  .then((response) => { productPlatform = response} );
 
   // START LINK LOCAL SWITCH REPORTING TO CONTROL HUB
   registerLinkLocal();
