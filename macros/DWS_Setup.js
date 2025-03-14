@@ -182,11 +182,18 @@ import xapi from 'xapi';
 
 function init()
 {
+  const productPlatform = getPlatform();
+
   // SAVE THE INITIAL STATE MACRO
   saveStateMacro();
 
   // LOAD NODE MACRO FROM GITHUB
   getMacro();  
+}
+
+async function getPlatform() {
+  const productPlatform = await xapi.Status.SystemUnit.ProductPlatform.get()
+  return productPlatform;
 }
 
 async function getMacro ()
@@ -246,12 +253,14 @@ const STATE = '${state}';
 const SCREENS = '${DWS.SECONDARY_SCREENS}';            
 const NAV_CONTROL = '${DWS.SECONDARY_NAV_CONTROL}';
 const NAV_SCHEDULER = '${DWS.SECONDARY_NAV_SCHEDULER}';
+const PLATFORM = '\${productPlatform}';
 
 export default {
   STATE,
   SCREENS, 
   NAV_CONTROL, 
-  NAV_SCHEDULER  
+  NAV_SCHEDULER
+  PLATFORM  
 }\`;
 
   // SAVE STATE MACRO
