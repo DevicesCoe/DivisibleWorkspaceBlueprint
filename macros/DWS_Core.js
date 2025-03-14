@@ -555,7 +555,7 @@ function createPanels(curState)
                 <Options>size=2</Options>
               </Widget>
               <Widget>
-                <WidgetId>dws_cam_panda</WidgetId>
+                <WidgetId>dws_cam_randp</WidgetId>
                 <Name>Rooms and Presenter</Name>
                 <Type>Button</Type>
                 <Options>size=2</Options>
@@ -633,7 +633,7 @@ function createPanels(curState)
                 <Options>size=2</Options>
               </Widget>
               <Widget>
-                <WidgetId>dws_cam_panda</WidgetId>
+                <WidgetId>dws_cam_randp</WidgetId>
                 <Name>Rooms and Presenter</Name>
                 <Type>Button</Type>
                 <Options>size=2</Options>
