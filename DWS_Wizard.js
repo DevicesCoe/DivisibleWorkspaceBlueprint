@@ -516,8 +516,6 @@ async function loadMacros()
 
 async function getPlatform() {
   const productPlatform = await xapi.Status.SystemUnit.ProductPlatform.get()
-  console.log(productPlatform);
-
   return productPlatform;
 }
 
