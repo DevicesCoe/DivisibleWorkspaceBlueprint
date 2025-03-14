@@ -72,6 +72,9 @@ function init() {
 
   console.log ("DWS: Starting up as Primary Node.");
 
+  const value = xapi.Status.SystemUnit.ProductPlatform.get()
+  console.log(value)
+
   // START LINK LOCAL SWITCH REPORTING TO CONTROL HUB
   registerLinkLocal();
   xapi.Config.Peripherals.Profile.ControlSystems.set('1');

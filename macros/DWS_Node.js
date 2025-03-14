@@ -23,11 +23,7 @@ https://cs.co/divisibleworkspaceblueprint
 //=========================================================================*/
 
 import xapi from 'xapi';
-import DWS_SEC from './DWS_State'
-
-function parse(event) {  //returns the content of the parent system when sent
-  return JSON.parse(event);
-}
+import DWS_SEC from './DWS_State';
 
 //===========================//
 //  INITIALIZATION FUNCTION  //
@@ -42,20 +38,38 @@ function init() {
     xapi.Config.Video.Output.Connector[1].MonitorRole.set("First");
     xapi.Config.Video.Output.Connector[3].MonitorRole.set("Third");
 
-    // SET VIDEO INPUT CONFIGS
-    xapi.Config.Video.Input.Connector[1].Name.set("Audience Camera");
-    xapi.Config.Video.Input.Connector[1].Visibility.set("Never");
-    xapi.Config.Video.Input.Connector[1].CameraControl.Mode.set("On");
+    if(DWS_SEC.PLATFORM == 'Codec Pro')
+    {
+      // SET VIDEO INPUT CONFIGS
+      xapi.Config.Video.Input.Connector[1].Name.set("Audience Camera");
+      xapi.Config.Video.Input.Connector[1].Visibility.set("Never");
+      xapi.Config.Video.Input.Connector[1].CameraControl.Mode.set("On");
 
-    xapi.Config.Video.Input.Connector[3].Name.set("First Feed from Primary");
-    xapi.Config.Video.Input.Connector[3].Visibility.set("Never");
-    xapi.Config.Video.Input.Connector[3].CameraControl.Mode.set("Off");
-    xapi.Config.Video.Input.Connector[3].PresentationSelection.set("Manual");
+      xapi.Config.Video.Input.Connector[3].Name.set("First Feed from Primary");
+      xapi.Config.Video.Input.Connector[3].Visibility.set("Never");
+      xapi.Config.Video.Input.Connector[3].CameraControl.Mode.set("Off");
+      xapi.Config.Video.Input.Connector[3].PresentationSelection.set("Manual");
 
-    xapi.Config.Video.Input.Connector[5].Name.set("Presenter PTZ");
-    xapi.Config.Video.Input.Connector[5].Visibility.set("Never");
-    xapi.Config.Video.Input.Connector[5].CameraControl.Mode.set("On");
+      xapi.Config.Video.Input.Connector[5].Name.set("Presenter PTZ");
+      xapi.Config.Video.Input.Connector[5].Visibility.set("Never");
+      xapi.Config.Video.Input.Connector[5].CameraControl.Mode.set("On");
+    }
+    else if (DWS_SEC.PLATFORM == 'Codec EQ')
+    {
+      // SET VIDEO INPUT CONFIGS
+      xapi.Config.Video.Input.Connector[1].Name.set("Audience Camera");
+      xapi.Config.Video.Input.Connector[1].Visibility.set("Never");
+      xapi.Config.Video.Input.Connector[1].CameraControl.Mode.set("On");
 
+      xapi.Config.Video.Input.Connector[2].Name.set("Presenter PTZ");
+      xapi.Config.Video.Input.Connector[2].Visibility.set("Never");
+      xapi.Config.Video.Input.Connector[2].CameraControl.Mode.set("On");
+
+      xapi.Config.Video.Input.Connector[3].Name.set("First Feed from Primary");
+      xapi.Config.Video.Input.Connector[3].Visibility.set("Never");
+      xapi.Config.Video.Input.Connector[3].CameraControl.Mode.set("Off");
+      xapi.Config.Video.Input.Connector[3].PresentationSelection.set("Manual");      
+    }
   }
   else if(DWS_SEC.SCREENS == 2)
   {
@@ -64,24 +78,43 @@ function init() {
     xapi.Config.Video.Output.Connector[2].MonitorRole.set("Second");
     xapi.Config.Video.Output.Connector[3].MonitorRole.set("Third");
 
-    // SET VIDEO INPUT CONFIGS
-    xapi.Config.Video.Input.Connector[1].Name.set("Audience Camera");
-    xapi.Config.Video.Input.Connector[1].Visibility.set("Never");
-    xapi.Config.Video.Input.Connector[1].CameraControl.Mode.set("On");
+    if(DWS_SEC.PLATFORM == 'Codec Pro')
+    {
+      // SET VIDEO INPUT CONFIGS
+      xapi.Config.Video.Input.Connector[1].Name.set("Audience Camera");
+      xapi.Config.Video.Input.Connector[1].Visibility.set("Never");
+      xapi.Config.Video.Input.Connector[1].CameraControl.Mode.set("On");
 
-    xapi.Config.Video.Input.Connector[3].Name.set("First Feed from Primary");
-    xapi.Config.Video.Input.Connector[3].Visibility.set("Never");
-    xapi.Config.Video.Input.Connector[3].CameraControl.Mode.set("Off");
-    xapi.Config.Video.Input.Connector[3].PresentationSelection.set("Manual");
+      xapi.Config.Video.Input.Connector[3].Name.set("First Feed from Primary");
+      xapi.Config.Video.Input.Connector[3].Visibility.set("Never");
+      xapi.Config.Video.Input.Connector[3].CameraControl.Mode.set("Off");
+      xapi.Config.Video.Input.Connector[3].PresentationSelection.set("Manual");
 
-    xapi.Config.Video.Input.Connector[4].Name.set("Second Feed from Primary");
-    xapi.Config.Video.Input.Connector[4].Visibility.set("Never");
-    xapi.Config.Video.Input.Connector[4].CameraControl.Mode.set("Off");
-    xapi.Config.Video.Input.Connector[4].PresentationSelection.set("Manual");
+      xapi.Config.Video.Input.Connector[4].Name.set("Second Feed from Primary");
+      xapi.Config.Video.Input.Connector[4].Visibility.set("Never");
+      xapi.Config.Video.Input.Connector[4].CameraControl.Mode.set("Off");
+      xapi.Config.Video.Input.Connector[4].PresentationSelection.set("Manual");
 
-    xapi.Config.Video.Input.Connector[5].Name.set("Presenter PTZ");
-    xapi.Config.Video.Input.Connector[5].Visibility.set("Never");
-    xapi.Config.Video.Input.Connector[5].CameraControl.Mode.set("On");
+      xapi.Config.Video.Input.Connector[5].Name.set("Presenter PTZ");
+      xapi.Config.Video.Input.Connector[5].Visibility.set("Never");
+      xapi.Config.Video.Input.Connector[5].CameraControl.Mode.set("On");
+    }
+    else if (DWS_SEC.PLATFORM == 'Codec EQ')
+    {
+      // SET VIDEO INPUT CONFIGS
+      xapi.Config.Video.Input.Connector[1].Name.set("Audience Camera");
+      xapi.Config.Video.Input.Connector[1].Visibility.set("Never");
+      xapi.Config.Video.Input.Connector[1].CameraControl.Mode.set("On");
+
+      xapi.Config.Video.Input.Connector[2].Name.set("Presenter PTZ");
+      xapi.Config.Video.Input.Connector[2].Visibility.set("Never");
+      xapi.Config.Video.Input.Connector[2].CameraControl.Mode.set("On");
+
+      xapi.Config.Video.Input.Connector[3].Name.set("First Feed from Primary");
+      xapi.Config.Video.Input.Connector[3].Visibility.set("Never");
+      xapi.Config.Video.Input.Connector[3].CameraControl.Mode.set("Off");
+      xapi.Config.Video.Input.Connector[3].PresentationSelection.set("Manual");      
+    }
   }
 
   if (DWS_SEC.STATE === 'Combined') {
@@ -114,10 +147,14 @@ function init() {
           {
             try { xapi.Command.Video.Matrix.Assign({Mode: "Replace", Output: "1", SourceId: "3"}) } catch(error) { console.error('DWS: Error Setting 1S Matrix: ' + error.message); }
           }
-          else if(DWS_SEC.SCREENS == 2)
+          else if(DWS_SEC.SCREENS == 2 && DWS_SEC.PLATFORM == 'Codec Pro')
           {
             try { xapi.Command.Video.Matrix.Assign({Mode: "Replace", Output: "1", SourceId: "3"}) } catch(error) { console.error('DWS: Error Setting 2S Matrix 1: ' + error.message); }
             try { xapi.Command.Video.Matrix.Assign({Mode: "Replace", Output: "2", SourceId: "4"}) } catch(error) { console.error('DWS: Error Setting 2S Matrix 2: ' + error.message); }
+          }
+          else{
+            console.error ("DWS: Misconfigured number of displays based on platform. Defaulting to Single Display.");
+            try { xapi.Command.Video.Matrix.Assign({Mode: "Replace", Output: "1", SourceId: "3"}) } catch(error) { console.error('DWS: Error Setting 1S Matrix: ' + error.message); }
           }
           
           // SET ALL CONFIGURATIONS
@@ -145,10 +182,14 @@ function init() {
           {
             try { xapi.Command.Video.Matrix.Reset({Output: "1"}) } catch(error) { console.error('DWS: Error Setting 1S Matrix: ' + error.message); }
           }
-          else if(DWS_SEC.SCREENS == 2)
+          else if(DWS_SEC.SCREENS == 2 && DWS_SEC.PLATFORM == 'Codec Pro')
           {
             try { xapi.Command.Video.Matrix.Reset({Output: "1"}) } catch(error) { console.error('DWS: Error Setting 2S Matrix 1: ' + error.message); }
             try { xapi.Command.Video.Matrix.Reset({Output: "2"}) } catch(error) { console.error('DWS: Error Setting 2S Matrix 2: ' + error.message); }
+          }
+          else{
+            console.error ("DWS: Misconfigured number of displays based on platform. Resetting Matrix for Single Display.");
+            try { xapi.Command.Video.Matrix.Reset({Output: "1"}) } catch(error) { console.error('DWS: Error Setting 1S Matrix: ' + error.message); }
           }
 
           // SET ALL CONFIGURATIONS
@@ -213,8 +254,15 @@ function init() {
   });
 }
 
+async function getPlatform() {
+  const productPlatform = await xapi.Status.SystemUnit.ProductPlatform.get()
+  return productPlatform;
+}
+
 function setSecondaryState(state)
 {
+  const productPlatform = getPlatform();
+
   // CREATE MACRO BODY
   const dataStr = `
 /*========================================================================//
@@ -245,12 +293,14 @@ const STATE = '${state}';
 const SCREENS = '${DWS_SEC.SCREENS}';            
 const NAV_CONTROL = '${DWS_SEC.NAV_CONTROL}';
 const NAV_SCHEDULER = '${DWS_SEC.NAV_SCHEDULER}';
+const PLATFORM = '${productPlatform}';
 
 export default {
   STATE,
   SCREENS, 
   NAV_CONTROL, 
-  NAV_SCHEDULER  
+  NAV_SCHEDULER,
+  PLATFORM
 };`
         ;
 

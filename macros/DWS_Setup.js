@@ -259,8 +259,8 @@ export default {
   STATE,
   SCREENS, 
   NAV_CONTROL, 
-  NAV_SCHEDULER
-  PLATFORM  
+  NAV_SCHEDULER,
+  PLATFORM
 }\`;
 
   // SAVE STATE MACRO
