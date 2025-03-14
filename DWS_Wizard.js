@@ -514,6 +514,13 @@ async function loadMacros()
   }
 }
 
+async function getPlatform() {
+  const productPlatform = await xapi.Status.SystemUnit.ProductPlatform.get()
+  console.log(productPlatform);
+
+  return productPlatform;
+}
+
 // LISTEN FOR SETUP BUTTON PRESS
 xapi.Event.UserInterface.Extensions.Widget.Action.on(event => {
   if( event.Type == 'released' && event.WidgetId == 'dws_wizard_common' )
@@ -527,6 +534,8 @@ xapi.Event.UserInterface.Extensions.Widget.Action.on(event => {
   if( event.Type == 'released' && event.WidgetId == 'dws_wizard_setup' )
   {
     console.log ('DWS: Beginning Divisible Workspace Initilization.');
+
+    const productPlatform = getPlatform();
 
     loadMacros()
     .then (result => {
@@ -606,6 +615,7 @@ const SECONDARY_MICS = [${JSON.stringify(responses[8], null, 2)}];
 const AUTOMODE_DEFAULT = ${JSON.stringify(responses[9], null, 2)};      
 const PRIMARY_VLAN = '100';
 const SECONDARY_VLAN = '200';
+const PLATFORM = '${productPlatform}';
 
 export default {
   DEBUG,
@@ -625,6 +635,7 @@ export default {
   AUTOMODE_DEFAULT,  
   PRIMARY_VLAN, 
   SECONDARY_VLAN
+  PLATFORM
 };`   
         ;
 
