@@ -254,14 +254,10 @@ function init() {
   });
 }
 
-async function getPlatform() {
-  const productPlatform = await xapi.Status.SystemUnit.ProductPlatform.get()
-  return productPlatform;
-}
-
 function setSecondaryState(state)
 {
-  const productPlatform = getPlatform();
+  xapi.Status.SystemUnit.ProductPlatform.get()
+  .then ((productPlatform) => {
 
   // CREATE MACRO BODY
   const dataStr = `
@@ -301,16 +297,16 @@ export default {
   NAV_CONTROL, 
   NAV_SCHEDULER,
   PLATFORM
-};`
-        ;
+};`;
 
-  // SAVE STATE MACRO
-  xapi.Command.Macros.Macro.Save({ Name: 'DWS_State', Overwrite: 'True' }, dataStr)
-  .then(() => {
-    console.log ('DWS: Saved state set to: '+state);
-  })
-  .catch (error => {
-    console.error('DWS: Error saving state macro: '+error);
+    // SAVE STATE MACRO
+    xapi.Command.Macros.Macro.Save({ Name: 'DWS_State', Overwrite: 'True' }, dataStr)
+    .then(() => {
+      console.log ('DWS: Saved state set to: '+state);
+    })
+    .catch (error => {
+      console.error('DWS: Error saving state macro: '+error);
+    })
   })
 }
 

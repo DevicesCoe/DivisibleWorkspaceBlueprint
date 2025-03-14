@@ -182,8 +182,6 @@ import xapi from 'xapi';
 
 function init()
 {
-  const productPlatform = getPlatform();
-
   // SAVE THE INITIAL STATE MACRO
   saveStateMacro();
 
@@ -223,6 +221,9 @@ async function getMacro ()
 
 function saveStateMacro()
 {
+  xapi.Status.SystemUnit.ProductPlatform.get()
+  .then ((productPlatform) => {
+
   // CREATE MACRO BODY
   const dataStr = \`
 /*========================================================================//
@@ -263,8 +264,9 @@ export default {
   PLATFORM
 }\`;
 
-  // SAVE STATE MACRO
-  xapi.Command.Macros.Macro.Save({ Name: 'DWS_State', Overwrite: 'True' }, dataStr);
+    // SAVE STATE MACRO
+    xapi.Command.Macros.Macro.Save({ Name: 'DWS_State', Overwrite: 'True' }, dataStr);
+  })
 }
 
 // START THE MACRO
