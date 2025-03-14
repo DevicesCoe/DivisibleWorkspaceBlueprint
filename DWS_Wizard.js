@@ -632,7 +632,7 @@ export default {
   MICS_LOW,
   AUTOMODE_DEFAULT,  
   PRIMARY_VLAN, 
-  SECONDARY_VLAN
+  SECONDARY_VLAN,
   PLATFORM
 };`   
         ;
