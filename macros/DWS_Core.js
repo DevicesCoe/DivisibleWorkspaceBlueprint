@@ -584,6 +584,12 @@ function createPanels(curState)
                 <Type>Button</Type>
                 <Options>size=2</Options>
               </Widget>
+              <Widget>
+              <WidgetId>dws_cam_presenter</WidgetId>
+                <Name>Primary Presenter</Name>
+                <Type>Button</Type>
+                <Options>size=4</Options>
+              </Widget>
             </Row>
             <PageId>dws_cam_control</PageId>
             <Options/>
@@ -661,6 +667,12 @@ function createPanels(curState)
                 <Name>Secondary Audience</Name>
                 <Type>Button</Type>
                 <Options>size=2</Options>
+              </Widget>
+              <Widget>
+                <WidgetId>dws_cam_presenter</WidgetId>
+                <Name>Primary Presenter</Name>
+                <Type>Button</Type>
+                <Options>size=4</Options>
               </Widget>
             </Row>
             <PageId>dws_cam_control</PageId>
