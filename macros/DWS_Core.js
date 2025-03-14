@@ -127,6 +127,9 @@ function init() {
           else {
             console.log("DWS: Automatic Mode Deactived.");
 
+            // RESET VIEW TO PRIMARY ROOM QUAD TO CLEAR ANY COMPOSITION FROM PREVIOUS SELECTION
+            xapi.Command.Video.Input.SetMainVideoSource({ ConnectorId: 1});
+
             // DEACTIVE LOCAL SPEAKERTRACK
             xapi.Command.Cameras.SpeakerTrack.Deactivate();
 
@@ -146,6 +149,8 @@ function init() {
             // SET VIEW TO PRESENTER PTZ ON INPUT 5
             xapi.Command.Video.Input.SetMainVideoSource({ ConnectorId: 5});
             xapi.Command.Cameras.PresenterTrack.Set({ Mode: 'Persistent' });
+
+            xapi.Command.UserInterface.Extensions.Widget.SetValue({ WidgetId: 'dws_cam_state', Value:'on'});
           }
           else{
             console.log ('DWS: Presenter and Audience Disabled.');
