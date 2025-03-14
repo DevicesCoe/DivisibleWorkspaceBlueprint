@@ -41,25 +41,54 @@ async function firstSetup()
   }
 
   // CHECK FOR CONNECTED INPUTS IN CONFIGURED SPOTS
-  console.log("DWS: Checking for Correct Inputs and Outputs."); 
-  const input1 = await xapi.Status.Video.Input.Connector[1].Connected.get();
-  const input2 = await xapi.Status.Video.Input.Connector[2].Connected.get();
-  const input3 = await xapi.Status.Video.Input.Connector[5].Connected.get();
+  const input1 = '';
+  const input2 = '';
+  const input3 = '';
+
+  console.log("DWS: Checking for Correct Inputs and Outputs.");
+  if(DWS.PLATFORM == 'Codec Pro')
+  {    
+    input1 = await xapi.Status.Video.Input.Connector[1].Connected.get();
+    input2 = await xapi.Status.Video.Input.Connector[2].Connected.get();
+    input3 = await xapi.Status.Video.Input.Connector[5].Connected.get();
+  }
+  else if (DWS.PLATFORM == 'Codec EQ')
+  {
+    input1 = await xapi.Status.Video.Input.Connector[1].Connected.get();
+    input2 = await xapi.Status.Video.Input.Connector[2].Connected.get();
+    input3 = await xapi.Status.Video.Input.Connector[3].Connected.get();
+  }
 
   if (input1 && input2 && input3)
   {
     console.log("DWS: Setting Inputs/Outputs Labels and Visibility."); 
 
-    // SET NAMES AND VISIBILITY SETTINGS
-    xapi.Config.Video.Input.Connector[1].Name.set('Audience Camera');
-    xapi.Config.Video.Input.Connector[1].CameraControl.Mode.set('On');
-    xapi.Config.Video.Input.Connector[1].Visibility.set('Never');
-    xapi.Config.Video.Input.Connector[2].Name.set('Secondary Audience');
-    xapi.Config.Video.Input.Connector[2].CameraControl.Mode.set('Off');
-    xapi.Config.Video.Input.Connector[2].Visibility.set('Never');
-    xapi.Config.Video.Input.Connector[5].Name.set('Primary PTZ Camera');
-    xapi.Config.Video.Input.Connector[5].CameraControl.Mode.set('On');
-    xapi.Config.Video.Input.Connector[5].Visibility.set('Never');
+    if(DWS.PLATFORM == 'Codec Pro')
+    {    
+      // SET NAMES AND VISIBILITY SETTINGS
+      xapi.Config.Video.Input.Connector[1].Name.set('Audience Camera');
+      xapi.Config.Video.Input.Connector[1].CameraControl.Mode.set('On');
+      xapi.Config.Video.Input.Connector[1].Visibility.set('Never');
+      xapi.Config.Video.Input.Connector[2].Name.set('Secondary Audience');
+      xapi.Config.Video.Input.Connector[2].CameraControl.Mode.set('Off');
+      xapi.Config.Video.Input.Connector[2].Visibility.set('Never');
+      xapi.Config.Video.Input.Connector[5].Name.set('Primary PTZ Camera');
+      xapi.Config.Video.Input.Connector[5].CameraControl.Mode.set('On');
+      xapi.Config.Video.Input.Connector[5].Visibility.set('Never');
+    }
+    else if (DWS.PLATFORM == 'Codec EQ')
+    {
+      // SET NAMES AND VISIBILITY SETTINGS
+      xapi.Config.Video.Input.Connector[1].Name.set('Audience Camera');
+      xapi.Config.Video.Input.Connector[1].CameraControl.Mode.set('On');
+      xapi.Config.Video.Input.Connector[1].Visibility.set('Never');
+      xapi.Config.Video.Input.Connector[2].Name.set('Secondary Audience');
+      xapi.Config.Video.Input.Connector[2].CameraControl.Mode.set('Off');
+      xapi.Config.Video.Input.Connector[2].Visibility.set('Never');
+      xapi.Config.Video.Input.Connector[3].Name.set('Primary PTZ Camera');
+      xapi.Config.Video.Input.Connector[3].CameraControl.Mode.set('On');
+      xapi.Config.Video.Input.Connector[3].Visibility.set('Never');
+    }
   }
   else
   {
