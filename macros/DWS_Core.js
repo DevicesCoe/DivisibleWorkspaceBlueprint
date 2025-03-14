@@ -208,6 +208,15 @@ function init() {
           // DEACTIVE REMOVE SPEAKERTRACK
           sendMessage(DWS.SECONDARY_HOST, "DisableST");
           break
+        case 'dws_cam_presenter': // LISTEN FOR PANDA COMPOSITION BUTTON PRESS  
+          console.log("DWS: Single Camera Presenter Selected.");
+          // SET VIDEO COMPOSITON
+          xapi.Command.Video.Input.SetMainVideoSource({ ConnectorId: [5]});
+
+          // DISABLE AUTO MODE IF MANUALLY SELECTING AUDIENCE CAMERAS
+          xapi.Command.UserInterface.Extensions.Widget.SetValue({ WidgetId: 'dws_cam_state', Value:'off'});
+          xapi.Command.UserInterface.Extensions.Widget.SetValue({ WidgetId: 'dws_cam_panda', Value:'off'});
+          break;
         case 'dws_combine': // LISTEN FOR INITIAL COMBINE BUTTON PRESS
           console.log ("DWS: Combine Requested. Confirming with user before beginning.");
 
