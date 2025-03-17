@@ -98,7 +98,7 @@ function init() {
   else {
     // SET THE DEFAULT ROOM STATE TO SPLIT
     createPanels('Split');
-    xapi.Command.UserInterface.Extensions.Widget.SetValue({ WidgetId: 'dws_state', Value:'Split' });    
+    setTimeout (() => { xapi.Command.UserInterface.Extensions.Widget.SetValue({ WidgetId: 'dws_state', Value:'Split' }) }, 300);   
   }
 
   console.log ("DWS: Initialization Complete.")
