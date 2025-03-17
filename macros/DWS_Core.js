@@ -92,8 +92,8 @@ function init() {
     
     // SET THE ROOM STATE TO COMBINED
     createPanels('Combined');
-    xapi.Command.UserInterface.Extensions.Widget.SetValue({ WidgetId: 'dws_state', Value:'Combined' });
-    xapi.Command.UserInterface.Extensions.Widget.SetValue({ WidgetId: 'dws_cam_state', Value: DWS_AUTOMODE_STATE });
+    setTimeout (() => { xapi.Command.UserInterface.Extensions.Widget.SetValue({ WidgetId: 'dws_state', Value:'Combined' }) }, 300);
+    setTimeout (() => { xapi.Command.UserInterface.Extensions.Widget.SetValue({ WidgetId: 'dws_cam_state', Value: DWS_AUTOMODE_STATE }) }, 300);
   } 
   else {
     // SET THE DEFAULT ROOM STATE TO SPLIT
