@@ -514,11 +514,6 @@ async function loadMacros()
   }
 }
 
-async function getPlatform() {
-  const productPlatform = await xapi.Status.SystemUnit.ProductPlatform.get()
-  return productPlatform;
-}
-
 // LISTEN FOR SETUP BUTTON PRESS
 xapi.Event.UserInterface.Extensions.Widget.Action.on(event => {
   if( event.Type == 'released' && event.WidgetId == 'dws_wizard_common' )
@@ -533,33 +528,35 @@ xapi.Event.UserInterface.Extensions.Widget.Action.on(event => {
   {
     console.log ('DWS: Beginning Divisible Workspace Initilization.');
 
-    const productPlatform = getPlatform();
+    // GET PRODUCT PLATFORM THEN CONTINUE
+    xapi.Status.SystemUnit.ProductPlatform.get()
+    .then ((productPlatform) => {
 
-    loadMacros()
-    .then (result => {
+      loadMacros()
+      .then (result => {
 
-      // LOAD SETUP MACRO FROM GITHUB
-      if (result)
-      {
-        if (responses[0] == 'Catalyst 1200/1300 8 Port')
+        // LOAD SETUP MACRO FROM GITHUB
+        if (result)
         {
-          responses.splice(0,1,'C1K-8P');
-        } 
-        else if (responses[0] == 'Catalyst 1200/1300 16 Port')
-        {
-          responses.splice(0,1,'C1K-16P');
-        } 
-        else if (responses[0] == 'Catalyst 9200CX 8 Port')
-        {
-          responses.splice(0,1,'C9K-8P');
-        } 
-        else if (responses[0] == 'Catalyst 9200CX 12 Port')
-        {
-          responses.splice(0,1,'C9K-12P');
-        }
+          if (responses[0] == 'Catalyst 1200/1300 8 Port')
+          {
+            responses.splice(0,1,'C1K-8P');
+          } 
+          else if (responses[0] == 'Catalyst 1200/1300 16 Port')
+          {
+            responses.splice(0,1,'C1K-16P');
+          } 
+          else if (responses[0] == 'Catalyst 9200CX 8 Port')
+          {
+            responses.splice(0,1,'C9K-8P');
+          } 
+          else if (responses[0] == 'Catalyst 9200CX 12 Port')
+          {
+            responses.splice(0,1,'C9K-12P');
+          }
 
-        // CREATE MACRO BODY
-        const dataStr = `
+          // CREATE MACRO BODY
+          const dataStr = `
 /*========================================================================//
 This file is part of the "Divisible Workspace" blueprint for Two-Way 
 Divisible Rooms leveraging Cisco IP Microphones.
@@ -634,20 +631,19 @@ export default {
   PRIMARY_VLAN, 
   SECONDARY_VLAN,
   PLATFORM
-};`   
-        ;
+};`;
+          // SAVE CONFIG MACRO
+          xapi.Command.Macros.Macro.Save({ Name: 'DWS_Config', Overwrite: 'True' }, dataStr); 
 
-        // SAVE CONFIG MACRO
-        xapi.Command.Macros.Macro.Save({ Name: 'DWS_Config', Overwrite: 'True' }, dataStr); 
-
-        // INITILIAZE SETUP MACRO
-        xapi.Command.Macros.Macro.Activate({ Name: "DWS_Setup" });        
-        xapi.Command.Macros.Runtime.Restart();
-      }
-      else
-      {
-        console.error("DWS: Divisible Workspace Initilization Stopped due to Macro error.");
-      }
+          // INITILIAZE SETUP MACRO
+          xapi.Command.Macros.Macro.Activate({ Name: "DWS_Setup" });        
+          xapi.Command.Macros.Runtime.Restart();
+        }
+        else
+        {
+          console.error("DWS: Divisible Workspace Initilization Stopped due to Macro error.");
+        }
+      })
     })    
   }
 });
