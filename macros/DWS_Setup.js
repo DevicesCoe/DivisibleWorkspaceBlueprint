@@ -41,9 +41,9 @@ async function firstSetup()
   }
 
   // CHECK FOR CONNECTED INPUTS IN CONFIGURED SPOTS
-  const input1 = '';
-  const input2 = '';
-  const input3 = '';
+  let input1 = '';
+  let input2 = '';
+  let input3 = '';
 
   console.log("DWS: Checking for Correct Inputs and Outputs.");
   if(DWS.PLATFORM == 'Codec Pro')
