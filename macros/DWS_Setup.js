@@ -208,6 +208,7 @@ async function getMacro ()
         xapi.Command.Macros.Macro.Activate({ Name: "DWS_Node"})
         .then (() => {
           xapi.Command.Macros.Macro.Remove({Name: "DWS_Sec_Startup"})
+          .then (() => { xapi.Command.Macros.Runtime.Restart() } )
         })
       })      
     })
