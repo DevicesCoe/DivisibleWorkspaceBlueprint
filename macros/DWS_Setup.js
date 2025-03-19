@@ -196,11 +196,6 @@ function init()
   getMacro();  
 }
 
-async function getPlatform() {
-  const productPlatform = await xapi.Status.SystemUnit.ProductPlatform.get()
-  return productPlatform;
-}
-
 async function getMacro ()
 {
   try {
