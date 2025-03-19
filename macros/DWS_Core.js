@@ -145,9 +145,7 @@ function init() {
       {
         case 'dws_cam_state': // LISTEN FOR ENABLE / DISABLE OF AUTOMATIC MODE  
           // SET VIDEO COMPOSITON
-          DWS_AUTOMODE_STATE = event.Value;
-
-          if (DWS_AUTOMODE_STATE == 'on') 
+          if (event.Value == 'on') 
           {
             console.log("DWS: Automatic Mode Activated.");
 
@@ -158,8 +156,10 @@ function init() {
             xapi.Command.Cameras.SpeakerTrack.Activate();
             xapi.Command.Cameras.SpeakerTrack.Closeup.Activate();
 
-            // ACTIVE REMOVE SPEAKERTRACK
+            // ACTIVATE REMOTE SPEAKERTRACK
             sendMessage(DWS.SECONDARY_HOST, "EnableST");
+
+            xapi.Command.UserInterface.Extensions.Widget.SetValue({ WidgetId: 'dws_cam_panda', Value:'off'});
           } 
           else {
             console.log("DWS: Automatic Mode Deactived.");
@@ -170,7 +170,7 @@ function init() {
             // DEACTIVE LOCAL SPEAKERTRACK
             xapi.Command.Cameras.SpeakerTrack.Deactivate();
 
-            // DEACTIVE REMOVE SPEAKERTRACK
+            // DEACTIVE REMOTE SPEAKERTRACK
             sendMessage(DWS.SECONDARY_HOST, "DisableST");
             
             // TURN OFF PANDA IF ENABLED
@@ -188,7 +188,14 @@ function init() {
             xapi.Command.Video.Input.SetMainVideoSource({ ConnectorId: 5});
             xapi.Command.Cameras.PresenterTrack.Set({ Mode: 'Persistent' });
 
-            xapi.Command.UserInterface.Extensions.Widget.SetValue({ WidgetId: 'dws_cam_state', Value:'on'});
+            // SET SPEAKERTRACK TO BACKGROUND MODE
+            xapi.Command.Cameras.SpeakerTrack.Activate();
+            xapi.Command.Cameras.SpeakerTrack.Closeup.Activate();
+
+            // SET REMOTE SPEAKERTRACK TO BACKGROUND MODE
+            sendMessage(DWS.SECONDARY_HOST, "EnableST");
+
+            xapi.Command.UserInterface.Extensions.Widget.SetValue({ WidgetId: 'dws_cam_state', Value:'off'});
           }
           else{
             console.log ('DWS: Presenter and Audience Disabled.');
@@ -204,14 +211,13 @@ function init() {
           xapi.Command.Video.Input.SetMainVideoSource({ ConnectorId: [1,2], Layout: 'Equal'});
 
           // DISABLE AUTO MODE IF MANUALLY SELECTING AUDIENCE CAMERAS
-          xapi.Command.UserInterface.Extensions.Widget.SetValue({ WidgetId: 'dws_cam_state', Value:'off'});
           xapi.Command.UserInterface.Extensions.Widget.SetValue({ WidgetId: 'dws_cam_panda', Value:'off'});
 
-          // DEACTIVE LOCAL SPEAKERTRACK
-          xapi.Command.Cameras.SpeakerTrack.Deactivate();
+          // ACTIVE LOCAL SPEAKERTRACK
+          xapi.Command.Cameras.SpeakerTrack.Activate();
 
-          // DEACTIVE REMOVE SPEAKERTRACK
-          sendMessage(DWS.SECONDARY_HOST, "DisableST");
+          // ACTIVE REMOTE SPEAKERTRACK
+          sendMessage(DWS.SECONDARY_HOST, "EnableST");
           break;
 
         case 'dws_cam_randp': // LISTEN FOR PANDA COMPOSITION BUTTON PRESS  
@@ -233,13 +239,13 @@ function init() {
           xapi.Command.UserInterface.Extensions.Widget.SetValue({ WidgetId: 'dws_cam_state', Value:'off'});
           xapi.Command.UserInterface.Extensions.Widget.SetValue({ WidgetId: 'dws_cam_panda', Value:'off'});
 
-          // DEACTIVE LOCAL SPEAKERTRACK
+          // DEACTIVE LOCAL SPEAKERTRACK & PRESENTER TRACK
           xapi.Command.Cameras.SpeakerTrack.Deactivate();
+          xapi.Command.Cameras.PresenterTrack.set({Mode: "Off"});
 
-          // DEACTIVE REMOVE SPEAKERTRACK
+          // DEACTIVE REMOTE SPEAKERTRACK
           sendMessage(DWS.SECONDARY_HOST, "DisableST");
           break;
-
         case 'dws_cam_secondary': // LISTEN FOR SECONDARY CAM BUTTON PRESS  
           console.log("DWS: Secondary Room Camera Selected.");
           // SET VIDEO INPUT
@@ -249,10 +255,11 @@ function init() {
           xapi.Command.UserInterface.Extensions.Widget.SetValue({ WidgetId: 'dws_cam_state', Value:'off'});
           xapi.Command.UserInterface.Extensions.Widget.SetValue({ WidgetId: 'dws_cam_panda', Value:'off'});
 
-          // DEACTIVE LOCAL SPEAKERTRACK
+          // DEACTIVE LOCAL SPEAKERTRACK & PRESENTER TRACK
           xapi.Command.Cameras.SpeakerTrack.Deactivate();
+          xapi.Command.Cameras.PresenterTrack.set({Mode: "Off"});
 
-          // DEACTIVE REMOVE SPEAKERTRACK
+          // DEACTIVE REMOTE SPEAKERTRACK
           sendMessage(DWS.SECONDARY_HOST, "DisableST");
           break;
 
@@ -261,9 +268,16 @@ function init() {
           // SET VIDEO COMPOSITON
           xapi.Command.Video.Input.SetMainVideoSource({ ConnectorId: [5]});
 
+          // DEACTIVE LOCAL SPEAKERTRACK & PRESENTER TRACK
+          xapi.Command.Cameras.SpeakerTrack.Deactivate();
+
+          // DEACTIVE REMOTE SPEAKERTRACK
+          sendMessage(DWS.SECONDARY_HOST, "DisableST");
+
           // DISABLE AUTO MODE IF MANUALLY SELECTING AUDIENCE CAMERAS
           xapi.Command.UserInterface.Extensions.Widget.SetValue({ WidgetId: 'dws_cam_state', Value:'off'});
           xapi.Command.UserInterface.Extensions.Widget.SetValue({ WidgetId: 'dws_cam_panda', Value:'off'});
+
           break;
 
         case 'dws_combine': // LISTEN FOR INITIAL COMBINE BUTTON PRESS
@@ -281,9 +295,6 @@ function init() {
 
                 // UPDATE STATE ON UI PANEL
                 xapi.Command.UserInterface.Extensions.Widget.SetValue({ WidgetId: 'dws_state', Value:'Combining'});
-                
-                // MAKE AUDIENCE CAM FROM SECONDARY AVAILABLE
-                xapi.Config.Video.Input.Connector[2].Visibility.set("Always");
 
                 // UPDATE VLANS FOR ACCESSORIES
                 setVLANs('Combine');
@@ -330,7 +341,7 @@ function init() {
                           
                           if (count == DWS.SECONDARY_MICS.length) {
                             // START AZM WITH A 5 SECOND DELAY IF AUTOMATIC MODE IS DEFAULT
-                            if (DWS.AUTOMODE_DEFAULT == 'On') {
+                            if (DWS.AUTOMODE_DEFAULT == 'on') {
                               setTimeout(() => {startAZM()}, 5000);
                             }                    
                             if (DWS.DEBUG == 'true') {console.debug("DWS: All Secondary Microphones Detected. Starting AZM.")};
@@ -383,10 +394,7 @@ function init() {
                 createPanels('Split');
 
                 // UPDATE STATE ON UI PANEL
-                xapi.Command.UserInterface.Extensions.Widget.SetValue({ WidgetId: 'dws_state', Value:'Splitting'});   
-
-                // MAKE AUDIENCE CAM FROM SECONDARY HIDDEN
-                xapi.Config.Video.Input.Connector[2].Visibility.set("Never");
+                xapi.Command.UserInterface.Extensions.Widget.SetValue({ WidgetId: 'dws_state', Value:'Splitting'});
 
                 // UPDATE STATUS ALERT
                 updateStatus('Split');
@@ -644,20 +652,13 @@ export default {
   xapi.Command.Macros.Macro.Save({ Name: 'DWS_State', Overwrite: 'True' }, dataStr);
 }
 
-async function getPT ()
-{
-  const CHECK_CONF = await xapi.Status.Cameras.PresenterTrack.Availability.get()
-
-  return CHECK_CONF;
-}
-
 //==================================//
 //  UI EXTENSION MODIFIER FUNCTION  //
 //==================================//
 function createPanels(curState) 
 {
   // CHECK FOR PRESENTER TRACK CONFIGURATION
-  getPT()
+  xapi.Status.Cameras.PresenterTrack.Availability.get()
   .then(response => {
 
     let PRES_CONF;
@@ -715,11 +716,10 @@ function createPanels(curState)
       DWS_PANEL = PANEL_SPLIT;
     }
   
-  // DRAW PANEL BASED ON CURRENT STATE
-  xapi.Command.UserInterface.Extensions.Panel.Save({ PanelId: DWS_PANEL_ID }, DWS_PANEL)
+    // DRAW PANEL BASED ON CURRENT STATE
+    xapi.Command.UserInterface.Extensions.Panel.Save({ PanelId: DWS_PANEL_ID }, DWS_PANEL)
     .catch(e => console.log('Error saving panel: ' + e.message))
-  
-  } )
+  })
 }
 
 //===============================//
@@ -798,9 +798,9 @@ async function sendMessage(codec, message) {
   await triggerMessage(codec, payload);
 }
 
-//======================================//
-//  VLAN CHANGING OVER SERIAL FUNCTION  //
-//======================================//
+//========================================//
+//  VLAN CHANGING OVER RESTCONF FUNCTION  //
+//========================================//
 async function setVLANs(state) {  
   // CHECK SWITCH TYPE THEN SET BASED ON STATE
   if (DWS.SWITCH_TYPE == 'C9K-8P') {
@@ -977,7 +977,7 @@ function startCallListener() {
 
 async function handleAZMZoneEvents(event) {
   // CHECK DWS CAMERA MODE & ONLY SET THE CAMERA BASED ON AZM PROFILE IF IN "AUTOMATIC"
-  if (DWS_AUTOMODE_STATE == 'On') 
+  if (DWS_AUTOMODE_STATE == 'on') 
   {
     if (DWS_PANDA_STATE == 'on') // CHECK FOR PRESENTER AND AUDIENCE TOGGLED ON
     {
@@ -1003,6 +1003,18 @@ async function handleAZMZoneEvents(event) {
             PIPSize: 'Large'
           });
 
+          if (event.Zone.Label == 'PRIMARY ROOM')
+          {
+            // SET LOCAL SPEAKERTRACK MODE
+            xapi.Command.Cameras.SpeakerTrack.Activate();
+            xapi.Command.Cameras.SpeakerTrack.Closeup.Activate();
+          }
+          else if (event.Zone.Label == 'SECONDARY ROOM')
+          {
+            // ACTIVATE REMOTE SPEAKERTRACK
+            sendMessage(DWS.SECONDARY_HOST, "EnableST");
+          }
+
           // RESET THE DROP AUDIENCE COUNTER
           DWS_DROP_AUDIENCE = 0;
         }
@@ -1023,12 +1035,24 @@ async function handleAZMZoneEvents(event) {
     else 
     {
       if (event.Zone.State == 'High') {
-        if (DWS.DEBUG == 'true') {console.debug ('DWS: No Presenter Detected. Switching to ' + event.Zone.Label)};
+        if (DWS.DEBUG == 'true') {console.debug ('DWS: Microphone activity detected. Switching to ' + event.Zone.Label)};
 
         await xapi.Command.Video.Input.SetMainVideoSource({
           ConnectorId: event.Assets.Camera.InputConnector,
           Layout: event.Assets.Camera.Layout
         });
+
+        if (event.Zone.Label == 'PRIMARY ROOM')
+        {
+          // SET LOCAL SPEAKERTRACK MODE
+          xapi.Command.Cameras.SpeakerTrack.Activate();
+          xapi.Command.Cameras.SpeakerTrack.Closeup.Activate();
+        }
+        else if (event.Zone.Label == 'SECONDARY ROOM')
+        {
+          // ACTIVATE REMOTE SPEAKERTRACK
+          sendMessage(DWS.SECONDARY_HOST, "EnableST");
+        }
       }
     }
   } 
@@ -1042,6 +1066,12 @@ async function handleCallStatus(event) {
     if(DWS_CUR_STATE == 'Combined'){
       // DRAW IN CALL PANEL
       createPanels ("InCall");
+      
+      if (DWS.DEBUG == 'true') { console.debug("DWS: Setting default camera mode to match configuration.")}
+      setTimeout (() => { 
+        xapi.Command.UserInterface.Extensions.Widget.Action({Type: 'changed', WidgetId: 'dws_cam_state', Value: DWS.AUTOMODE_DEFAULT })
+        .catch (error => console.error("DWS: Error setting default Auto mode state: ",error))
+        }, 300);
     }
   } 
   else {
