@@ -979,42 +979,45 @@ async function handleAZMZoneEvents(event) {
   // CHECK DWS CAMERA MODE & ONLY SET THE CAMERA BASED ON AZM PROFILE IF IN "AUTOMATIC"
   if (DWS_AUTOMODE_STATE == 'On') 
   {
-    const IN_PRESENTER = await xapi.Status.Cameras.PresenterTrack.Status.get()
-    const ACTIVE_PRESENTER = await xapi.Status.Cameras.PresenterTrack.PresenterDetected.get();
-
-    if (DWS.DEBUG == 'true') {
-      console.debug ("In Presenter Mode: "+IN_PRESENTER);
-      console.debug ("Active Presenter?: "+ACTIVE_PRESENTER);
-    }
-  
-    if (ACTIVE_PRESENTER == 'True' && IN_PRESENTER == 'Persistent')
+    if (DWS_PANDA_STATE == 'on') // CHECK FOR PRESENTER AND AUDIENCE TOGGLED ON
     {
-      // SET COMPOSITION TO INCLUDE PRESENTER TRACK PTZ AS LARGE PIP
-      if (event.Zone.State == 'High') 
+      const IN_PRESENTER = await xapi.Status.Cameras.PresenterTrack.Status.get()
+      const ACTIVE_PRESENTER = await xapi.Status.Cameras.PresenterTrack.PresenterDetected.get();
+
+      if (DWS.DEBUG == 'true') {
+        console.debug ("DWS: In Presenter Mode: "+IN_PRESENTER);
+        console.debug ("DWS: Active Presenter?: "+ACTIVE_PRESENTER);
+      }
+    
+      if (ACTIVE_PRESENTER == 'True' && IN_PRESENTER == 'Persistent')
       {
-        if (DWS.DEBUG == 'true') {console.debug ('DWS: Presenter Detected. Setting PIP with PTZ & ' + event.Zone.Label)};
+        // SET COMPOSITION TO INCLUDE PRESENTER TRACK PTZ AS LARGE PIP
+        if (event.Zone.State == 'High') 
+        {
+          if (DWS.DEBUG == 'true') {console.debug ('DWS: Presenter Detected. Setting PIP with PTZ & ' + event.Zone.Label)};
 
-        await xapi.Command.Video.Input.SetMainVideoSource({
-          ConnectorId: [5, event.Assets.Camera.InputConnector],
-          Layout: 'PIP',
-          PIPPosition: 'Lowerright',
-          PIPSize: 'Large'
-        });
+          await xapi.Command.Video.Input.SetMainVideoSource({
+            ConnectorId: [5, event.Assets.Camera.InputConnector],
+            Layout: 'PIP',
+            PIPPosition: 'Lowerright',
+            PIPSize: 'Large'
+          });
 
-        // RESET THE DROP AUDIENCE COUNTER
-        DWS_DROP_AUDIENCE = 0;
-      }
-      else if (DWS_DROP_AUDIENCE > 4) {
-        await xapi.Command.Video.Input.SetMainVideoSource({
-          ConnectorId: 5,
-          Layout: 'Equal'
-        });
-        // RESET THE DROP AUDIENCE COUNTER
-        DWS_DROP_AUDIENCE = 0;
-      }
-      else{
-        // INCREMENT THE DROP AUDIENCE COUNTER
-        DWS_DROP_AUDIENCE++;
+          // RESET THE DROP AUDIENCE COUNTER
+          DWS_DROP_AUDIENCE = 0;
+        }
+        else if (DWS_DROP_AUDIENCE > 4) {
+          await xapi.Command.Video.Input.SetMainVideoSource({
+            ConnectorId: 5,
+            Layout: 'Equal'
+          });
+          // RESET THE DROP AUDIENCE COUNTER
+          DWS_DROP_AUDIENCE = 0;
+        }
+        else{
+          // INCREMENT THE DROP AUDIENCE COUNTER
+          DWS_DROP_AUDIENCE++;
+        }
       }
     }
     else 
