@@ -38,9 +38,6 @@ function init() {
     xapi.Config.Video.Output.Connector[1].MonitorRole.set("First");
     xapi.Config.Video.Output.Connector[3].MonitorRole.set("Third");
 
-    // ENABLE NOISE REMOVAL BY DEFAULT
-    xapi.Config.Audio.Microphones.NoiseRemoval.Mode.set("Enabled");
-
     if(DWS_SEC.PLATFORM == 'Codec Pro')
     {
       // SET VIDEO INPUT CONFIGS
@@ -56,6 +53,8 @@ function init() {
       xapi.Config.Video.Input.Connector[5].Name.set("Presenter PTZ");
       xapi.Config.Video.Input.Connector[5].Visibility.set("Never");
       xapi.Config.Video.Input.Connector[5].CameraControl.Mode.set("On");
+      xapi.Config.Video.Input.Connector[5].PresentationSelection.set("Manual"); 
+      
     }
     else if (DWS_SEC.PLATFORM == 'Codec EQ')
     {
@@ -67,6 +66,7 @@ function init() {
       xapi.Config.Video.Input.Connector[2].Name.set("Presenter PTZ");
       xapi.Config.Video.Input.Connector[2].Visibility.set("Never");
       xapi.Config.Video.Input.Connector[2].CameraControl.Mode.set("On");
+      xapi.Config.Video.Input.Connector[2].PresentationSelection.set("Manual");
 
       xapi.Config.Video.Input.Connector[3].Name.set("First Feed from Primary");
       xapi.Config.Video.Input.Connector[3].Visibility.set("Never");
@@ -101,6 +101,7 @@ function init() {
       xapi.Config.Video.Input.Connector[5].Name.set("Presenter PTZ");
       xapi.Config.Video.Input.Connector[5].Visibility.set("Never");
       xapi.Config.Video.Input.Connector[5].CameraControl.Mode.set("On");
+      xapi.Config.Video.Input.Connector[5].PresentationSelection.set("Manual");
     }
     else if (DWS_SEC.PLATFORM == 'Codec EQ')
     {
@@ -112,6 +113,7 @@ function init() {
       xapi.Config.Video.Input.Connector[2].Name.set("Presenter PTZ");
       xapi.Config.Video.Input.Connector[2].Visibility.set("Never");
       xapi.Config.Video.Input.Connector[2].CameraControl.Mode.set("On");
+      xapi.Config.Video.Input.Connector[2].PresentationSelection.set("Manual"); 
 
       xapi.Config.Video.Input.Connector[3].Name.set("First Feed from Primary");
       xapi.Config.Video.Input.Connector[3].Visibility.set("Never");
