@@ -40,6 +40,10 @@ async function firstSetup()
     return;
   }
 
+  // DISABLE HDCP Policy on the output to allow for Extron DA Duplication
+  xapi.Config.Video.Output.Connector[1].HDCPPolicy.set("off");
+  xapi.Config.Video.Output.Connector[2].HDCPPolicy.set("off");
+  
   // CHECK FOR CONNECTED INPUTS IN CONFIGURED SPOTS
   let input1 = '';
   let input2 = '';
