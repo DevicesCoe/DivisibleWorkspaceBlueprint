@@ -43,6 +43,9 @@ async function firstSetup()
   // DISABLE HDCP Policy on the output to allow for Extron DA Duplication
   xapi.Config.Video.Output.Connector[1].HDCPPolicy.set("off");
   xapi.Config.Video.Output.Connector[2].HDCPPolicy.set("off");
+
+  // SET DEFAULT AUDIO MODE TO BE NOISE REMOVAL
+  xapi.Config.Audio.Microphones.NoiseRemoval.Mode.set("Enabled");
   
   // CHECK FOR CONNECTED INPUTS IN CONFIGURED SPOTS
   let input1 = '';
