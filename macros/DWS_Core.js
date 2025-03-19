@@ -54,7 +54,7 @@ else {
 const Settings = {                        
   Sample: {
     Size: 4,                              
-    Rate_In_Ms: 500,                      
+    Rate_In_Ms: 400,                      
     Mode: 'Snapshot'                      
   },
   GlobalThreshold: {
