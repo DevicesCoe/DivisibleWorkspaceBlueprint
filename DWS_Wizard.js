@@ -36,6 +36,7 @@ let questions = [
     { feedbackId: "q7", text: "How many Ceiling Microphone Pros are connected to the Primary Codec?", type: "choice", options: { "Option.1": "One", "Option.2": "Two", "Option.3": "Three", "Option.4": "Four" } },
     { feedbackId: "q8", text: "How many Ceiling Microphone Pros are connected to the Secondary Codec?", type: "choice", options: { "Option.1": "One", "Option.2": "Two", "Option.3": "Three", "Option.4": "Four" } },
     { feedbackId: "q9", text: "Do you want Automatic Audience Camera switching enabled by default?", type: "choice", options: { "Option.1": "On", "Option.2": "Off" } },
+    { feedbackId: "q10", text: "Please enter an Advanced Settings lock PIN", inputType: "Numeric", keyboardState: "Open", type: "text", placeholder: "Enter your Numerical PIN" }
 ];
 let restart = questions;
 
@@ -607,7 +608,8 @@ const SECONDARY_NAV_CONTROL = ${JSON.stringify(responses[5], null, 2)};
 const SECONDARY_NAV_SCHEDULER = ${JSON.stringify(responses[6], null, 2)};
 const PRIMARY_MICS = [${JSON.stringify(responses[7], null, 2)}];
 const SECONDARY_MICS = [${JSON.stringify(responses[8], null, 2)}];
-const AUTOMODE_DEFAULT = ${JSON.stringify(responses[9], null, 2)};      
+const AUTOMODE_DEFAULT = ${JSON.stringify(responses[9], null, 2)};
+const UNLOCK_PIN = ${JSON.stringify(responses[10], null, 2)};      
 const PRIMARY_VLAN = '100';
 const SECONDARY_VLAN = '200';
 const PLATFORM = '${productPlatform}';
@@ -627,7 +629,8 @@ export default {
   SECONDARY_MICS,
   MICS_HIGH,
   MICS_LOW,
-  AUTOMODE_DEFAULT,  
+  AUTOMODE_DEFAULT,
+  UNLOCK_PIN,  
   PRIMARY_VLAN, 
   SECONDARY_VLAN,
   PLATFORM
