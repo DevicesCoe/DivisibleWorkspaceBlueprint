@@ -38,6 +38,9 @@ function init() {
     xapi.Config.Video.Output.Connector[1].MonitorRole.set("First");
     xapi.Config.Video.Output.Connector[3].MonitorRole.set("Third");
 
+    // ENABLE NOISE REMOVAL BY DEFAULT
+    xapi.Config.Audio.Microphones.NoiseRemoval.Mode.set("Enabled");
+
     if(DWS_SEC.PLATFORM == 'Codec Pro')
     {
       // SET VIDEO INPUT CONFIGS
