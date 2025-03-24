@@ -152,6 +152,9 @@ function init() {
             // RESET VIEW TO PRIMARY ROOM QUAD TO CLEAR ANY COMPOSITION FROM PREVIOUS SELECTION
             xapi.Command.Video.Input.SetMainVideoSource({ ConnectorId: 1});
 
+            // DISABLE PRESENTER TRACK
+            xapi.Command.Cameras.PresenterTrack.Set({ Mode: 'Off' });
+
             // SET LOCAL SPEAKERTRACK MODE
             xapi.Command.Cameras.SpeakerTrack.Activate();
             xapi.Command.Cameras.SpeakerTrack.Closeup.Activate();
@@ -166,6 +169,9 @@ function init() {
 
             // RESET VIEW TO PRIMARY ROOM QUAD TO CLEAR ANY COMPOSITION FROM PREVIOUS SELECTION
             xapi.Command.Video.Input.SetMainVideoSource({ ConnectorId: 1});
+
+            // DISABLE PRESENTER TRACK
+            xapi.Command.Cameras.PresenterTrack.Set({ Mode: 'Off' });
 
             // DEACTIVE LOCAL SPEAKERTRACK
             xapi.Command.Cameras.SpeakerTrack.Deactivate();
@@ -225,6 +231,15 @@ function init() {
           // SET VIDEO COMPOSITON
           xapi.Command.Video.Input.SetMainVideoSource({ ConnectorId: [1,2,5], Layout: 'Equal'});
 
+          // ENABLE PRESENTER TRACK
+          xapi.Command.Cameras.PresenterTrack.Set({ Mode: 'Persistent' });
+
+          // ACTIVE LOCAL SPEAKERTRACK
+          xapi.Command.Cameras.SpeakerTrack.Activate();
+
+          // ACTIVE REMOTE SPEAKERTRACK
+          sendMessage(DWS.SECONDARY_HOST, "EnableST");
+
           // DISABLE AUTO MODE IF MANUALLY SELECTING AUDIENCE CAMERAS
           xapi.Command.UserInterface.Extensions.Widget.SetValue({ WidgetId: 'dws_cam_state', Value:'off'});
           xapi.Command.UserInterface.Extensions.Widget.SetValue({ WidgetId: 'dws_cam_panda', Value:'off'});
@@ -265,6 +280,10 @@ function init() {
 
         case 'dws_cam_presenter': // LISTEN FOR PANDA COMPOSITION BUTTON PRESS  
           console.log("DWS: Single Camera Presenter Selected.");
+          
+          // ENABLE PRESENTER TRACK
+          xapi.Command.Cameras.PresenterTrack.set({Mode: "Follow"});
+          
           // SET VIDEO COMPOSITON
           xapi.Command.Video.Input.SetMainVideoSource({ ConnectorId: [5]});
 
