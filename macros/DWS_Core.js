@@ -41,6 +41,7 @@ let DWS_TEMP_MICS = [];
 let DWS_ALL_SEC = [];
 let DWS_SEC_PER_COUNT = DWS.SECONDARY_MICS.length;
 let DWS_DROP_AUDIENCE = 0;
+let DWS_CHANGE_DELAY = 3;
 let DWS_PANDA_STATE = '';
 
 if (DWS.SECONDARY_NAV_SCHEDULER != '') {
@@ -977,6 +978,32 @@ function buildAZMProfile() {
             Layout: 'Equal'
           }
         }
+      },
+      {
+        Label: 'PRESENTER USB',
+        MicrophoneAssignment: {
+          Type: 'USB',                   
+          Connectors: [{Id: 1}],
+        },
+        Assets: {                             
+          Camera: {
+            InputConnector: 5,
+            Layout: 'Equal'
+          }
+        }
+      },
+      {
+        Label: 'PRESENTER ANALOG',
+        MicrophoneAssignment: {
+          Type: 'Microphone',                   
+          Connectors: [{Id: 1}],
+        },
+        Assets: {                             
+          Camera: {
+            InputConnector: 5,
+            Layout: 'Equal'
+          }
+        }
       }
     ]
   }
@@ -1011,7 +1038,7 @@ async function handleAZMZoneEvents(event) {
       if (ACTIVE_PRESENTER == 'True' && IN_PRESENTER == 'Persistent')
       {
         // SET COMPOSITION TO INCLUDE PRESENTER TRACK PTZ AS LARGE PIP
-        if (event.Zone.State == 'High') 
+        if (event.Zone.State == 'High' && DWS_CHANGE_DELAY == 0 && (event.Zone.Label == 'PRIMARY ROOM' || event.Zone.Label == 'SECONDARY ROOM'))
         {
           if (DWS.DEBUG == 'true') {console.debug ('DWS: Presenter Detected. Setting PIP with PTZ & ' + event.Zone.Label)};
 
@@ -1034,8 +1061,9 @@ async function handleAZMZoneEvents(event) {
             sendMessage(DWS.SECONDARY_HOST, "EnableST");
           }
 
-          // RESET THE DROP AUDIENCE COUNTER
+          // RESET THE DROP AUDIENCE COUNTER && DELAY TIMER
           DWS_DROP_AUDIENCE = 0;
+          DWS_CHANGE_DELAY = 2;
         }
         else if (DWS_DROP_AUDIENCE > 4) {
           await xapi.Command.Video.Input.SetMainVideoSource({
@@ -1048,12 +1076,16 @@ async function handleAZMZoneEvents(event) {
         else{
           // INCREMENT THE DROP AUDIENCE COUNTER
           DWS_DROP_AUDIENCE++;
+
+          // DECREMENT THE CHANGE TIMER
+          DWS_CHANGE_DELAY--;
         }
       }
     }
     else 
     {
-      if (event.Zone.State == 'High') {
+      if (event.Zone.State == 'High' && DWS_CHANGE_DELAY == 0) 
+      {
         if (DWS.DEBUG == 'true') {console.debug ('DWS: Microphone activity detected. Switching to ' + event.Zone.Label)};
 
         await xapi.Command.Video.Input.SetMainVideoSource({
@@ -1072,6 +1104,11 @@ async function handleAZMZoneEvents(event) {
           // ACTIVATE REMOTE SPEAKERTRACK
           sendMessage(DWS.SECONDARY_HOST, "EnableST");
         }
+      }
+      else 
+      {
+        // DECREMENT THE CHANGE TIMER
+        DWS_CHANGE_DELAY--;
       }
     }
   } 
