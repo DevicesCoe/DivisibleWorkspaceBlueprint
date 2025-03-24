@@ -108,8 +108,7 @@ async function firstSetup()
   await setSecondaryState("Split");
 
   // DELETE SETUP MACROS AND ENABLE CORE MACRO
-  try { xapi.Command.UserInterface.Extensions.Panel.Remove({ PanelId: 'dws_wizard_start' }); } catch(error) { console.error('DWS: Error Removing Confirm Panel: ' + error.message); }
-  try { xapi.Command.UserInterface.Extensions.Panel.Remove({ PanelId: 'dws_wizard_confirm' }); } catch(error) { console.error('DWS: Error Removing Wizard Panel: ' + error.message); }
+  try { xapi.Command.UserInterface.Extensions.Panel.Remove({ PanelId: 'dws_wizard' }); } catch(error) { console.error('DWS: Error Removing Wizard Panel: ' + error.message); }
   try { xapi.Command.Macros.Macro.Activate({ Name: 'DWS_Core' }); } catch(error) { console.error('DWS: Error Starting Core Macro: ' + error.message); }
   try { xapi.Command.Macros.Macro.Remove({ Name: "DWS_Wizard" }); } catch(error) { console.error('DWS: Error Deleting Wizard Macro: ' + error.message); }
   try { xapi.Command.Macros.Macro.Remove({ Name: "DWS_Setup" }); } catch(error) { console.log('DWS: Error Deleting Setup Macro: ' + error.message); }
