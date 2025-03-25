@@ -1258,6 +1258,10 @@ function buildAZMProfile() {
   let PRIMARY_ZONE = [];
   let SECONDARY_ZONE = [];
 
+  console.log("P"+DWS.PRESENTER_MIC)
+  console.log("A"+DWS.PRIMARY_MICS)
+  console.log("S"+DWS.SECONDARY_MICS)
+
   DWS.PRIMARY_MICS.forEach(element => { 
     PRIMARY_ZONE.push({Serial: element, SubId: [1]})
   });
