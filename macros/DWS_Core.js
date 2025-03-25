@@ -1303,7 +1303,7 @@ function buildAZMProfile() {
         Label: 'PRESENTER ETH',
         MicrophoneAssignment: {
           Type: 'Ethernet',                   
-          Connectors: [DWS.PRESENTER_MIC],
+          Connectors: [{ Serial: DWS.PRESENTER_MIC, SubId: [1] }]
         }
       },
       {
