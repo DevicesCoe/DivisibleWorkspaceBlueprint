@@ -1142,7 +1142,7 @@ async function setVLANs(state) {
       {
         const payload = {"Cisco-IOS-XE-native:GigabitEthernet":[{"name":"1/0/"+p,"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}]};
 
-        await submitRESTCONF(payload);
+        await submitRESTCONF(payload);       
 
         if (p == 7)
         {
@@ -1172,7 +1172,7 @@ async function setVLANs(state) {
       {
         const payload = {"Cisco-IOS-XE-native:GigabitEthernet":[{"name":"1/0/"+p,"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}]};
 
-        await submitRESTCONF(payload);
+        await submitRESTCONF(payload)
 
         if (p == 11)
         {
@@ -1186,7 +1186,7 @@ async function setVLANs(state) {
       {
         const payload = {"Cisco-IOS-XE-native:GigabitEthernet":[{"name":"1/0/"+p,"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.SECONDARY_VLAN}}}}]};
 
-        await submitRESTCONF(payload); 
+        await submitRESTCONF(payload)
 
         if (p == 11)
         {
@@ -1219,10 +1219,11 @@ async function submitRESTCONF(payload) {
     } 
     else 
     {
-	    console.error (`DWS: VLAN change failed: ${response.StatusCode} - ${response.StatusText}`);
+	    console.error (`DWS: HTTP Error: ${response.StatusCode} - ${response.StatusText}`);
     }
   } catch (error) {
-      console.error (`DWS: VLAN change failed: ${error.message}`);
+      console.warn (`DWS: VLAN change failed - Retrying.`);
+      submitRESTCONF(payload);
   }
 }
 
