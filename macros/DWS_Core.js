@@ -77,6 +77,9 @@ function init() {
 
   console.log ("DWS: Starting up as Primary Node.");
 
+  // ENSURE NOISE REMOVAL IS ENABLED BY DEFAULT
+  xapi.Config.Audio.Microphones.NoiseRemoval.Mode.set("Enabled");
+
   // START LINK LOCAL SWITCH REPORTING TO CONTROL HUB
   registerLinkLocal();
   xapi.Config.Peripherals.Profile.ControlSystems.set('1');
@@ -159,10 +162,22 @@ function init() {
     // INITIALIZE AZM BASED ON SAVED STATE
     startAZM();
     
-    // SET THE ROOM STATE TO COMBINED
-    createPanels('Combined');
-    setTimeout (() => { xapi.Command.UserInterface.Extensions.Widget.SetValue({ WidgetId: 'dws_state', Value:'Combined' }) }, 300);
-    setTimeout (() => { xapi.Command.UserInterface.Extensions.Widget.SetValue({ WidgetId: 'dws_cam_state', Value: DWS_AUTOMODE_STATE }) }, 300);
+    // GET NUMBER OF ACTIVE CALLS
+    xapi.Status.Call.get()
+    .then (response => {
+      if (response == '')
+      {
+        // SET THE ROOM STATE TO COMBINED
+        createPanels('Combined');
+        setTimeout (() => { xapi.Command.UserInterface.Extensions.Widget.SetValue({ WidgetId: 'dws_state', Value:'Combined' }) }, 300);
+        setTimeout (() => { xapi.Command.UserInterface.Extensions.Widget.SetValue({ WidgetId: 'dws_cam_state', Value: DWS_AUTOMODE_STATE }) }, 300);
+      }
+      else
+      {
+        createPanels('InCall');
+        setTimeout (() => { xapi.Command.UserInterface.Extensions.Widget.SetValue({ WidgetId: 'dws_cam_state', Value: DWS_AUTOMODE_STATE }) }, 300);
+      }
+    })
   } 
   else {
     // SET THE DEFAULT ROOM STATE TO SPLIT
@@ -179,7 +194,6 @@ function init() {
     if (event.Type == 'released' || event.Type == 'changed') {   
       switch(event.WidgetId)
       {
-
         //============================//
         //   CAMERA SELECTION EVENTS  //
         //============================//
@@ -296,7 +310,7 @@ function init() {
 
           // DEACTIVE LOCAL SPEAKERTRACK & PRESENTER TRACK
           xapi.Command.Cameras.SpeakerTrack.Deactivate();
-          xapi.Command.Cameras.PresenterTrack.set({Mode: "Off"});
+          xapi.Command.Cameras.PresenterTrack.Set({Mode: "Off"});
 
           // DEACTIVE REMOTE SPEAKERTRACK
           sendMessage(DWS.SECONDARY_HOST, "DisableST");
@@ -313,7 +327,7 @@ function init() {
 
           // DEACTIVE LOCAL SPEAKERTRACK & PRESENTER TRACK
           xapi.Command.Cameras.SpeakerTrack.Deactivate();
-          xapi.Command.Cameras.PresenterTrack.set({Mode: "Off"});
+          xapi.Command.Cameras.PresenterTrack.Set({Mode: "Off"});
 
           // DEACTIVE REMOTE SPEAKERTRACK
           sendMessage(DWS.SECONDARY_HOST, "DisableST");
@@ -323,7 +337,7 @@ function init() {
           console.log("DWS: Single Camera Presenter Selected.");
           
           // ENABLE PRESENTER TRACK
-          xapi.Command.Cameras.PresenterTrack.set({Mode: "Follow"});
+          xapi.Command.Cameras.PresenterTrack.Set({Mode: "Follow"});
           
           // SET VIDEO COMPOSITON
           xapi.Command.Video.Input.SetMainVideoSource({ ConnectorId: [5]});
@@ -900,7 +914,7 @@ function registerLinkLocal()
 {
   const url = `https://169.254.1.254/restconf/data/Cisco-IOS-XE-device-hardware-oper:device-hardware-data/device-hardware/device-inventory/`;
 
-  xapi.command('HttpClient Get', { 
+  xapi.Command.HttpClient.Get({ 
     Url: url, 
     Header: [
       `Content-Type: application/yang-data+json`,
