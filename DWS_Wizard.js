@@ -225,18 +225,21 @@ function init()
         xapi.Command.UserInterface.Message.Alert.Display({ Duration: '5', Title:"Missing Variables", Text: "Please ensure a Switch type, Automation Mode, and PIN are entered."});
         xapi.Command.UserInterface.Extensions.Panel.Open( { PageId: 'setup_credentials', PanelId: 'dws_wizard' });
         console.log("DWS: Missing Variables. Prompting User to enter required details.");
+        break;
       }
       else if(SETUP_VARIABLES['dws_setup_primic_1'] == undefined || SETUP_VARIABLES['dws_setup_primic_pres'] == undefined)
       {
         xapi.Command.UserInterface.Message.Alert.Display({ Duration: '5', Title:"Missing Variables", Text: "Please configure at least one Primary Microphone and the Presenter Microphone Serial Number."});
         xapi.Command.UserInterface.Extensions.Panel.Open( { PageId: 'setup_primary_mics', PanelId: 'dws_wizard' });
         console.log("DWS: Missing Variables. Prompting User to enter required details.");
+        break;
       }
       else if (SETUP_VARIABLES['dws_setup_sec_host'] == undefined || SETUP_VARIABLES['dws_setup_sec_screens'] == undefined || SETUP_VARIABLES['dws_setup_username'] == undefined || SETUP_VARIABLES['dws_setup_password'] == undefined)
       {
         xapi.Command.UserInterface.Message.Alert.Display({ Duration: '5', Title:"Missing Variables", Text: "Please set the Host, # of Displays, Username and Password"});
         xapi.Command.UserInterface.Extensions.Panel.Open( { PageId: 'setup_secondary_codec', PanelId: 'dws_wizard' });
         console.log("DWS: Missing Variables. Prompting User to enter required details.");
+        break;
       }      
       else if(SETUP_VARIABLES['dws_setup_secmic_1'] == undefined)
       {
@@ -249,6 +252,7 @@ function init()
         xapi.Command.UserInterface.Message.Alert.Display({ Duration: '5', Title:"Missing Variables", Text: "Please configure the Secondary Room Control Navigator."});
         xapi.Command.UserInterface.Extensions.Panel.Open( { PageId: 'setup_settings', PanelId: 'dws_wizard' });
         console.log("DWS: Missing Variables. Prompting User to enter required details.");
+        break;
       }
 
       console.log ('DWS: Beginning Divisible Workspace Initilization.');
