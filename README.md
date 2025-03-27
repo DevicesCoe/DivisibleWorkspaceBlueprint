@@ -67,8 +67,6 @@ The following models (SKUs) of switches have been validated:
 
 ## Installation: [Top](#table-of-contents)
 
-Select one of the following configurations:
-
 | **Codecs** | **# of Secondary Displays** | **Switch Model** | **Wire Diagram** | **Switch Config** |
 |---|---|---|---|---|
 | 2 x Codec EQs | One (1) | 9200CX 8 Port | [Diagram](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/images/EQ%201S%20C9K-8P.png) | [Config](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/switch-configs/C9200CX-8P/ciscortr.cfg) |
