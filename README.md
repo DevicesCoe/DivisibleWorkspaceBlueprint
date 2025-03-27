@@ -81,8 +81,7 @@ Steps to be completed:
 | **Configuration** | **Value** |
 |---|---|
 | HttpClient > AllowInsecureHTTPS | True |
-| HttpClient > Mode | On |
-| NetworkServices > HTTP > Mode | HTTP+HTTPS |
+| HttpClient > Mode | On ||
 | Macros > Mode | On |
 | Macros > EvaluateTranspiled | False |
 | Video > Input > CameraConfigMode | Auto |
