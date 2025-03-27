@@ -15,7 +15,7 @@ The solution leverages the following:
 |:-----------------------|:------------|:--------------------------|:-----------|:-----------------------------------------|
 | 11.24              | ✅ Yes      | ✅ Yes                    | ✅ Yes**     | ❌ Not Supported   | 
 
-** Premise deployments will require manual deployment of macros and additional configuration. Documentation pending.
+** Premise deployments will require manual deployment of macros and additional configuration.
 
 ### Please join this Webex messaging space for best effort and community level support: https://eurl.io/#nakTe_Vn3
 
@@ -80,61 +80,15 @@ Select one of the following configurations:
 
 **NOTE: Do NOT power on your Codecs or Switch until instructed to!**
 
-Steps to be completed:
-1.  **[Mandatory]** Please factory reset your switch (write erase) if it is **NOT** in a factory state before beginning. Power it off when the factory reset has been completed.
-2.  Download the switch configuration that matches your configuration and the **DWS_Wizard.js** file.
-
-**NOTE: You do not need to download any other macro files. These are automatically loaded by the setup process.**
-
-2.	Physically wire the rooms according the wiring diagram that matches your configuration. 
-3.	Format a USB Key to have 4G Partition with FAT32.
-4.	Load the ciscortr.cfg file for your respective switch into the base directory of the USB Key. **Do NOT rename this file or put it into subfolders.**
-5.	Plug the USB Key into the port on the front of the 9200CX.
-6.	With the Codecs still **powered off**... **Power on the switch**. The auto-configuration will take **6 minutes** to complete from power on.
-7.	Log in to Control Hub (admin.webex.com) and select **Devices** from the left hand menu.
-8.	Select **Templates** at the top and click **"Create Template"**.
-9.	Name the template something descriptive such as "Divisible Workspaces".
-10.	Select the following configurations and values:
-
-| **Configuration** | **Value** |
-|---|---|
-| HttpClient > AllowInsecureHTTPS | True |
-| HttpClient > Mode | On ||
-| Macros > Mode | On |
-| Macros > EvaluateTranspiled | False |
-| Video > Input > CameraConfigMode | Auto |
-
-11.	**Power on your codecs** and register them to their respective Workspaces.
-12.	Once fully registered, Apply the Configuration Template created above to **both** devices.
-13.	Open the device page for the **Secondary Room** and click the **Actions** button.
-14.	Select **Run xCommand**. Select **UserManagement** from the left menu and then select **Add** from the right side.
-15.	Set the following items:
-
-|Attribute | Value|
-|---|---|
-| Roles | Admin |
-| Active | True |
-| Username | YOUR USERNAME |
-| Password | YOUR PASSWORD |
-| PassphraseChangeRequired | False |
-
-16.	Click **Execute**.
-17.	Open the device page for the **Primary Room** and select **Macros**.
-18.	Click **Add Macro**. Upload the **DWS_Wizard.js** downloaded from this repository. 
-19.	Do **NOT** rename this macro. Ensure the **Enabled** toggle is selected. Click **Save**.
-20.	On the Navigator, select **DWS Setup Wizard** from the homescreen and follow the on screen prompts. 
-
-The above setup process will automatically install the Divisible Workspace Macros, configure the Switch to best practices configuration and initilize your divisible workspaces.
+| **Registration Method** | Configuration Guide |
+| --- | --- |
+| Cloud / Hybrid | [Install Guide](#) |
+| On Premise | In-Progress |
   
 ---
 ## User Guide: [Top](#table-of-contents)
 
-- The Divisible Room blueprint automatically creates the user interface panel in the Primary Room. There is no user interface added to the secondary room.
-- When in "Split" state, the User Interface Panel will show only the controls to manually perform the combine operation.
-- When in "Combined" state, the User Interface Panel will reflect the combined state and show additional controls.
-- The Camera Control Tab provides the end user with the ability to manage the camera automation in combined states. 
-- Enabling Automatic Mode will enable the Quad Cameras in the respective rooms to be presented to the remote call/meeting based on the most active microphone. Disabling it will revert to the Primary Room's Quad Camera.
-- Selecting any manual camera or fixed video composition will disable the automation for automatic switching based on microphones. You can re-enable by toggling Automatic Mode back to "On".
+Access the end user documentation here: [End User Guide](#)
   
 ---
 ## Support Information: [Top](#table-of-contents)
