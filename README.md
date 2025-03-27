@@ -94,8 +94,7 @@ Access the end user documentation here: [End User Guide](#)
 - All Macros are considered **Custom Code** and are **NOT** supported by Cisco through the Technical Assistance Center (TAC).
 - If you're considering deploying the Divisible Workspace blueprint, we recommend you engage a Cisco AV Integration Partner, not only for installation, but for configuration and ongoing support.
 - The Divisible Workspace blueprint is provided AS IS, please reference the code license included above.
-
-### Please join this Webex messaging space for best effort and community level support: https://eurl.io/#nakTe_Vn3
+- Please join this Webex messaging space for best effort and community level support: https://eurl.io/#nakTe_Vn3
   
 ---
 ## FAQ: [Top](#table-of-contents)
