@@ -17,6 +17,8 @@ The solution leverages the following:
 
 ** Premise deployments will require manual deployment of macros and additional configuration. Documentation pending.
 
+### Please join this Webex messaging space for best effort and community level support: https://eurl.io/#nakTe_Vn3
+
 ---
 ## Table of Contents
 
@@ -141,12 +143,12 @@ The above setup process will automatically install the Divisible Workspace Macro
 - If you're considering deploying the Divisible Workspace blueprint, we recommend you engage a Cisco AV Integration Partner, not only for installation, but for configuration and ongoing support.
 - The Divisible Workspace blueprint is provided AS IS, please reference the code license included above.
 
-### Please join this Webex messaging space for best effort support: https://eurl.io/#nakTe_Vn3
+### Please join this Webex messaging space for best effort and community level support: https://eurl.io/#nakTe_Vn3
   
 ---
 ## FAQ: [Top](#table-of-contents)
 **Is this a Cisco TAC supported deployment?**
-- No. This repository is a custom blueprint and is not supported through Cisco Technical Assistance Center. Implementation, troubleshooting and support would be the responsibility of the end customer or AV Integrator. Please join the Webex messaging space for best effort and community support: EURL URL
+- No. This repository is a custom blueprint and is not supported through Cisco Technical Assistance Center. Implementation, troubleshooting and support would be the responsibility of the end customer or AV Integrator.
 
 **How many Microphone Pros (Ceiling and Table) can I use in each room?**
 - Combined mode operation can support a maximum of 8 microphones. They can be split amongst either room during split operation in any variation.
