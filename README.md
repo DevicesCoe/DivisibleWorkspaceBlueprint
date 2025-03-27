@@ -157,7 +157,7 @@ The above setup process will automatically install the Divisible Workspace Macro
 - No, this blueprint provides support for only Cisco Pro Series Microphones.
 
 **Can this be used for 3-way(+) divisible spaces?**
-- No, this blueprint is specifically designed to support 2-way divisible spaces leveraging Ceiling Microphone Pros.
+- No, this blueprint is specifically designed to support 2-way divisible spaces.
 
 **Does this blueprint support Voice Lift / Room re-enforcement scenarions?**
 - No, this blueprint does not provide for voice lift scenarios.
