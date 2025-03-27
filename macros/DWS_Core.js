@@ -409,7 +409,6 @@ function init() {
 
           if (DWS.DEBUG == 'true') {console.debug("DWS: (Advanced) Prompting for change in default automation.")};
 
-          console.log("DWS: (Advanced) Change")
           // PROMPT THE USER FOR THE NEW DEFAULT
           xapi.Command.UserInterface.Message.Prompt.Display({
             Title: `Default Automation Mode`,
@@ -976,22 +975,26 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
   {
     let NEW_AUTOMODE_STATE;
     let NEW_PANDA_STATE;
+    let NEW_STATE_NAME;
 
     if (value.OptionId == '1') // ENABLE AUDIENCE ONLY AUTOMATION BY DEFAULT
     {
       NEW_AUTOMODE_STATE = 'on';
       NEW_PANDA_STATE = 'off';
+      NEW_STATE_NAME = 'Audience Only';
     }
     
     else if (value.OptionId == '2') // ENABLE PRESENTER AND AUDIENCE AUTOMATION BY DEFAULT
     {
       NEW_AUTOMODE_STATE = 'off';
       NEW_PANDA_STATE = 'on';
+      NEW_STATE_NAME = 'Presenter and Audience';
     }
     else if (value.OptionId == '3') // ENABLE PRESENTER AND AUDIENCE AUTOMATION BY DEFAULT
     {
       NEW_AUTOMODE_STATE = 'off';
       NEW_PANDA_STATE = 'off';
+      NEW_STATE_NAME = 'Off (No Automation)';
     }
 
     // UPDATE CONFIGURATION MACRO
@@ -1077,13 +1080,16 @@ export default {
   SECONDARY_VLAN,
   PLATFORM
 };`;
-    // SAVE CONFIG MACRO
-    xapi.Command.Macros.Macro.Save({ Name: 'DWS_Config', Overwrite: 'True' }, dataStr);
-  }
-  
-  else if (value.FeedbackId != 'confirmCombine' && value.FeedbackId != 'confirmSplit' && value.FeedbackId != 'changeAutomation')
-  {
-    console.log ("DWS: Request dismissed. No action taken.");
+    
+    // UPDATE THE PANELS
+    xapi.Command.UserInterface.Extensions.Widget.SetValue({WidgetId: "dws_cam_state", Value: NEW_AUTOMODE_STATE})
+    xapi.Command.UserInterface.Extensions.Widget.SetValue({WidgetId: "dws_cam_panda", Value: NEW_PANDA_STATE})
+    xapi.Command.UserInterface.Extensions.Widget.SetValue({WidgetId: "dws_adv_automode", Value: NEW_STATE_NAME})
+    .then(() => {
+      // SAVE CONFIG MACRO
+      xapi.Command.Macros.Macro.Save({ Name: 'DWS_Config', Overwrite: 'True' }, dataStr)
+      .catch(error => { console.error("DWS: (Advanced) Unable to save configuration macro."), error})
+    })    
   }
 })
 
@@ -1098,13 +1104,48 @@ xapi.Event.UserInterface.Message.TextInput.Response.on(event => {
   {
     console.log('DWS: PIN Accepted. Displaying Advanced Panel.');
 
-    // OPEN THE ADVANCED SETTINGS PANEL
-    xapi.Command.UserInterface.Extensions.Panel.Open({PanelId: 'dws_advanced'});
+    //CHECK FOR ACTIVE CALL THEN REDRAW THE PANEL WITH THE ADVANCED TAB OPEN
+    xapi.Status.Call.get()
+    .then (response => {
+      if (response == '')
+      {
+        createPanels("unlockedOOC");
+      }
+      else
+      {
+        createPanels("unlockedCall");
+      }
+    })
   }
   else
   {
     console.warn("DWS: Entered PIN did not match configured PIN.");
   }              
+})
+
+//===============================//
+//   ADVANCED PANEL LOCK RESET   //
+//===============================//
+// LISTEN FOR PANEL CLOSURE THEN RELOCK THE ADVANCED PANEL
+xapi.Event.UserInterface.Extensions.Event.PageClosed
+.on(value => {
+  if (value.PageId == 'dws_adv_unlocked')
+  {
+    console.debug("DWS: Advanced panel closed. Re-locking");
+    
+    //CHECK FOR ACTIVE CALL THEN REDRAW THE PANEL WITH THE ADVANCED TAB OPEN
+    xapi.Status.Call.get()
+    .then (response => {
+      if (response == '')
+      {
+        createPanels("Combined");
+      }
+      else
+      {
+        createPanels("InCall");
+      }
+    })
+  }
 })
 
 //=================================//
@@ -1250,6 +1291,12 @@ function createPanels(curState)
     // COMBINED IN CALL
     const PANEL_COMBINED_CALL = `<Extensions><Version>1.11</Version><Panel><Order>1</Order><PanelId>dws_controls</PanelId><Origin>local</Origin><Location>HomeScreenAndCallControls</Location><Icon>Custom</Icon><Name>Room Controls</Name><ActivityType>Custom</ActivityType><CustomIcon><Content>${controlsIcon}</Content><Id>03f5056a23ef85070954bc371a7b64e97d809899ba6fb0b1c01c4d9fdc1faad7</Id></CustomIcon><Page><Name>Camera Controls</Name><Row><Name>Automatic Camera Switching:</Name><Widget><WidgetId>dws_cam_state</WidgetId><Type>ToggleButton</Type><Options>size=1</Options></Widget><Widget><WidgetId>widget_31</WidgetId><Name>Automate camera switching based on active audience microphones across both workspaces.</Name><Type>Text</Type><Options>size=3;fontSize=small;align=center</Options></Widget></Row>${PRES_CONF}<Row><Name>Fixed Compositions:</Name><Widget><WidgetId>dws_cam_sxs</WidgetId><Name>Side by Side</Name><Type>Button</Type><Options>size=2</Options></Widget><Widget><WidgetId>dws_cam_randp</WidgetId><Name>Rooms and Presenter</Name><Type>Button</Type><Options>size=2</Options></Widget></Row><Row><Name/><Widget><WidgetId>widget_7</WidgetId><Name>Side by Side sends only Audience Cameras. Rooms and Presenter will send the Presenter and both Audience Cameras.</Name><Type>Text</Type><Options>size=4;fontSize=small;align=center</Options></Widget></Row><Row><Name>Single Camera Modes:</Name><Widget><WidgetId>dws_cam_primary</WidgetId><Name>Primary Audience</Name><Type>Button</Type><Options>size=2</Options></Widget><Widget><WidgetId>dws_cam_secondary</WidgetId><Name>Secondary Audience</Name><Type>Button</Type><Options>size=2</Options></Widget><Widget><WidgetId>dws_cam_presenter</WidgetId><Name>Primary Presenter</Name><Type>Button</Type><Options>size=4</Options></Widget></Row><PageId>dws_cam_control</PageId><Options/></Page><Page><Name>Adv. Settings</Name><Row><Name>Advanced Settings:</Name><Widget><WidgetId>dws_unlock</WidgetId><Name>Unlock Advanced Settings</Name><Type>Button</Type><Options>size=4</Options></Widget></Row><PageId>dws_settings_control</PageId><Options/></Page></Panel></Extensions>`;
 
+    // COMBINED OUT OF CALL - UNLOCKED
+    const PANEL_UNLOCKED_OOC = `<Extensions><Version>1.11</Version><Panel><Order>1</Order><PanelId>dws_controls</PanelId><Origin>local</Origin><Location>HomeScreen</Location><Icon>Custom</Icon><Name>Room Controls</Name><ActivityType>Custom</ActivityType><CustomIcon><Content>${controlsIcon}</Content><Id>03f5056a23ef85070954bc371a7b64e97d809899ba6fb0b1c01c4d9fdc1faad7</Id></CustomIcon><Page><Name>Room Controls</Name><Row><Name>Current Room Status:</Name><Widget><WidgetId>dws_state</WidgetId><Name>Text</Name><Type>Text</Type><Options>size=4;fontSize=normal;align=center</Options></Widget></Row><Row><Name>Manual Control:</Name><Widget><WidgetId>dws_split</WidgetId><Name>Split Rooms</Name><Type>Button</Type><Options>size=4</Options></Widget></Row><PageId>dws_room_control</PageId><Options/></Page><Page><Name>Camera Controls</Name><Row><Name>Automatic Camera Switching:</Name><Widget><WidgetId>dws_cam_state</WidgetId><Type>ToggleButton</Type><Options>size=1</Options></Widget><Widget><WidgetId>widget_31</WidgetId><Name>Automate camera switching based on active audience microphones across both workspaces.</Name><Type>Text</Type><Options>size=3;fontSize=small;align=center</Options></Widget></Row>${PRES_CONF}<Row><Name>Fixed Compositions:</Name><Widget><WidgetId>dws_cam_sxs</WidgetId><Name>Side by Side</Name><Type>Button</Type><Options>size=2</Options></Widget><Widget><WidgetId>dws_cam_randp</WidgetId><Name>Rooms and Presenter</Name><Type>Button</Type><Options>size=2</Options></Widget></Row><Row><Name/><Widget><WidgetId>widget_7</WidgetId><Name>Side by Side sends only Audience Cameras. Rooms and Presenter will send the Presenter and both Audience Cameras.</Name><Type>Text</Type><Options>size=4;fontSize=small;align=center</Options></Widget></Row><Row><Name>Single Camera Modes:</Name><Widget><WidgetId>dws_cam_primary</WidgetId><Name>Primary Audience</Name><Type>Button</Type><Options>size=2</Options></Widget><Widget><WidgetId>dws_cam_secondary</WidgetId><Name>Secondary Audience</Name><Type>Button</Type><Options>size=2</Options></Widget><Widget><WidgetId>dws_cam_presenter</WidgetId><Name>Primary Presenter</Name><Type>Button</Type><Options>size=4</Options></Widget></Row><PageId>dws_cam_control</PageId><Options/></Page><Page><Name>Advanced Settings</Name><Row><Name>Camera Automation Default</Name><Widget><WidgetId>dws_adv_automode</WidgetId><Name></Name><Type>Text</Type><Options>size=2;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_adv_edit_automode</WidgetId><Name>Edit Default</Name><Type>Button</Type><Options>size=2</Options></Widget></Row><Row><Name/><Widget><WidgetId>widget_65</WidgetId><Name>Use these controls to raise or lower the level/gain on the microphones. Defaults: Audience (45) Presenter: Ethernet (45), USB (5), Analog (58)</Name><Type>Text</Type><Options>size=4;fontSize=small;align=center</Options></Widget></Row><Row><Name>Audience Microphones</Name><Widget><WidgetId>widget_51</WidgetId><Name>Primary Audience</Name><Type>Text</Type><Options>size=1;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_mics_audience</WidgetId><Type>ToggleButton</Type><Options>size=1</Options></Widget><Widget><WidgetId>dws_edit_level_audience</WidgetId><Type>Spinner</Type><Options>size=2;style=plusminus</Options></Widget></Row><Row><Name>Presenter Microphones</Name><Widget><WidgetId>widget_53</WidgetId><Name>Presenter Ethernet</Name><Type>Text</Type><Options>size=1;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_mics_presenter</WidgetId><Type>ToggleButton</Type><Options>size=1</Options></Widget><Widget><WidgetId>dws_edit_level_presenter</WidgetId><Type>Spinner</Type><Options>size=2;style=plusminus</Options></Widget><Widget><WidgetId>widget_53</WidgetId><Name>Presenter USB</Name><Type>Text</Type><Options>size=1;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_mics_presenter_usb</WidgetId><Type>ToggleButton</Type><Options>size=1</Options></Widget><Widget><WidgetId>dws_edit_level_presenter_usb</WidgetId><Type>Spinner</Type><Options>size=2;style=plusminus</Options></Widget><Widget><WidgetId>widget_117</WidgetId><Name>Presenter Analog</Name><Type>Text</Type><Options>size=1;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_mics_presenter_analog</WidgetId><Type>ToggleButton</Type><Options>size=1</Options></Widget><Widget><WidgetId>dws_edit_level_presenter_analog</WidgetId><Type>Spinner</Type><Options>size=2;style=plusminus</Options></Widget></Row><Options/><PageId>dws_adv_unlocked</PageId></Page></Panel></Extensions>`;
+
+    // COMBINED IN CALL - UNLOCKED
+    const PANEL_UNLOCKED_CALL = `<Extensions><Version>1.11</Version><Panel><Order>1</Order><PanelId>dws_controls</PanelId><Origin>local</Origin><Location>HomeScreenAndCallControls</Location><Icon>Custom</Icon><Name>Room Controls</Name><ActivityType>Custom</ActivityType><CustomIcon><Content>${controlsIcon}</Content><Id>03f5056a23ef85070954bc371a7b64e97d809899ba6fb0b1c01c4d9fdc1faad7</Id></CustomIcon><Page><Name>Camera Controls</Name><Row><Name>Automatic Camera Switching:</Name><Widget><WidgetId>dws_cam_state</WidgetId><Type>ToggleButton</Type><Options>size=1</Options></Widget><Widget><WidgetId>widget_31</WidgetId><Name>Automate camera switching based on active audience microphones across both workspaces.</Name><Type>Text</Type><Options>size=3;fontSize=small;align=center</Options></Widget></Row>${PRES_CONF}<Row><Name>Fixed Compositions:</Name><Widget><WidgetId>dws_cam_sxs</WidgetId><Name>Side by Side</Name><Type>Button</Type><Options>size=2</Options></Widget><Widget><WidgetId>dws_cam_randp</WidgetId><Name>Rooms and Presenter</Name><Type>Button</Type><Options>size=2</Options></Widget></Row><Row><Name/><Widget><WidgetId>widget_7</WidgetId><Name>Side by Side sends only Audience Cameras. Rooms and Presenter will send the Presenter and both Audience Cameras.</Name><Type>Text</Type><Options>size=4;fontSize=small;align=center</Options></Widget></Row><Row><Name>Single Camera Modes:</Name><Widget><WidgetId>dws_cam_primary</WidgetId><Name>Primary Audience</Name><Type>Button</Type><Options>size=2</Options></Widget><Widget><WidgetId>dws_cam_secondary</WidgetId><Name>Secondary Audience</Name><Type>Button</Type><Options>size=2</Options></Widget><Widget><WidgetId>dws_cam_presenter</WidgetId><Name>Primary Presenter</Name><Type>Button</Type><Options>size=4</Options></Widget></Row><PageId>dws_cam_control</PageId><Options/></Page><Page><Name>Advanced Settings</Name><Row><Name>Camera Automation Default</Name><Widget><WidgetId>dws_adv_automode</WidgetId><Name></Name><Type>Text</Type><Options>size=2;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_adv_edit_automode</WidgetId><Name>Edit Default</Name><Type>Button</Type><Options>size=2</Options></Widget></Row><Row><Name/><Widget><WidgetId>widget_65</WidgetId><Name>Use these controls to raise or lower the level/gain on the microphones. Defaults: Audience (45) Presenter: Ethernet (45), USB (5), Analog (58)</Name><Type>Text</Type><Options>size=4;fontSize=small;align=center</Options></Widget></Row><Row><Name>Audience Microphones</Name><Widget><WidgetId>widget_51</WidgetId><Name>Primary Audience</Name><Type>Text</Type><Options>size=1;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_mics_audience</WidgetId><Type>ToggleButton</Type><Options>size=1</Options></Widget><Widget><WidgetId>dws_edit_level_audience</WidgetId><Type>Spinner</Type><Options>size=2;style=plusminus</Options></Widget></Row><Row><Name>Presenter Microphones</Name><Widget><WidgetId>widget_53</WidgetId><Name>Presenter Ethernet</Name><Type>Text</Type><Options>size=1;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_mics_presenter</WidgetId><Type>ToggleButton</Type><Options>size=1</Options></Widget><Widget><WidgetId>dws_edit_level_presenter</WidgetId><Type>Spinner</Type><Options>size=2;style=plusminus</Options></Widget><Widget><WidgetId>widget_53</WidgetId><Name>Presenter USB</Name><Type>Text</Type><Options>size=1;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_mics_presenter_usb</WidgetId><Type>ToggleButton</Type><Options>size=1</Options></Widget><Widget><WidgetId>dws_edit_level_presenter_usb</WidgetId><Type>Spinner</Type><Options>size=2;style=plusminus</Options></Widget><Widget><WidgetId>widget_117</WidgetId><Name>Presenter Analog</Name><Type>Text</Type><Options>size=1;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_mics_presenter_analog</WidgetId><Type>ToggleButton</Type><Options>size=1</Options></Widget><Widget><WidgetId>dws_edit_level_presenter_analog</WidgetId><Type>Spinner</Type><Options>size=2;style=plusminus</Options></Widget></Row><Options/><PageId>dws_adv_unlocked</PageId></Page></Panel></Extensions>`;
+    
     // SET THE PANEL XML BASED ON STATE
     if(curState == 'Combined') 
     {
@@ -1257,9 +1304,18 @@ function createPanels(curState)
     } 
     else if(curState == 'InCall') 
     {
-      DWS_PANEL = PANEL_COMBINED_CALL
+      DWS_PANEL = PANEL_COMBINED_CALL;
     }
-    else {
+    else if(curState == 'unlockedOOC')
+    {
+      DWS_PANEL = PANEL_UNLOCKED_OOC;
+    }
+    else if(curState == 'unlockedCall')
+    {
+      DWS_PANEL = PANEL_UNLOCKED_CALL;
+    }
+    else 
+    {
       DWS_PANEL = PANEL_SPLIT;
     }
   
