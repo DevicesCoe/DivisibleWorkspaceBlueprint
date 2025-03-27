@@ -72,7 +72,7 @@ Steps to be completed:
 3.	Format a USB Key to have 4G Partition with FAT32.
 4.	Load the ciscortr.cfg file for your respective switch into the base directory of the USB Key. **Do NOT rename this file or put it into subfolders.**
 5.	Plug the USB Key into the port on the front of the 9200CX.
-6.	Power on the switch. The auto-configuration will take **6 minutes** to complete from power on.
+6.	With the Codecs still **powered off**... **Power on the switch**. The auto-configuration will take **6 minutes** to complete from power on.
 7.	Log in to Control Hub (admin.webex.com) and select **Devices** from the left hand menu.
 8.	Select **Templates** at the top and click **"Create Template"**.
 9.	Name the template something descriptive such as "Divisible Workspaces".
