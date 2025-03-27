@@ -7,12 +7,9 @@ Note, this concept is **not** a Cisco native feature but a **validated blueprint
 The solution leverages the following: 
 - Cisco Codec EQs or Codec Pros
 - Cisco Table or Ceiling Microphone Pros (up to 8)
-- A validated 9200CX switch:
-  - C9200CX-8P-2X2G
-  - C9200CX-12P-2X2G
-  - C9200CX-8P-2XGH
-  - C9200CX-12P-2XGH   
+- Cisco Catalyst 9K Series Switches  
 - Custom Macros including [Audio Zone Manager Library](https://github.com/ctg-tme/audio-zone-manager-library-macro?tab=readme-ov-file)
+- Certified HDMI Distrubution Amplifiers: [Certified Third Party Devices](https://help.webex.com/en-us/article/7sw4gab/Cisco-collaboration-devices-certification-program)
 
 | Minimum RoomOS Version | Webex Cloud | Webex Edge (Hybrid Cloud) | On-Premise | Microsoft Teams Room<br>On Cisco Devices |
 |:-----------------------|:------------|:--------------------------|:-----------|:-----------------------------------------|
