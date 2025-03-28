@@ -198,7 +198,7 @@ function init()
 async function getMacro ()
 {
   try {
-    const getMacro = await xapi.Command.HttpClient.Get({ Url:'https://raw.githubusercontent.com/DevicesCoe/DivisibleWorkspace/refs/heads/main/macros/DWS_Node.js' })
+    const getMacro = await xapi.Command.HttpClient.Get({ Url:'https://github.com/DevicesCoe/DivisibleWorkspace/releases/latest/download/DWS_Node.js' })
     .then( result => {
       console.debug("DWS: Node Macro Downloaded Successfully.");
       let setupMacro = result.Body;
