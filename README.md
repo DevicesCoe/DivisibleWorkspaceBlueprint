@@ -76,12 +76,11 @@ The following models (SKUs) of switches have been validated:
 | 2 x Codec Pros | Two (2) | 9200CX 8 Port | [Diagram](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/images/Pro%202S%20C9K-8P.png) | [Config](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/switch-configs/C9200CX-8P/ciscortr.cfg) |
 | 2 x Codec Pros | Two (2) | 9200CX 12 Port | [Diagram](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/images/Pro%202S%20C9K-12P.png) | [Config](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/switch-configs/C9200CX-12P/ciscortr.cfg) |
 
-**NOTE: Do NOT power on your Codecs or Switch until instructed to!**
+**Do NOT power on your Codecs or Switch until instructed to!**
 
-| **Registration Method** | Configuration Guide |
-| --- | --- |
-| Cloud / Hybrid | [Install Guide](#) |
-| On Premise | In-Progress |
+Access the installation documentation for Cloud & Hybrid registrations here: [Install Guide](#)
+
+On Premise documentation will be released at a later date.
   
 ---
 ## User Guide: [Top](#table-of-contents)
