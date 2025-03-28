@@ -469,7 +469,7 @@ async function loadMacros()
 
   // DOWNLOAD THE MACROS
   try {
-    const getSetup = await xapi.Command.HttpClient.Get({ Url:'https://raw.githubusercontent.com/DevicesCoe/DivisibleWorkspaceBlueprint/refs/heads/main/macros/DWS_Setup.js' })
+    const getSetup = await xapi.Command.HttpClient.Get({ Url:'https://raw.githubusercontent.com/DevicesCoe/DivisibleWorkspaceBlueprint/releases/latest/download/DWS_Setup.js' })
       .then( result => {
         console.debug("DWS: Setup Macro Downloaded Successfully.");
         setupMacro = result.Body;
@@ -485,7 +485,7 @@ async function loadMacros()
 
   // LOAD CORE MACRO FROM GITHUB
   try {
-    const getCore = await xapi.Command.HttpClient.Get({ Url:'https://raw.githubusercontent.com/DevicesCoe/DivisibleWorkspaceBlueprint/refs/heads/main/macros/DWS_Core.js' })
+    const getCore = await xapi.Command.HttpClient.Get({ Url:'https://github.com/DevicesCoe/DivisibleWorkspaceBlueprint/releases/latest/download/DWS_Core.js' })
       .then( result => {
         console.debug("DWS: Core Macro Downloaded Successfully.");
         coreMacro = result.Body;
@@ -501,7 +501,7 @@ async function loadMacros()
 
   // LOAD AZM MACRO FROM GITHUB
   try {
-    const getAZM = await xapi.Command.HttpClient.Get({ Url: 'https://raw.githubusercontent.com/DevicesCoe/DivisibleWorkspaceBlueprint/refs/heads/main/macros/DWS_AZM_Lib.js' })
+    const getAZM = await xapi.Command.HttpClient.Get({ Url: 'https://github.com/DevicesCoe/DivisibleWorkspaceBlueprint/releases/latest/download/DWS_AZM_Lib.js' })
       .then( result => {
         console.debug("DWS: AZM Macro Downloaded Successfully.");
         azmMacro = result.Body;
