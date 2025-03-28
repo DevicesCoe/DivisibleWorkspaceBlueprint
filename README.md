@@ -95,7 +95,7 @@ On Premise documentation will be released at a later date.
 ---
 ## User Guide: [Top](#table-of-contents)
 
-Access the end user documentation here: [End User Guide]([#](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/EndUserGuide.pdf))
+Access the end user documentation here: [End User Guide](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/EndUserGuide.pdf)
   
 ---
 ## Support Information: [Top](#table-of-contents)
