@@ -1,8 +1,6 @@
 ## Two Way Divisible Workspaces
 
-The Divisible Workspaces design blueprint provides a drastically simplified installation for two-way combinable rooms while leveraging Cisco Pro Series Microphones (Ceiling and Table). 
-
-Note, this concept is **not** a Cisco native feature but a **validated blueprint** that leverages the flexibility and customization capabilities within Room OS on Cisco Video Devices to achieve a predictable outcome. 
+The Divisible Workspaces design blueprint provides a drastically simplified installation for two-way combinable rooms while leveraging Cisco Pro Series Microphones (Ceiling and Table). This blueprint is **not** a Cisco native offering but a **validated blueprint** that leverages the flexibility and customization capabilities within Room OS on Cisco Video Devices to achieve a predictable outcome. 
 
 The solution leverages the following: 
 - Cisco Codec EQs or Codec Pros
@@ -63,7 +61,16 @@ The following Microphones have been validated:
 - Cisco Ceiling Microphone Pro
 
 The following models (SKUs) of switches have been validated:
-- ADD SWITCHES
+- C9200CX-8P-2X2G-E
+- C9200CX-12P-2X2G-E
+- C9200CX-8P-2XGH-E
+- C9200CX-12P-2XGH-E
+- C9200L-24P-4G-E
+- C9200L-24P-4X-E
+- C9300L-24P-4G-E
+- C9300L-24P-4X-E
+
+Network Advantage (-A) is also supported if you choose to deploy that tier of licensing.
 
 ## Installation: [Top](#table-of-contents)
 
@@ -71,21 +78,24 @@ The following models (SKUs) of switches have been validated:
 |---|---|---|---|---|
 | 2 x Codec EQs | One (1) | 9200CX 8 Port | [Diagram](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/images/EQ%201S%20C9K-8P.png) | [Config](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/switch-configs/C9200CX-8P/ciscortr.cfg) |
 | 2 x Codec EQs | One (1) | 9200CX 12 Port | [Diagram](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/images/EQ%201S%20C9K-12P.png) | [Config](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/switch-configs/C9200CX-12P/ciscortr.cfg) |
+| 2 x Codec EQs | One (1) | 9200CX 24 Port | [Diagram](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/images/EQ%201S%20C9K-24P.png) | [Config](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/switch-configs/C9200CX-24P/ciscortr.cfg) |
 | 2 x Codec Pros | One (1) | 9200CX 8 Port | [Diagram](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/images//Pro%201S%20C9K-8P.png) | [Config](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/switch-configs/C9200CX-8P/ciscortr.cfg) |
 | 2 x Codec Pros | One (1) | 9200CX 12 Port | [Diagram](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/images/Pro%201S%20C9K-12P.png) | [Config](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/switch-configs/C9200CX-12P/ciscortr.cfg) |
+| 2 x Codec Pros | One (1) | 9200CX 24 Port | [Diagram](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/images/Pro%201S%20C9K-24P.png) | [Config](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/switch-configs/C9200CX-24P/ciscortr.cfg) |
 | 2 x Codec Pros | Two (2) | 9200CX 8 Port | [Diagram](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/images/Pro%202S%20C9K-8P.png) | [Config](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/switch-configs/C9200CX-8P/ciscortr.cfg) |
 | 2 x Codec Pros | Two (2) | 9200CX 12 Port | [Diagram](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/images/Pro%202S%20C9K-12P.png) | [Config](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/switch-configs/C9200CX-12P/ciscortr.cfg) |
+| 2 x Codec Pros | Two (2) | 9200CX 24 Port | [Diagram](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/images/Pro%202S%20C9K-24P.png) | [Config](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/switch-configs/C9200CX-24P/ciscortr.cfg) |
 
 **Do NOT power on your Codecs or Switch until instructed to!**
 
-Access the installation documentation for Cloud & Hybrid registrations here: [Install Guide](#)
+Access the installation documentation for Cloud & Hybrid registrations here: [Install Guide](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/InstallGuide.pdf)
 
 On Premise documentation will be released at a later date.
   
 ---
 ## User Guide: [Top](#table-of-contents)
 
-Access the end user documentation here: [End User Guide](#)
+Access the end user documentation here: [End User Guide]([#](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/EndUserGuide.pdf))
   
 ---
 ## Support Information: [Top](#table-of-contents)
