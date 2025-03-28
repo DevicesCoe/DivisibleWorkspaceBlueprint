@@ -469,7 +469,7 @@ async function loadMacros()
 
   // DOWNLOAD THE MACROS
   try {
-    const getSetup = await xapi.Command.HttpClient.Get({ Url:'https://raw.githubusercontent.com/DevicesCoe/DivisibleWorkspaceBlueprint/releases/latest/download/DWS_Setup.js' })
+    const getSetup = await xapi.Command.HttpClient.Get({ Url:'https://github.com/DevicesCoe/DivisibleWorkspaceBlueprint/releases/latest/download/DWS_Setup.js' })
       .then( result => {
         console.debug("DWS: Setup Macro Downloaded Successfully.");
         setupMacro = result.Body;
