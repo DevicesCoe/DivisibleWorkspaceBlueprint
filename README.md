@@ -88,7 +88,7 @@ Network Advantage (-A) is also supported if you choose to deploy that tier of li
 
 **Do NOT power on your Codecs or Switch until instructed to!**
 
-Access the installation documentation for Cloud & Hybrid registrations here: [Install Guide](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/InstallGuide.pdf)
+Access the installation documentation for Cloud & Hybrid registrations here: [Install Guide](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/InstallationGuide.pdf)
 
 On Premise documentation will be released at a later date.
   
