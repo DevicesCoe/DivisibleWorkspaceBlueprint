@@ -12,9 +12,8 @@ Robert(Bobby) McGonigle Jr
 Chase Voisin
 William Mills
 
-Version: 0.9.1 (Beta)
-
-Released: 03/31/2025
+Version: 0.9.2 (Beta)
+Released: 04/04/2025
 
 Complete details for this macro are available on Github:
 https://cs.co/divisibleworkspaceblueprint
@@ -1150,8 +1149,8 @@ Robert(Bobby) McGonigle Jr
 Chase Voisin
 William Mills
 
-Version: 0.9
-Released: 03/31/2025
+Version: 0.9.2 (Beta)
+Released: 04/04/2025
 
 Complete details for this macro are available on Github:
 https://cs.co/divisibleworkspaceblueprint
@@ -1470,51 +1469,24 @@ async function setVLANs(state) {
     if (state == 'Combine') {
 
       const payload = {
-        "Cisco-IOS-XE-native:GigabitEthernet":[{"name":"1/0/13","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}],
-        "Cisco-IOS-XE-native:GigabitEthernet":[{"name":"1/0/14","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}],
-        "Cisco-IOS-XE-native:GigabitEthernet":[{"name":"1/0/15","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}],
-        "Cisco-IOS-XE-native:GigabitEthernet":[{"name":"1/0/16","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}],
-        "Cisco-IOS-XE-native:GigabitEthernet":[{"name":"1/0/17","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}],
-        "Cisco-IOS-XE-native:GigabitEthernet":[{"name":"1/0/18","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}],
-        "Cisco-IOS-XE-native:GigabitEthernet":[{"name":"1/0/19","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}],
-        "Cisco-IOS-XE-native:GigabitEthernet":[{"name":"1/0/20","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}],
-        "Cisco-IOS-XE-native:GigabitEthernet":[{"name":"1/0/21","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}],
-        "Cisco-IOS-XE-native:GigabitEthernet":[{"name":"1/0/22","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}],
-        "Cisco-IOS-XE-native:GigabitEthernet":[{"name":"1/0/23","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}]
+        "Cisco-IOS-XE-native:GigabitEthernet":[
+		{"name":"1/0/13","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
+		{"name":"1/0/14","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
+		{"name":"1/0/15","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
+		{"name":"1/0/16","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
+		{"name":"1/0/17","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
+		{"name":"1/0/18","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
+		{"name":"1/0/19","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
+		{"name":"1/0/20","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
+		{"name":"1/0/21","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
+		{"name":"1/0/22","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
+		{"name":"1/0/23","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}
+	]
       };
-
-      /*const payload = {
-        "Cisco-IOS-XE-native:GigabitEthernet":[{"name":"1/0/13","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
-        {"name":"1/0/14","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
-        {"name":"1/0/15","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
-        {"name":"1/0/16","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
-        {"name":"1/0/17","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
-        {"name":"1/0/18","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
-        {"name":"1/0/19","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
-        {"name":"1/0/20","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
-        {"name":"1/0/21","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
-        {"name":"1/0/22","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
-        {"name":"1/0/23","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}]
-      };*/
-
       await submitRESTCONF(payload)
 
       // SET SECONDARY STATE FOR COMBINE OPERATION AFTER LAST VLAN CHANGE
       sendMessage(DWS.SECONDARY_HOST,"Combine");
-
-      /* OLDER METHOD  
-      for (let p = 13; p <= 23; p++)
-      {
-        const payload = {"Cisco-IOS-XE-native:GigabitEthernet":[{"name":"1/0/"+p,"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}]};
-
-        await submitRESTCONF(payload)
-
-        if (p == 23)
-        {
-          // SET SECONDARY STATE FOR COMBINE OPERATION AFTER LAST VLAN CHANGE
-          sendMessage(DWS.SECONDARY_HOST,"Combine");
-        }      
-      } */
     }
     else {
       for (let p = 13; p <= 23; p++)
