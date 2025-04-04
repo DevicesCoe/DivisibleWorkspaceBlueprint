@@ -1406,101 +1406,113 @@ async function sendMessage(codec, message) {
 async function setVLANs(state) {  
   // CHECK SWITCH TYPE THEN SET BASED ON STATE
   if (DWS.SWITCH_TYPE == 'C9K-8P') {
-    if (state == 'Combine') {
-      for (let p = 5; p < 8; p++)
-      {
-        const payload = {"Cisco-IOS-XE-native:GigabitEthernet":[{"name":"1/0/"+p,"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}]};
-
-        await submitRESTCONF(payload);       
-
-        if (p == 7)
-        {
-          // SET SECONDARY STATE FOR COMBINE OPERATION AFTER LAST VLAN CHANGE
-          sendMessage(DWS.SECONDARY_HOST,"Combine");
-        }
-      }
-    }
-    else {
-      for (let p = 5; p < 8; p++)
-      {
-        const payload = {"Cisco-IOS-XE-native:GigabitEthernet":[{"name":"1/0/"+p,"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.SECONDARY_VLAN}}}}]};
-
-        await submitRESTCONF(payload);       
-
-        if (p == 7)
-        {
-          // SET SECONDARY STATE FOR SPLIT OPERATION
-          sendMessage(DWS.SECONDARY_HOST,"Split");
-        }
-      }
-    }    
-  }
-  else if (DWS.SWITCH_TYPE == 'C9K-12P') {
-    if (state == 'Combine') {
-      for (let p = 7; p <= 11; p++)
-      {
-        const payload = {"Cisco-IOS-XE-native:GigabitEthernet":[{"name":"1/0/"+p,"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}]};
-
-        await submitRESTCONF(payload)
-
-        if (p == 11)
-        {
-          // SET SECONDARY STATE FOR COMBINE OPERATION AFTER LAST VLAN CHANGE
-          sendMessage(DWS.SECONDARY_HOST,"Combine");
-        }      
-      }
-    }
-    else {
-      for (let p = 7; p <= 11; p++)
-      {
-        const payload = {"Cisco-IOS-XE-native:GigabitEthernet":[{"name":"1/0/"+p,"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.SECONDARY_VLAN}}}}]};
-
-        await submitRESTCONF(payload)
-
-        if (p == 11)
-        {
-          // SET SECONDARY STATE FOR SPLIT OPERATION
-          sendMessage(DWS.SECONDARY_HOST,"Split");
-        }
-      }
-    }   
-  }
-  else if (DWS.SWITCH_TYPE == 'C9K-24P') {
-    if (state == 'Combine') {
-
+    if (state == 'Combine') 
+    {
       const payload = {
         "Cisco-IOS-XE-native:GigabitEthernet":[
-		{"name":"1/0/13","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
-		{"name":"1/0/14","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
-		{"name":"1/0/15","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
-		{"name":"1/0/16","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
-		{"name":"1/0/17","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
-		{"name":"1/0/18","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
-		{"name":"1/0/19","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
-		{"name":"1/0/20","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
-		{"name":"1/0/21","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
-		{"name":"1/0/22","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
-		{"name":"1/0/23","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}
-	]
+          {"name":"1/0/5","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
+          {"name":"1/0/6","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
+          {"name":"1/0/7","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}
+        ]
       };
       await submitRESTCONF(payload)
 
       // SET SECONDARY STATE FOR COMBINE OPERATION AFTER LAST VLAN CHANGE
       sendMessage(DWS.SECONDARY_HOST,"Combine");
     }
-    else {
-      for (let p = 13; p <= 23; p++)
-      {
-        const payload = {"Cisco-IOS-XE-native:GigabitEthernet":[{"name":"1/0/"+p,"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.SECONDARY_VLAN}}}}]};
+    else 
+    {
+      const payload = {
+        "Cisco-IOS-XE-native:GigabitEthernet":[
+          {"name":"1/0/5","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.SECONDARY_VLAN}}}},
+          {"name":"1/0/6","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.SECONDARY_VLAN}}}},
+          {"name":"1/0/7","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.SECONDARY_VLAN}}}}
+        ]
+      };
+      await submitRESTCONF(payload)
+      
+      // SET SECONDARY STATE FOR SPLIT OPERATION      
+      sendMessage(DWS.SECONDARY_HOST,"Split"); 
+    }    
+  }
+  else if (DWS.SWITCH_TYPE == 'C9K-12P') {
+    if (state == 'Combine')
+    {
+      const payload = {
+        "Cisco-IOS-XE-native:GigabitEthernet":[
+          {"name":"1/0/7","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
+          {"name":"1/0/8","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
+          {"name":"1/0/9","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
+          {"name":"1/0/10","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
+          {"name":"1/0/11","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}
+        ]
+      };
+      await submitRESTCONF(payload)
 
-        await submitRESTCONF(payload)
+      // SET SECONDARY STATE FOR COMBINE OPERATION AFTER LAST VLAN CHANGE
+      sendMessage(DWS.SECONDARY_HOST,"Combine");
+    }
+    else 
+    {
+      const payload = {
+        "Cisco-IOS-XE-native:GigabitEthernet":[
+          {"name":"1/0/7","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.SECONDARY_VLAN}}}},
+          {"name":"1/0/8","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.SECONDARY_VLAN}}}},
+          {"name":"1/0/9","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.SECONDARY_VLAN}}}},
+          {"name":"1/0/10","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.SECONDARY_VLAN}}}},
+          {"name":"1/0/11","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.SECONDARY_VLAN}}}}
+        ]
+      };
+      await submitRESTCONF(payload)
+      
+      // SET SECONDARY STATE FOR SPLIT OPERATION      
+      sendMessage(DWS.SECONDARY_HOST,"Split"); 
+    }   
+  }
+  else if (DWS.SWITCH_TYPE == 'C9K-24P') {
+    if (state == 'Combine') 
+    {
+      const payload = {
+        "Cisco-IOS-XE-native:GigabitEthernet":[
+          {"name":"1/0/13","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
+          {"name":"1/0/14","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
+          {"name":"1/0/15","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
+          {"name":"1/0/16","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
+          {"name":"1/0/17","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
+          {"name":"1/0/18","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
+          {"name":"1/0/19","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
+          {"name":"1/0/20","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
+          {"name":"1/0/21","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
+          {"name":"1/0/22","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
+          {"name":"1/0/23","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}
+        ]
+      };
+      await submitRESTCONF(payload)
 
-        if (p == 23)
-        {
-          // SET SECONDARY STATE FOR SPLIT OPERATION
-          sendMessage(DWS.SECONDARY_HOST,"Split");
-        }
-      }
+      // SET SECONDARY STATE FOR COMBINE OPERATION AFTER LAST VLAN CHANGE
+      sendMessage(DWS.SECONDARY_HOST,"Combine");
+    }
+    else 
+    {
+      const payload = {
+        "Cisco-IOS-XE-native:GigabitEthernet":[
+          {"name":"1/0/13","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.SECONDARY_VLAN}}}},
+          {"name":"1/0/14","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.SECONDARY_VLAN}}}},
+          {"name":"1/0/15","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.SECONDARY_VLAN}}}},
+          {"name":"1/0/16","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.SECONDARY_VLAN}}}},
+          {"name":"1/0/17","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.SECONDARY_VLAN}}}},
+          {"name":"1/0/18","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.SECONDARY_VLAN}}}},
+          {"name":"1/0/19","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.SECONDARY_VLAN}}}},
+          {"name":"1/0/20","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.SECONDARY_VLAN}}}},
+          {"name":"1/0/21","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.SECONDARY_VLAN}}}},
+          {"name":"1/0/22","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.SECONDARY_VLAN}}}},
+          {"name":"1/0/23","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.SECONDARY_VLAN}}}}
+        ]
+      };
+      await submitRESTCONF(payload)
+      
+      // SET SECONDARY STATE FOR SPLIT OPERATION      
+      sendMessage(DWS.SECONDARY_HOST,"Split");   
     }   
   }    
 }
