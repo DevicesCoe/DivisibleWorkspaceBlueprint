@@ -12,8 +12,8 @@ Robert(Bobby) McGonigle Jr
 Chase Voisin
 William Mills
 
-Version: 0.9.1 (Beta)
-Released: 03/31/2025
+Version: 0.9.2 (Beta)
+Released: 04/04/2025
 
 Complete details for this macro are available on Github:
 https://cs.co/divisibleworkspaceblueprint
@@ -280,8 +280,8 @@ Robert(Bobby) McGonigle Jr
 Chase Voisin
 William Mills
 
-Version: 0.9.1 (Beta)
-Released: 03/31/2025
+Version: 0.9.2 (Beta)
+Released: 04/04/2025
 
 Complete details for this macro are available on Github:
 https://cs.co/divisibleworkspaceblueprint
