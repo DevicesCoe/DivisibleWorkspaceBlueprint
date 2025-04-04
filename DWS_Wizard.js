@@ -12,7 +12,7 @@ Robert(Bobby) McGonigle Jr
 Chase Voisin
 William Mills
 
-Version: 0.9.1 (Beta)
+Version: 0.9
 Released: 03/31/2025
 
 Complete details for this macro are available on Github:
@@ -327,7 +327,7 @@ Robert(Bobby) McGonigle Jr
 Chase Voisin
 William Mills
 
-Version: 0.9.1 (Beta)
+Version: 0.9
 Released: 03/31/2025
 
 Complete details for this macro are available on Github:
