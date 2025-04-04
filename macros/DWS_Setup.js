@@ -12,8 +12,8 @@ Robert(Bobby) McGonigle Jr
 Chase Voisin
 William Mills
 
-Version: 0.9.1 (Beta)
-Released: 03/31/2025
+Version: 0.9.2 (Beta)
+Released: 04/04/2025
 
 Complete details for this macro are available on Github:
 https://cs.co/divisibleworkspaceblueprint
@@ -175,8 +175,8 @@ Robert(Bobby) McGonigle Jr
 Chase Voisin
 William Mills
 
-Version: 0.9.1 (Beta)
-Released: 03/31/2025
+Version: 0.9.2 (Beta)
+Released: 04/04/2025
 
 Complete details for this macro are available on Github:
 https://cs.co/divisibleworkspaceblueprint
@@ -198,7 +198,7 @@ function init()
 async function getMacro ()
 {
   try {
-    const getMacro = await xapi.Command.HttpClient.Get({ Url:'https://github.com/DevicesCoe/DivisibleWorkspaceBlueprint/releases/latest/download/DWS_Node.js' })
+    const getMacro = await xapi.Command.HttpClient.Get({ Url:'https://raw.githubusercontent.com/DevicesCoe/DivisibleWorkspaceBlueprint/refs/heads/main/macros/DWS_Node.js' })
     .then( result => {
       console.debug("DWS: Node Macro Downloaded Successfully.");
       let setupMacro = result.Body;
@@ -242,8 +242,8 @@ Robert(Bobby) McGonigle Jr
 Chase Voisin
 William Mills
 
-Version: 0.9.1 (Beta)
-Released: 03/31/2025
+Version: 0.9.2 (Beta)
+Released: 04/04/2025
 
 Complete details for this macro are available on Github:
 https://cs.co/divisibleworkspaceblueprint
