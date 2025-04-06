@@ -88,9 +88,9 @@ Download the switch configuration based on your design:
 
 | **Switch Model** | **Switch Config** |
 |---|---|
-| 9200CX 8 Port | [Config](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/switch-configs/C9200CX-8P/ciscortr.cfg) |
-| 9200CX 12 Port | [Config](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/switch-configs/C9200CX-12P/ciscortr.cfg) |
-| Cat 9K 24 Port | [Config](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/switch-configs/C9K-24P/ciscortr.cfg) |
+| 9200CX 8 Port | [Two-Way](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/switch-configs/C9200CX-8P/ciscortr.cfg) |
+| 9200CX 12 Port | [Two-Way](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/switch-configs/C9200CX-12P/ciscortr.cfg) |
+| Cat 9K 24 Port | [Two-Way](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/switch-configs/C9K-24P/ciscortr.cfg) |
 
 **Do NOT power on your Codecs or Switch until instructed to!**
 
