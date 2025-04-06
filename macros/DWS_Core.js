@@ -1373,7 +1373,7 @@ async function triggerMessage(codec, payload) {
   Params.Timeout = 5;
   Params.AllowInsecureHTTPS = 'True';
   Params.ResultBody = 'PlainText';
-  Params.Url = `http://${codec}/putxml`;
+  Params.Url = `https://${codec}/putxml`;
   Params.Header = ['Authorization: Basic ' + btoa(`${DWS.MACRO_USERNAME}:${DWS.MACRO_PASSWORD}`), 'Content-Type: application/json']; // CONVERT TO BASE64 ENCODED
 
   // ENABLE THIS LINE TO SEE THE COMMANDS BEING SENT TO FAR END
