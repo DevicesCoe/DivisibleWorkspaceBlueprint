@@ -74,20 +74,27 @@ Network Advantage (-A) is also supported if you choose to deploy that tier of li
 
 ## Installation: [Top](#table-of-contents)
 
-| **Codecs** | **# of Secondary Displays** | **Switch Model** | **Wire Diagram** | **Switch Config** |
-|---|---|---|---|---|
-| 2 x Codec EQs | One (1) | 9200CX 8 Port | [Diagram](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/images/EQ%201S%20C9K-8P.png) | [Config](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/switch-configs/C9200CX-8P/ciscortr.cfg) |
-| 2 x Codec EQs | One (1) | 9200CX 12 Port | [Diagram](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/images/EQ%201S%20C9K-12P.png) | [Config](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/switch-configs/C9200CX-12P/ciscortr.cfg) |
-| 2 x Codec EQs | One (1) | Cat 9K 24 Port | [Diagram](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/images/EQ%201S%20C9K-24P.png) | [Config](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/switch-configs/C9K-24P/ciscortr.cfg) |
-| 2 x Codec Pros | One (1) | 9200CX 8 Port | [Diagram](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/images//Pro%201S%20C9K-8P.png) | [Config](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/switch-configs/C9200CX-8P/ciscortr.cfg) |
-| 2 x Codec Pros | One (1) | 9200CX 12 Port | [Diagram](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/images/Pro%201S%20C9K-12P.png) | [Config](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/switch-configs/C9200CX-12P/ciscortr.cfg) |
-| 2 x Codec Pros | One (1) | Cat 9K 24 Port | [Diagram](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/images/Pro%201S%20C9K-24P.png) | [Config](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/switch-configs/C9K-24P/ciscortr.cfg) |
-| 2 x Codec Pros | Two (2) | 9200CX 8 Port | [Diagram](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/images/Pro%202S%20C9K-8P.png) | [Config](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/switch-configs/C9200CX-8P/ciscortr.cfg) |
-| 2 x Codec Pros | Two (2) | 9200CX 12 Port | [Diagram](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/images/Pro%202S%20C9K-12P.png) | [Config](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/switch-configs/C9200CX-12P/ciscortr.cfg) |
-| 2 x Codec Pros | Two (2) | Cat 9K 24 Port | [Diagram](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/images/Pro%202S%20C9K-24P.png) | [Config](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/switch-configs/C9K-24P/ciscortr.cfg) |
+This table provides the supported combinations of codecs and number of secondary displays. Note, all of these designs assume a Presenter PTZ Camera in each unique space (Primary and Nodes).
+
+| **Codecs** | **Single Secondary Display** | **Dual Secondary Display** |
+| --- | --- | ---|
+| 2 x Codec EQs | ✅ Yes | ❌ No |
+| 1 EQ & 1 Pro | ✅ Yes | ✅ Yes |
+| 2 x Codec Pros | ✅ Yes | ✅ Yes |
+
+All wire diagrams for each scenario are available here: [Wire Diagrams](https://github.com/DevicesCoe/DivisibleWorkspaceBlueprint/blob/main/WireDiagrams.pdf)
+
+Download the switch configuration based on your design: 
+
+| **Switch Model** | **Switch Config** |
+|---|---|
+| 9200CX 8 Port | [Config](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/switch-configs/C9200CX-8P/ciscortr.cfg) |
+| 9200CX 12 Port | [Config](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/switch-configs/C9200CX-12P/ciscortr.cfg) |
+| Cat 9K 24 Port | [Config](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/switch-configs/C9K-24P/ciscortr.cfg) |
 
 **Do NOT power on your Codecs or Switch until instructed to!**
 
+### INSTALL GUIDE
 Access the installation documentation for Cloud & Hybrid registrations here: [Install Guide](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/InstallationGuide.pdf)
 
 On Premise documentation will be released at a later date.
