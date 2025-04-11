@@ -95,9 +95,11 @@ Download the switch configuration based on your design:
 **Do NOT power on your Codecs or Switch until instructed to!**
 
 ### INSTALL GUIDE
-Access the installation documentation for Cloud & Hybrid registrations here: [Install Guide](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/InstallationGuide.pdf)
+Access the installation documentation for Cloud & Hybrid registrations here: [Cloud Install Guide](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/InstallationGuide.pdf)
 
-On Premise documentation will be released at a later date.
+Access the installation documentation for On premise registered devices (CUCM or Expressway) that have **internet access** to GitHub URLs: [Premise Install Guide](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/PremiseInstallationGuide.pdf)
+
+Air Gapped / No Internet Access installation Guide will be released at a later date.
   
 ---
 ## User Guide: [Top](#table-of-contents)
