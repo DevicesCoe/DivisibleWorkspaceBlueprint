@@ -1,6 +1,6 @@
 /*========================================================================//
-This file is part of the "Divisible Workspace" blueprint for Two-Way 
-Divisible Rooms leveraging Cisco IP Microphones.
+This file is part of the "Divisible Workspace" blueprint for Two-Way and
+Three-Way Divisible Rooms leveraging Cisco IP Microphones.
 
 Macro Author:  
 Mark Lula
@@ -12,8 +12,7 @@ Robert(Bobby) McGonigle Jr
 Chase Voisin
 William Mills
 
-Version: 0.9.2 (BETA)
-Released: 04/04/2025
+Version: 0.9.3 (BETA)
 
 Complete details for this macro are available on Github:
 https://cs.co/divisibleworkspaceblueprint
@@ -26,36 +25,106 @@ import xapi from 'xapi';
 
 let WIZARD_QUESTIONS = [];
 let SETUP_VARIABLES = [];
+let LOADED_MACROS = [];
 
 function init()
 {
-  WIZARD_QUESTIONS["dws_edit_username"] = { feedbackId: "dws_setup_username", text: "Enter the Username for the user created on the Secondary Codec:", inputType: "SingleLine", keyboardState: "Open", placeholder: "Enter the username..."},
-  WIZARD_QUESTIONS["dws_edit_password"] = { feedbackId: "dws_setup_password", text: "Enter the Password for the user created on the Secondary Codec:", inputType: "SingleLine", keyboardState: "Open", placeholder: "Enter the password..."},
-  WIZARD_QUESTIONS["dws_edit_advpin"] = { feedbackId: "dws_setup_advpin", text: "Please enter an Advanced Settings lock PIN", inputType: "Numeric", keyboardState: "Open", placeholder: "Enter your Numerical PIN" },
-  WIZARD_QUESTIONS["dws_edit_sec_host"] = { feedbackId: "dws_setup_sec_host", text: "Enter the IP or FQDN of the Secondary Room:", inputType: "SingleLine", keyboardState: "Open", placeholder: "Ex. 192.168.1.10 or secondary.domain.com" },
-  WIZARD_QUESTIONS["dws_edit_sec_control"] = { feedbackId: "dws_setup_sec_control", text: "Enter the MAC Address of the 'Control' mode Navigator for the Secondary Room:", inputType: "SingleLine", keyboardState: "Open", placeholder: "Ex. aabbcc112233 or aa:bb:cc:dd:ee:ff" },
-  WIZARD_QUESTIONS["dws_edit_sec_scheduler"] = { feedbackId: "dws_setup_sec_scheduler", text: "Enter the MAC Address of the 'Scheduler' mode Navigator for the Secondary Room:", inputType: "SingleLine", keyboardState: "Open", placeholder: "Ex. aabbcc112233 or aa:bb:cc:dd:ee:ff" },
-  WIZARD_QUESTIONS["dws_edit_primic_1"] = { feedbackId: "dws_setup_primic_1", text: "Enter the Serial Number of the Microphone:", inputType: "SingleLine", keyboardState: "Open", placeholder: "Ex. FOC28xxxxxx"},
-  WIZARD_QUESTIONS["dws_edit_primic_2"] = { feedbackId: "dws_setup_primic_2", text: "Enter the Serial Number of the Microphone:", inputType: "SingleLine", keyboardState: "Open", placeholder: "Ex. FOC28xxxxxx"},
-  WIZARD_QUESTIONS["dws_edit_primic_3"] = { feedbackId: "dws_setup_primic_3", text: "Enter the Serial Number of the Microphone:", inputType: "SingleLine", keyboardState: "Open", placeholder: "Ex. FOC28xxxxxx"},
-  WIZARD_QUESTIONS["dws_edit_secmic_1"] = { feedbackId: "dws_setup_secmic_1", text: "Enter the Serial Number of the Microphone:", inputType: "SingleLine", keyboardState: "Open", placeholder: "Ex. FOC28xxxxxx"},
-  WIZARD_QUESTIONS["dws_edit_secmic_2"] = { feedbackId: "dws_setup_secmic_2", text: "Enter the Serial Number of the Microphone:", inputType: "SingleLine", keyboardState: "Open", placeholder: "Ex. FOC28xxxxxx"},
-  WIZARD_QUESTIONS["dws_edit_secmic_3"] = { feedbackId: "dws_setup_secmic_3", text: "Enter the Serial Number of the Microphone:", inputType: "SingleLine", keyboardState: "Open", placeholder: "Ex. FOC28xxxxxx"},
-  WIZARD_QUESTIONS["dws_edit_secmic_4"] = { feedbackId: "dws_setup_secmic_4", text: "Enter the Serial Number of the Microphone:", inputType: "SingleLine", keyboardState: "Open", placeholder: "Ex. FOC28xxxxxx"},
-  WIZARD_QUESTIONS["dws_edit_primic_pres"] = { feedbackId: "dws_setup_primic_pres", text: "Enter the Serial Number of the Presenter Microphone:", inputType: "SingleLine", keyboardState: "Open", placeholder: "Ex. FOC28xxxxxx"},
-  WIZARD_QUESTIONS["dws_edit_switchtype"] = { feedbackId: "dws_setup_switchtype", text: "What Model Switch are you using?", options: { "Option.1": "Catalyst 9200CX 8 Port", "Option.2": "Catalyst 9200CX 12 Port", "Option.3": "Catalyst 9200/9300 24 Port" } }
+  // PERFORM INITIAL PLATFORM SANITY CHECK BEFORE ALLOWING THE WIZARD TO DEPLOY
+  xapi.Status.SystemUnit.ProductPlatform.get()
+  .then (platform => {    
+    if(platform != 'Codec Pro' && platform != 'Room Kit EQ')
+    {    
+      xapi.Command.UserInterface.Message.Alert.Display({ Duration: '0', Title:"Unsupported Product Platform", Text: "The Divisible Workspace Blueprint is only supported on Codec Pro and Codec EQ."}); 
+
+      console.error("DWS: Platform not compatible with Divisble Workspace Blueprint. Stopping installation.");
+
+      // TURN OFF MACRO
+      try { xapi.Command.Macros.Macro.Deactivate({ Name: 'DWS_Wizard' }); } catch(error) { console.error('DWS: Error disabling Wizard Macro: ' + error.message); }
+    }
+  });
+
+  // ENSURE ROOM TYPE IS STANDARD
+  xapi.Status.Provisioning.RoomType.get()
+  .then (roomType => {
+    if (roomType != 'Standard')
+    {
+      xapi.Command.UserInterface.Message.Alert.Display({ Duration: '0', Title:"Unsupported Room Type", Text: "The Divisible Workspace Blueprint is only supported using the Standard Room Type."}); 
+
+      console.error("DWS: Divisble Workspace Blueprint only operates in Standard Room Type. Stopping installation.");
+
+      // TURN OFF MACRO
+      try { xapi.Command.Macros.Macro.Deactivate({ Name: 'DWS_Wizard' }); } catch(error) { console.error('DWS: Error disabling Wizard Macro: ' + error.message); }
+    }
+  })
 
   console.log ("DWS: Initializing Divisible Workspace Wizard.");
 
-  // XML CONDENSED WIZARD PANEL
-  let WIZARD_PANEL = `<Extensions><Version>1.11</Version><Panel><Order>3</Order><PanelId>dws_wizard</PanelId><Location>HomeScreen</Location><Icon>Custom</Icon><Name>Setup Wizard</Name><ActivityType>Custom</ActivityType><CustomIcon><Content>${WIZARD_ICON}</Content><Id>f281484f6f2ed61917826f1e020e8124dae8efd4016b364462b387f68fd67994</Id></CustomIcon><Page><Name>Step 1</Name><Row><Name>Switch Type</Name><Widget><WidgetId>dws_setup_switchtype</WidgetId><Name></Name><Type>Text</Type><Options>size=3;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_edit_switchtype</WidgetId><Name>Edit</Name><Type>Button</Type><Options>size=1</Options></Widget></Row><Row><Name/><Widget><WidgetId>widget_130</WidgetId><Name>Please ensure you select the correct switch model and your cabling matches the diagrams provided.</Name><Type>Text</Type><Options>size=4;fontSize=small;align=center</Options></Widget></Row><Row><Name>Combined Camera Automation</Name><Widget><WidgetId>dws_edit_automode</WidgetId><Type>GroupButton</Type><Options>size=4;columns=2</Options><ValueSpace><Value><Key>off</Key><Name>Off</Name></Value><Value><Key>on</Key><Name>Audience Only</Name></Value><Value><Key>panda</Key><Name>Presenter and Audience</Name></Value></ValueSpace></Widget></Row><Row><Name/><Widget><WidgetId>widget_129</WidgetId><Name>This will set the default operation mode for automatic audience switching based on active microphones when in the combined state.</Name><Type>Text</Type><Options>size=4;fontSize=small;align=center</Options></Widget></Row><Row><Name>Adv. Settings PIN</Name><Widget><WidgetId>widget_108</WidgetId><Name>This PIN is used to lock the advanced settings panel.</Name><Type>Text</Type><Options>size=2;fontSize=small;align=left</Options></Widget><Widget><WidgetId>dws_setup_advpin</WidgetId><Name></Name><Type>Text</Type><Options>size=1;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_edit_advpin</WidgetId><Name>Edit</Name><Type>Button</Type><Options>size=1</Options></Widget></Row><Row><Name/><Widget><WidgetId>dws_setup_next1</WidgetId><Name>Next</Name><Type>Button</Type><Options>size=2</Options></Widget></Row><Options>hideRowNames=0</Options><PageId>setup_credentials</PageId></Page><Page><Name>Step 2</Name><Row><Name>Primary Room Microphones</Name><Widget><WidgetId>dws_setup_primic_1</WidgetId><Name></Name><Type>Text</Type><Options>size=3;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_edit_primic_1</WidgetId><Name>Edit</Name><Type>Button</Type><Options>size=1</Options></Widget><Widget><WidgetId>dws_setup_primic_2</WidgetId><Name></Name><Type>Text</Type><Options>size=3;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_edit_primic_2</WidgetId><Name>Edit</Name><Type>Button</Type><Options>size=1</Options></Widget><Widget><WidgetId>dws_setup_primic_3</WidgetId><Name></Name><Type>Text</Type><Options>size=3;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_edit_primic_3</WidgetId><Name>Edit</Name><Type>Button</Type><Options>size=1</Options></Widget></Row><Row><Name/><Widget><WidgetId>widget_112</WidgetId><Name>Enter the Serial Number(s) of all Primary Room Microphones above and the Serial Number of the Presenter Microphone below.</Name><Type>Text</Type><Options>size=4;fontSize=small;align=center</Options></Widget></Row><Row><Name>Presenter Microphone</Name><Widget><WidgetId>dws_setup_primic_pres</WidgetId><Name></Name><Type>Text</Type><Options>size=3;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_edit_primic_pres</WidgetId><Name>Edit</Name><Type>Button</Type><Options>size=1</Options></Widget></Row><Row><Name/><Widget><WidgetId>dws_setup_back2</WidgetId><Name>Back</Name><Type>Button</Type><Options>size=2</Options></Widget><Widget><WidgetId>dws_setup_next2</WidgetId><Name>Next</Name><Type>Button</Type><Options>size=2</Options></Widget></Row><Options/><PageId>setup_primary_mics</PageId></Page><Page><Name>Step 3</Name><Row><Name>Secondary Host IP/FQDN</Name><Widget><WidgetId>dws_setup_sec_host</WidgetId><Name></Name><Type>Text</Type><Options>size=3;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_edit_sec_host</WidgetId><Name>Edit</Name><Type>Button</Type><Options>size=1</Options></Widget></Row><Row><Name>Number of Secondary Displays</Name><Widget><WidgetId>dws_edit_sec_screens</WidgetId><Type>GroupButton</Type><Options>size=4;columns=2</Options><ValueSpace><Value><Key>1</Key><Name>One (1)</Name></Value><Value><Key>2</Key><Name>Two (2)</Name></Value></ValueSpace></Widget></Row><Row><Name>Secondary Username</Name><Widget><WidgetId>dws_setup_username</WidgetId><Name></Name><Type>Text</Type><Options>size=3;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_edit_username</WidgetId><Name>Edit</Name><Type>Button</Type><Options>size=1</Options></Widget></Row><Row><Name>Secondary Password</Name><Widget><WidgetId>dws_setup_password</WidgetId><Name></Name><Type>Text</Type><Options>size=3;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_edit_password</WidgetId><Name>Edit</Name><Type>Button</Type><Options>size=1</Options></Widget><Widget><WidgetId>widget_107</WidgetId><Name>Set these to the credentials created in Control Hub.</Name><Type>Text</Type><Options>size=4;fontSize=small;align=left</Options></Widget></Row><Row><Name/><Widget><WidgetId>dws_setup_back3</WidgetId><Name>Back</Name><Type>Button</Type><Options>size=2</Options></Widget><Widget><WidgetId>dws_setup_next3</WidgetId><Name>Next</Name><Type>Button</Type><Options>size=2</Options></Widget></Row><Options/><PageId>setup_secondary_codec</PageId></Page><Page><Name>Step 4</Name><Row><Name>Secondary Room Microphones</Name><Widget><WidgetId>dws_setup_secmic_1</WidgetId><Name></Name><Type>Text</Type><Options>size=3;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_edit_secmic_1</WidgetId><Name>Edit</Name><Type>Button</Type><Options>size=1</Options></Widget><Widget><WidgetId>dws_setup_secmic_2</WidgetId><Name></Name><Type>Text</Type><Options>size=3;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_edit_secmic_2</WidgetId><Name>Edit</Name><Type>Button</Type><Options>size=1</Options></Widget><Widget><WidgetId>dws_setup_secmic_3</WidgetId><Name></Name><Type>Text</Type><Options>size=3;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_edit_secmic_3</WidgetId><Name>Edit</Name><Type>Button</Type><Options>size=1</Options></Widget><Widget><WidgetId>dws_setup_secmic_4</WidgetId><Name></Name><Type>Text</Type><Options>size=3;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_edit_secmic_4</WidgetId><Name>Edit</Name><Type>Button</Type><Options>size=1</Options></Widget></Row><Row><Name/><Widget><WidgetId>widget_114</WidgetId><Name>Enter the Serial Number(s) of all Secondary Room Microphones</Name><Type>Text</Type><Options>size=4;fontSize=small;align=center</Options></Widget></Row><Row><Name/><Widget><WidgetId>dws_setup_back4</WidgetId><Name>Back</Name><Type>Button</Type><Options>size=2</Options></Widget><Widget><WidgetId>dws_setup_next4</WidgetId><Name>Next</Name><Type>Button</Type><Options>size=2</Options></Widget></Row><Options/><PageId>setup_secondary_mics</PageId></Page><Page><Name>Step 5</Name><Row><Name>Control MAC Address</Name><Widget><WidgetId>dws_setup_sec_control</WidgetId><Name></Name><Type>Text</Type><Options>size=3;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_edit_sec_control</WidgetId><Name>Edit</Name><Type>Button</Type><Options>size=1</Options></Widget></Row><Row><Name/><Widget><WidgetId>control_txt</WidgetId><Name>Enter the MAC Address of the Secondary Room Control Navigator (Ex. aabbccddeeff or aa:bb:cc:dd:ee:ff)</Name><Type>Text</Type><Options>size=4;fontSize=small;align=center</Options></Widget></Row><Row><Name>Scheduler MAC Address</Name><Widget><WidgetId>dws_setup_sec_scheduler</WidgetId><Name></Name><Type>Text</Type><Options>size=3;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_edit_sec_scheduler</WidgetId><Name>Edit</Name><Type>Button</Type><Options>size=1</Options></Widget><Widget><WidgetId>widget_105</WidgetId><Name>Enter the MAC Address of the Secondary Room Scheduler Navigator. If you do not have a Scheduler, leave this blank.</Name><Type>Text</Type><Options>size=4;fontSize=small;align=center</Options></Widget></Row><Row><Name/></Row><Row><Name/><Widget><WidgetId>dws_setup_back5</WidgetId><Name>Back</Name><Type>Button</Type><Options>size=2</Options></Widget><Widget><WidgetId>dws_setup_next5</WidgetId><Name>Next</Name><Type>Button</Type><Options>size=2</Options></Widget></Row><PageId>setup_settings</PageId></Page><Page><Name>Finish</Name><Row><Name/></Row><Row><Name/><Widget><WidgetId>setup_text</WidgetId><Name>Clicking Begin Setup will finalize the installation of the Primary and Secondary Rooms based on the details provided. Please ensure the accuracy of your entries prior to continuing.</Name><Type>Text</Type><Options>size=4;fontSize=small;align=center</Options></Widget></Row><Row><Name/><Widget><WidgetId>dws_setup_begin</WidgetId><Name>Begin Setup</Name><Type>Button</Type><Options>size=4</Options></Widget></Row><Row><Name/></Row><Row><Name/></Row><Row><Name/><Widget><WidgetId>dws_setup_back6</WidgetId><Name>Back</Name><Type>Button</Type><Options>size=2</Options></Widget></Row><PageId>setup_finish</PageId></Page></Panel></Extensions>`;
+  WIZARD_QUESTIONS["dws_edit_nway"] = { feedbackId: "dws_setup_nway", text: "What type of Divisible Room are you deploying?", options: { "Option.1": "Two Way", "Option.2": "Three Way"} };
+  WIZARD_QUESTIONS["dws_edit_switchtype"] = { feedbackId: "dws_setup_switchtype", text: "What Model Switch are you using?", options: { "Option.1": "Catalyst 9200CX 8 Port", "Option.2": "Catalyst 9200CX 12 Port", "Option.3": "Catalyst 9200/9300 24 Port" } };
+  WIZARD_QUESTIONS["dws_edit_username"] = { feedbackId: "dws_setup_username", text: "Enter the Username for the user created on the Node Codecs:", inputType: "SingleLine", keyboardState: "Open", placeholder: "Enter the username..."};
+  WIZARD_QUESTIONS["dws_edit_password"] = { feedbackId: "dws_setup_password", text: "Enter the Password for the user created on the Node Codecs:", inputType: "SingleLine", keyboardState: "Open", placeholder: "Enter the password..."};
+  WIZARD_QUESTIONS["dws_edit_advpin"] = { feedbackId: "dws_setup_advpin", text: "Please enter an Advanced Settings lock PIN", inputType: "Numeric", keyboardState: "Open", placeholder: "Enter your Numerical PIN" };
+  WIZARD_QUESTIONS["dws_edit_automode"] = { feedbackId: "dws_setup_automode", text: "Please select the default automated camera mode:", options: { "Option.1": "On", "Option.2": "Off" } };
+  WIZARD_QUESTIONS["dws_edit_node1_host"] = { feedbackId: "dws_setup_node1_host", text: "Enter the IP or FQDN of the Node 1 Codec:", inputType: "Numeric", keyboardState: "Open", placeholder: "Ex. 192.168.1.10 or secondary.domain.com" };
+  WIZARD_QUESTIONS["dws_edit_node1_alias"] = { feedbackId: "dws_setup_node1_alias", text: "Enter a user friendly alias for Node 1:", inputType: "SingleLine", keyboardState: "Open", placeholder: "Ex. Training A" };
+  WIZARD_QUESTIONS["dws_edit_node1_configuration"] = { feedbackId: "dws_setup_node1_configuration", text: "Please select the configurationt that matches Node 1:", options: { "Option.1": "Codec Pro with One Screen", "Option.2": "Codec Pro with Two Screens", "Option.3": "Codec EQ with One Screen", "Option.4": "Codec EQ with Two Screens"} };
+  WIZARD_QUESTIONS["dws_edit_node1_presenter"] = { feedbackId: "dws_setup_node1_presenter", text: "What connection type is the Presenter PTZ for Node 1?:", options: { "Option.1": "IP", "Option.2": "HDMI", "Option.3": "None"} };
+  WIZARD_QUESTIONS["dws_edit_node2_host"] = { feedbackId: "dws_setup_node2_host", text: "Enter the IP or FQDN of the Node 2 Codec:", inputType: "Numeric", keyboardState: "Open", placeholder: "Ex. 192.168.1.10 or secondary.domain.com" };
+  WIZARD_QUESTIONS["dws_edit_node2_alias"] = { feedbackId: "dws_setup_node2_alias", text: "Enter a user friendly alias for Node 2:", inputType: "SingleLine", keyboardState: "Open", placeholder: "Ex. Training C" },
+  WIZARD_QUESTIONS["dws_edit_node2_configuration"] = { feedbackId: "dws_setup_node2_configuration", text: "Please select the configurationt that matches Node 2:", options: { "Option.1": "Codec Pro with One Screen", "Option.2": "Codec Pro with Two Screens", "Option.3": "Codec EQ with One Screen", "Option.4": "Codec EQ with Two Screens"} };
+  WIZARD_QUESTIONS["dws_edit_node2_presenter"] = { feedbackId: "dws_setup_node2_presenter", text: "What connection type is the Presenter PTZ for Node 2?:", options: { "Option.1": "IP", "Option.2": "HDMI", "Option.3": "None"} };
+
+  // PERFORM PREMISE INSTALL CHECK
+  xapi.Command.Macros.Macro.Get()
+  .then (response => {
+    response.Macro.forEach(element => {
+      LOADED_MACROS.push(element.Name);
+    });
+  });
+
+  // GET AND STORE PRIMARY MICROPHONES
+  xapi.Command.Peripherals.List({ Connected: 'True', Type: 'AudioMicrophone' })
+  .then(response => {
+
+    const devicesArray = [];
+    const serialArray = [];
+
+    let filteredDevices = JSON.parse(response);
+
+    filteredDevices.Device.forEach(device => {
+        devicesArray.push({
+            SerialNumber: device.SerialNumber || null,
+            ID: device.ID || null,
+            Name: device.Name || null
+        });
+
+        serialArray.push(device.SerialNumber);
+    });
+
+    //console.log(filteredDevices);
+    
+    for (let i = 0; i < 4; i++)
+    {
+      if (devicesArray[i] != undefined)
+      {
+        SETUP_VARIABLES['dws_setup_primary_mic' + (i + 1)] = "Microphone " + (i + 1) + ": " + devicesArray[i].SerialNumber;              
+        console.debug("DWS: Found Primary Mic: " + SETUP_VARIABLES['dws_setup_primary_mic' + (i + 1)]);
+      }
+      else
+      {
+        SETUP_VARIABLES['dws_setup_primary_mic' + (i + 1)] = "Microphone " + (i + 1) + ": Not Connected";
+      }            
+    }
+
+    // SAVE MICROPHONES TO SETUP VARIABLE
+    SETUP_VARIABLES['dws_setup_primary_mics'] = serialArray;
+  });
 
   // DRAW SETUP WIZARD PANEL & BUTTON
-  xapi.Command.UserInterface.Extensions.Panel.Save({PanelId: 'dws_wizard'}, WIZARD_PANEL)
+  xapi.Command.UserInterface.Extensions.Panel.Save({PanelId: 'dws_wizard'}, PANEL_START)
   .then(() =>{ console.log ("DWS: Panel created successfully.")})
   .catch(e => console.log('Error saving panel: ' + e.message))
 
-  
   // HANDLE TEXT INPUT RESPONSES FROM EDIT BUTTON TRIGGERS BELOW
   xapi.Event.UserInterface.Message.TextInput.Response.on(event => {
 
@@ -83,57 +152,31 @@ function init()
         updateWidget(event.FeedbackId, event.Text);
       }
     }
-    // MAC ADDRESS ENTRY CHECKS
-    else if (event.FeedbackId == 'dws_setup_sec_control' || event.FeedbackId == 'dws_setup_sec_scheduler' ) 
-    {
-      const macAddress = event.Text.toLowerCase();
-
-      // CHECK FOR COLONS IN SUBMITTED MAC ADDRESS AND ADD IF NOT PRESENT
-      if(macAddress.length == 12)
-      {
-        const macArray = macAddress.split("");
-        const newMac = macArray[0] + macArray[1] + ":" + macArray[2] + macArray[3] + ":" + macArray[4] + macArray[5] + ":" + macArray[6] + macArray[7] + ":" + macArray[8] + macArray[9]+ ":" + macArray[10] + macArray[11];
-
-        // UPDATE PANEL DETAILS TO SHOW NEW VALUE
-        updateWidget(event.FeedbackId, newMac);
-      }
-      // IF MAC IF FORMATTED ALREADY = ACCEPT
-      else if (macAddress.length == 17 && macAddress.substring(2,1) == ':' && macAddress.substring(4,1) == ':' && macAddress.substring(6,1) == ':' && macAddress.substring(8,1) == ':' && macAddress.substring(10,1) == ':')  
-      {
-        // UPDATE PANEL DETAILS TO SHOW NEW VALUE
-        updateWidget(event.FeedbackId, macAddress);
-      }
-      // REPEAT THE CONTROL QUESTION IF THE BOX IS EMPTY OR MAC WAS INVALID
-      else if (event.FeedbackId == 'dws_setup_sec_control') 
-      {
-        xapi.Command.UserInterface.Message.Alert.Display({ Duration: '5', Title:"Invalid Entry", Text: "Invalid Control MAC Address entered (cannot be blank). Please try again."});
-      }
-      // REPEAT THE SCHEDULER QUESTION IF THE MAC WAS ENTERED AND INVALID
-      else if (event.FeedbackId == 'dws_setup_sec_scheduler' && event.Text.length != 0) 
-      {
-        xapi.Command.UserInterface.Message.Alert.Display({ Duration: '5', Title:"Invalid Entry", Text: "Invalid Scheduler MAC Address entered. Please try again."});
-      }
+    // ENSURE YOU DONT CONNECT TO THE SAME CODEC TWICE OR YOURSELF
+    else if (event.FeedbackId == 'dws_setup_node1_host' || event.FeedbackId == 'dws_setup_node2_host')
+    {   
+      // GET SYSTEM IP ADDRESS
+      xapi.Status.Network[1].IPv4.Address.get()
+      .then(PRIMARY_IP => {
+        // COMPARE SUBMITTED ADDRESS AGAINST LOCAL IP
+        if (PRIMARY_IP == event.Text)
+        {
+          xapi.Command.UserInterface.Message.Alert.Display({ Duration: '5', Title:"Invalid Entry", Text: "Please enter the IP or FQDN of your Node Codec."});
+        }
+        // CHECK TO MAKE SURE BOTH CODECS ARENT THE SAME IP
+        else if (event.FeedbackId == 'dws_setup_node2_host' && event.Text == SETUP_VARIABLES['dws_setup_node1_host'])
+        {
+          xapi.Command.UserInterface.Message.Alert.Display({ Duration: '5', Title:"Invalid Entry", Text: "Both Node Codecs must have unique IP or FQDNs."});
+        }
+        else
+        {
+          // UPDATE PANEL DETAILS TO SHOW NEW VALUE
+          updateWidget(event.FeedbackId, event.Text);
+        }
+      })
     }
-    //  MICROPHONE INPUT CHECKS FOR PROPER LENGTH SERIAL NUMBERS
-    else if (event.FeedbackId.startsWith('dws_setup_primic') || event.FeedbackId.startsWith('dws_setup_secmic'))
+    else
     {
-      let serialNumber = event.Text;
-
-      if (serialNumber.length != 11)
-      {
-        xapi.Command.UserInterface.Message.Alert.Display({ Duration: '5', Title:"Invalid Entry", Text: "The Serial Number entered was invalid. Please try again."});
-      }
-      else if (serialNumber.length == 11 && !(serialNumber.startsWith("FOC") || serialNumber.startsWith("Foc") || serialNumber.startsWith("foc")))
-      {
-        xapi.Command.UserInterface.Message.Alert.Display({ Duration: '5', Title:"Invalid Entry", Text: "The Serial Number entered was invalid. Please try again."});
-      }
-      else
-      {
-        // UPDATE PANEL DETAILS TO SHOW NEW VALUE
-        updateWidget(event.FeedbackId, serialNumber.toUpperCase());
-      }    
-    }
-    else{
       // UPDATE PANEL DETAILS TO SHOW NEW VALUE
       updateWidget(event.FeedbackId, event.Text);
     }
@@ -142,180 +185,348 @@ function init()
   // HANDLE MULTIPLE CHOICE SWITCH TYPE RESPONSE
   xapi.Event.UserInterface.Message.Prompt.Response.on(event => {
     const selectedOption = event.OptionId;
-    const optionText = WIZARD_QUESTIONS['dws_edit_switchtype'].options[`Option.${selectedOption}`];
+    let optionText;
 
-    // UPDATE PANEL DETAILS TO SHOW NEW VALUE
-    updateWidget(event.FeedbackId, optionText);
+    if (event.FeedbackId == 'dws_setup_nway')
+    {
+      optionText = WIZARD_QUESTIONS['dws_edit_nway'].options[`Option.${selectedOption}`];
+ 
+      SETUP_VARIABLES['dws_setup_nway'] = optionText;
+
+      // UPDATE PANEL DETAILS TO SHOW NEW VALUE
+      updateWidget(event.FeedbackId, optionText);
+    }
+    else if (event.FeedbackId == 'dws_setup_switchtype')
+    {
+      optionText = WIZARD_QUESTIONS['dws_edit_switchtype'].options[`Option.${selectedOption}`];
+
+      // UPDATE PANEL DETAILS TO SHOW NEW VALUE
+      updateWidget(event.FeedbackId, optionText);
+    }
+    else if (event.FeedbackId == 'dws_setup_automode')
+    {
+      optionText = WIZARD_QUESTIONS['dws_edit_automode'].options[`Option.${selectedOption}`];
+
+      // STORE THE AUTO MODE DEFAULT SETTING IN ARRAY
+      SETUP_VARIABLES['dws_setup_automode'] = optionText;
+
+      // UPDATE PANEL DETAILS TO SHOW NEW VALUE
+      updateWidget(event.FeedbackId, optionText);
+    }
+    else if (event.FeedbackId == 'dws_setup_node1_configuration')
+    {
+      // STORE FOR DISPLAYS
+      if (selectedOption == '1' || selectedOption == '3')
+      {
+        SETUP_VARIABLES['dws_setup_node1_displays'] = '1';
+        SETUP_VARIABLES['dws_setup_node1_configuration'] == optionText;
+      }
+      // STORE FOR DUAL DISPLAYS
+      else
+      {
+        SETUP_VARIABLES['dws_setup_node1_displays'] = '2';
+      }
+
+      optionText = WIZARD_QUESTIONS['dws_edit_node1_configuration'].options[`Option.${selectedOption}`];
+      SETUP_VARIABLES['dws_setup_node1_configuration'] == optionText;
+
+      // UPDATE PANEL DETAILS TO SHOW NEW VALUE
+      updateWidget(event.FeedbackId, optionText);
+    }
+    else if (event.FeedbackId == 'dws_setup_node1_presenter')
+    {
+      optionText = WIZARD_QUESTIONS['dws_edit_node1_presenter'].options[`Option.${selectedOption}`];
+
+      // UPDATE PANEL DETAILS TO SHOW NEW VALUE
+      updateWidget(event.FeedbackId, optionText);
+    }
+    else if (event.FeedbackId == 'dws_setup_node2_configuration')
+    {
+      // STORE FOR DISPLAYS
+      if (selectedOption == '1' || selectedOption == '3')
+      {
+        SETUP_VARIABLES['dws_setup_node2_displays'] = '1';
+        SETUP_VARIABLES['dws_setup_node2_configuration'] == optionText;
+      }
+      // STORE FOR DUAL DISPLAYS
+      else
+      {
+        SETUP_VARIABLES['dws_setup_node2_displays'] = '2';
+      }
+
+      optionText = WIZARD_QUESTIONS['dws_edit_node2_configuration'].options[`Option.${selectedOption}`];
+
+      // UPDATE PANEL DETAILS TO SHOW NEW VALUE
+      updateWidget(event.FeedbackId, optionText);
+    }
+    else if (event.FeedbackId == 'dws_setup_node2_presenter')
+    {
+      optionText = WIZARD_QUESTIONS['dws_edit_node2_presenter'].options[`Option.${selectedOption}`];
+
+      // UPDATE PANEL DETAILS TO SHOW NEW VALUE
+      updateWidget(event.FeedbackId, optionText);
+    }
+
   })
 
-  // LISTEN FOR BACK / NEXT AND SETUP BUTTON PRESSES
+  // LISTEN FOR TOGGLE CHANGES, BACK / NEXT, EDIT BUTTON PRESSES
   xapi.Event.UserInterface.Extensions.Widget.Action.on(event => {
-    // EDIT BUTTONS ON CREDENTIALS PAGE
-    if (event.Type == 'released' && event.WidgetId.startsWith('dws_edit_') && event.WidgetId != 'dws_edit_sec_screens' && event.WidgetId != 'dws_edit_switchtype' && event.WidgetId != 'dws_edit_automode') 
+    // MULTI CHOICE TOGGLE CHANGES
+    if (event.Type == 'released' && event.WidgetId == 'dws_setup_presenter_mic')
+    {
+      if (event.Value == 'USB')
+      {
+        SETUP_VARIABLES['dws_setup_mics_usb'] = 'on';
+        SETUP_VARIABLES['dws_setup_presenter_mic'] = 'USB';
+        SETUP_VARIABLES['dws_setup_mics_analog'] = 'off';
+      }
+      else if (event.Value == 'Analog')
+      {
+        SETUP_VARIABLES['dws_setup_mics_analog'] = 'on';
+        SETUP_VARIABLES['dws_setup_presenter_mic'] = 'Analog';
+        SETUP_VARIABLES['dws_setup_mics_usb'] = 'off';
+      }
+      else
+      {
+        // STORE TOGGLED VALUE
+        SETUP_VARIABLES['dws_setup_presenter_mic'] = event.Value;
+
+        // REMOVE PRESENTER MIC FROM PRIMARY MIC ARRAY
+        const index = SETUP_VARIABLES['dws_setup_primary_mics'].indexOf(event.Value);
+        SETUP_VARIABLES['dws_setup_primary_mics'].splice(index, 1);
+
+        SETUP_VARIABLES['dws_setup_mics_usb'] = 'off';
+        SETUP_VARIABLES['dws_setup_mics_analog'] = 'off';
+      }
+
+      console.debug("DWS: Primary presenter microphone set to " + event.Value);
+    }
+
+    // EDIT BUTTONS FOR TEXT INPUTS
+    else if (event.Type == 'released' && event.WidgetId.startsWith('dws_edit_') && event.WidgetId != 'dws_edit_nway' && event.WidgetId != 'dws_edit_switchtype' && event.WidgetId != 'dws_edit_automode'  && event.WidgetId != 'dws_edit_node1_presenter' && event.WidgetId != 'dws_edit_node1_configuration' && event.WidgetId != 'dws_edit_node2_presenter' && event.WidgetId != 'dws_edit_node2_configuration') 
     {
       editDetails(event.WidgetId);
     }
-    else if (event.Type == 'released' && event.WidgetId == 'dws_edit_switchtype')
+    // EDIT BUTTONS FOR MULTIPLE CHOICE
+    else if (event.Type == 'released' && ( event.WidgetId == 'dws_edit_nway' || event.WidgetId == 'dws_edit_switchtype' || event.WidgetId == 'dws_edit_automode' || event.WidgetId == 'dws_edit_node1_presenter' || event.WidgetId == 'dws_edit_node1_configuration' || event.WidgetId == 'dws_edit_node2_presenter' || event.WidgetId == 'dws_edit_node2_configuration' ))
     {
       xapi.Command.UserInterface.Message.Prompt.Display({
-            Title: `Select Switch Type`,
-            Text: WIZARD_QUESTIONS[event.WidgetId].text,
-            FeedbackId: WIZARD_QUESTIONS[event.WidgetId].feedbackId,
-            ...WIZARD_QUESTIONS[event.WidgetId].options
-        });
-    }
-    else if (event.Type == 'released' && event.WidgetId == 'dws_edit_sec_screens')
-    {
-      // STORE NUMBER OF SCREENS VALUE IN ARRAY
-      SETUP_VARIABLES['dws_setup_sec_screens'] = event.Value;
-    }
-    else if (event.Type == 'released' && event.WidgetId == 'dws_edit_automode')
-    {
-      // STORE THE AUTO MODE DEFAULT SETTING IN ARRAY
-      SETUP_VARIABLES['dws_setup_automode'] = event.Value;
+        Title: `Select an Option`,
+        Text: WIZARD_QUESTIONS[event.WidgetId].text,
+        FeedbackId: WIZARD_QUESTIONS[event.WidgetId].feedbackId,
+        ...WIZARD_QUESTIONS[event.WidgetId].options
+      });
     }
 
     // NEXT BUTTONS
-    else if( event.Type == 'released' && event.WidgetId == 'dws_setup_next1' )
+    else if( event.Type == 'released' && event.WidgetId == 'dws_next_start' )
     {
-      xapi.Command.UserInterface.Extensions.Panel.Open( { PageId: 'setup_primary_mics', PanelId: 'dws_wizard' });
+      // REDRAW PANEL TO NEXT PAGE
+      drawPanel(PANEL_COMMON);
     }
-    else if( event.Type == 'released' && event.WidgetId == 'dws_setup_next2' )
+    else if( event.Type == 'released' && event.WidgetId == 'dws_next_common' )
     {
-      xapi.Command.UserInterface.Extensions.Panel.Open( { PageId: 'setup_secondary_codec', PanelId: 'dws_wizard' });
+      // CHECK SETUP IS SUFFICIENTLY COMPLETED BY PAGE
+      if ( SETUP_VARIABLES['dws_setup_nway'] == undefined || SETUP_VARIABLES['dws_setup_switchtype'] == undefined || SETUP_VARIABLES['dws_setup_automode'] == undefined || SETUP_VARIABLES['dws_setup_username'] == undefined || SETUP_VARIABLES['dws_setup_password'] == undefined)
+      {
+        xapi.Command.UserInterface.Message.Alert.Display({ Duration: '10', Title:"Missing Configuration", Text: "Please ensure all values are configured."});
+      }
+      else if (SETUP_VARIABLES['dws_setup_nway'] == 'Three Way' && (SETUP_VARIABLES['dws_setup_switchtype'] == 'Catalyst 9200CX 8 Port' || SETUP_VARIABLES['dws_setup_switchtype'] == 'C9K-8P'))
+      {
+        xapi.Command.UserInterface.Message.Alert.Display({ Duration: '10', Title:"Configuration Error", Text: "Three Way Divisible Workspaces are only compatible with 12 and 24 port switches."});
+      }
+      else
+      {
+        PANEL_PRIMARY = "<Extensions><Version>1.11</Version><Panel><Order>2</Order><PanelId>dws_wizard</PanelId><Origin>local</Origin><Location>HomeScreen</Location><Icon>Custom</Icon><Name>Setup Wizard</Name><ActivityType>Custom</ActivityType><CustomIcon><Content>${WIZARD_ICON}</Content><Id>4f0568a41894116ebce904f8b1004077281643ea28cba96d903078210e434757</Id></CustomIcon><Page><Name>Select Presenter Microphone</Name><Row><Name/><Widget><WidgetId>widget_273</WidgetId><Name>Please select the Presenter Microphone in the primary workspace.</Name><Type>Text</Type><Options>size=4;fontSize=small;align=center</Options></Widget></Row><Row><Name>Available Microphones</Name><Widget><WidgetId>dws_setup_presenter_mic</WidgetId><Type>GroupButton</Type><Options>size=4;columns=2</Options><ValueSpace>";
+
+        // AUTOMATE THE CREATION OF OPTIONS BASED ON MICROPHONE COUNT
+        let COUNTER = 0;
+        SETUP_VARIABLES['dws_setup_primary_mics'].forEach(() => {
+          PANEL_PRIMARY += "<Value><Key>" + SETUP_VARIABLES['dws_setup_primary_mics'][COUNTER] + "</Key><Name>Eth " + (COUNTER+1) + ": " + SETUP_VARIABLES['dws_setup_primary_mics'][COUNTER] + "</Name></Value>";
+          COUNTER++;
+        });
+
+        PANEL_PRIMARY += '<Value><Key>USB</Key><Name>USB</Name></Value><Value><Key>Analog</Key><Name>Analog (All)</Name></Value></ValueSpace></Widget></Row><Row><Name/><Widget><WidgetId>dws_back_primary</WidgetId><Name>Back</Name><Type>Button</Type><Options>size=2</Options></Widget><Widget><WidgetId>dws_next_primary</WidgetId><Name>Next</Name><Type>Button</Type><Options>size=2</Options></Widget></Row><PageId>setup_primary</PageId><Options/></Page></Panel></Extensions>';
+
+        drawPanel(PANEL_PRIMARY);
+      }
     }
-    else if( event.Type == 'released' && event.WidgetId == 'dws_setup_next3' )
+    else if( event.Type == 'released' && event.WidgetId == 'dws_next_primary' )
     {
-      xapi.Command.UserInterface.Extensions.Panel.Open( { PageId: 'setup_secondary_mics', PanelId: 'dws_wizard' });
+      // PRIMARY PRESENTER MICROPHONE CHECK
+      if(SETUP_VARIABLES['dws_setup_presenter_mic'] == undefined)
+      {
+        xapi.Command.UserInterface.Message.Alert.Display({ Duration: '5', Title:"Missing Variables", Text: "Please select a Presenter Microphone option."});
+      }
+      else
+      {
+        // REDRAW PANEL TO NEXT PAGE
+        drawPanel(PANEL_NODE1);
+      }
+      
     }
-    else if( event.Type == 'released' && event.WidgetId == 'dws_setup_next4' )
+    else if( event.Type == 'released' && event.WidgetId == 'dws_connect_node1' )
     {
-      xapi.Command.UserInterface.Extensions.Panel.Open( { PageId: 'setup_settings', PanelId: 'dws_wizard' });
+
+      if (SETUP_VARIABLES['dws_setup_node1_host'] == undefined || SETUP_VARIABLES['dws_setup_node1_alias'] == undefined || SETUP_VARIABLES['dws_setup_node1_configuration'] == undefined || SETUP_VARIABLES['dws_setup_node1_presenter'] == undefined)
+      {
+        xapi.Command.UserInterface.Message.Alert.Display({ Duration: '10', Title:"Missing Configuration", Text: "Please set the host, alias, configuration and presenter camera option."});
+      }
+      else if ((SETUP_VARIABLES['dws_setup_node1_configuration'] == 'Codec Pro with One Screen' || SETUP_VARIABLES['dws_setup_node1_configuration'] == 'Codec Pro with Two Screens') && SETUP_VARIABLES['dws_setup_node1_presenter'] == 'IP')
+      {
+        xapi.Command.UserInterface.Message.Alert.Display({ Duration: '10', Title:"Invalid Configuration", Text: "The Codec Pro does not support Video over IP for Presenter PTZ."});
+      }
+      else if (SETUP_VARIABLES['dws_setup_node1_configuration'] == 'Codec EQ with Two Screens' && SETUP_VARIABLES['dws_setup_node1_presenter'] == 'HDMI')
+      {
+        xapi.Command.UserInterface.Message.Alert.Display({ Duration: '10', Title:"Invalid Configuration", Text: "The Codec EQ does not have sufficient inputs for dual display and HDMI presenter PTZ configuration."});
+      }
+      else
+      {
+        // CONNECT TO NODE FOR DETAILS
+        connectNode('1',SETUP_VARIABLES['dws_setup_node1_host'])
+
+        // REDRAW PANEL TO NEXT PAGE
+        drawPanel(PANEL_NODE1_DETAILS);
+      }
+      
     }
-    else if( event.Type == 'released' && event.WidgetId == 'dws_setup_next5' )
+    else if( event.Type == 'released' && event.WidgetId == 'dws_next_node1_details' )
     {
-      xapi.Command.UserInterface.Extensions.Panel.Open( { PageId: 'setup_finish', PanelId: 'dws_wizard' });
+      // N-WAY TYPE CHECK
+      if (SETUP_VARIABLES['dws_setup_nway'] == 'Two Way')
+      {
+        PANEL_SETUP = `<Extensions><Version>1.11</Version><Panel><Order>1</Order><PanelId>dws_wizard_new</PanelId><Origin>local</Origin><Location>HomeScreen</Location><Icon>Custom</Icon><Name>Setup Wizard</Name><ActivityType>Custom</ActivityType><CustomIcon><Content>${WIZARD_ICON}</Content><Id>4f0568a41894116ebce904f8b1004077281643ea28cba96d903078210e434757</Id></CustomIcon><Page><Name>Final Step</Name><Row><Name>Adv. Settings Lock PIN:</Name><Widget><WidgetId>dws_setup_advpin</WidgetId><Name>${SETUP_VARIABLES['dws_setup_advpin']}</Name><Type>Text</Type><Options>size=3;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_edit_advpin</WidgetId><Name>Edit</Name><Type>Button</Type><Options>size=1</Options></Widget></Row><Row></Row><Row><Name/><Widget><WidgetId>setup_text</WidgetId><Name>Click Begin Setup to finalize the installation of the Primary and Node codecs based on the details provided. </Name><Type>Text</Type><Options>size=4;fontSize=small;align=center</Options></Widget></Row><Row><Name/><Widget><WidgetId>dws_setup_begin</WidgetId><Name>Begin Setup</Name><Type>Button</Type><Options>size=4</Options></Widget></Row><Row></Row><Row><Name/><Widget><WidgetId>dws_back_setup</WidgetId><Name>Back</Name><Type>Button</Type><Options>size=2</Options></Widget><Widget><WidgetId>widget_310</WidgetId><Type>Spacer</Type><Options>size=2</Options></Widget></Row><PageId>setup_finish</PageId><Options>hideRowNames=0</Options></Page></Panel></Extensions>`;
+
+        // REDRAW PANEL TO NEXT PAGE
+        drawPanel(PANEL_SETUP);
+      }
+      else
+      {
+        // REDRAW PANEL TO NEXT PAGE
+        drawPanel(PANEL_NODE2);
+      }
     }
+    else if( event.Type == 'released' && event.WidgetId == 'dws_connect_node2' )
+    {
+      if (SETUP_VARIABLES['dws_setup_node2_host'] == undefined || SETUP_VARIABLES['dws_setup_node2_alias'] == undefined || SETUP_VARIABLES['dws_setup_node2_configuration'] == undefined || SETUP_VARIABLES['dws_setup_node2_presenter'] == undefined)
+      {
+        xapi.Command.UserInterface.Message.Alert.Display({ Duration: '10', Title:"Missing Configuration", Text: "Please set the host, alias, configuration and presenter camera option."});
+      }
+      else if ((SETUP_VARIABLES['dws_setup_node2_configuration'] == 'Codec Pro with One Screen' || SETUP_VARIABLES['dws_setup_node2_configuration'] == 'Codec Pro with Two Screens') && SETUP_VARIABLES['dws_setup_node2_presenter'] == 'IP')
+      {
+        xapi.Command.UserInterface.Message.Alert.Display({ Duration: '10', Title:"Invalid Configuration", Text: "The Codec Pro does not support Video over IP for Presenter PTZ."});
+      }
+      else if (SETUP_VARIABLES['dws_setup_node2_configuration'] == 'Codec EQ with Two Screens' && SETUP_VARIABLES['dws_setup_node2_presenter'] == 'HDMI')
+      {
+        xapi.Command.UserInterface.Message.Alert.Display({ Duration: '10', Title:"Invalid Configuration", Text: "The Codec EQ does not have sufficient inputs for dual display and HDMI presenter PTZ configuration."});
+      }
+      else
+      {
+        // CONNECT TO NODE FOR DETAILS
+        connectNode('2',SETUP_VARIABLES['dws_setup_node2_host'])
+
+        // REDRAW PANEL TO NEXT PAGE
+        drawPanel(PANEL_NODE2_DETAILS);
+      }      
+    }
+     else if( event.Type == 'released' && event.WidgetId == 'dws_next_node2_details' )
+    {
+      PANEL_SETUP = `<Extensions><Version>1.11</Version><Panel><Order>1</Order><PanelId>dws_wizard_new</PanelId><Origin>local</Origin><Location>HomeScreen</Location><Icon>Custom</Icon><Name>Setup Wizard</Name><ActivityType>Custom</ActivityType><CustomIcon><Content>${WIZARD_ICON}</Content><Id>4f0568a41894116ebce904f8b1004077281643ea28cba96d903078210e434757</Id></CustomIcon><Page><Name>Final Step</Name><Row><Name>Adv. Settings Lock PIN:</Name><Widget><WidgetId>dws_setup_advpin</WidgetId><Name>${SETUP_VARIABLES['dws_setup_advpin']}</Name><Type>Text</Type><Options>size=3;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_edit_advpin</WidgetId><Name>Edit</Name><Type>Button</Type><Options>size=1</Options></Widget></Row><Row></Row><Row><Name/><Widget><WidgetId>setup_text</WidgetId><Name>Click Begin Setup to finalize the installation of the Primary and Node codecs based on the details provided. </Name><Type>Text</Type><Options>size=4;fontSize=small;align=center</Options></Widget></Row><Row><Name/><Widget><WidgetId>dws_setup_begin</WidgetId><Name>Begin Setup</Name><Type>Button</Type><Options>size=4</Options></Widget></Row><Row></Row><Row><Name/><Widget><WidgetId>dws_back_setup</WidgetId><Name>Back</Name><Type>Button</Type><Options>size=2</Options></Widget><Widget><WidgetId>widget_310</WidgetId><Type>Spacer</Type><Options>size=2</Options></Widget></Row><PageId>setup_finish</PageId><Options>hideRowNames=0</Options></Page></Panel></Extensions>`;
+
+      // REDRAW PANEL TO NEXT PAGE
+      drawPanel(PANEL_SETUP);
+    }
+
     // BACK BUTTONS
-    else if( event.Type == 'released' && event.WidgetId == 'dws_setup_back2' )
+    else if( event.Type == 'released' && event.WidgetId == 'dws_back_primary' )
     {
-      xapi.Command.UserInterface.Extensions.Panel.Open( { PageId: 'setup_credentials', PanelId: 'dws_wizard' });
+      PANEL_COMMON = `<Extensions><Version>1.11</Version><Panel><Order>1</Order><PanelId>dws_wizard_new</PanelId><Origin>local</Origin><Location>HomeScreen</Location><Icon>Custom</Icon><Name>Setup Wizard</Name><ActivityType>Custom</ActivityType><CustomIcon><Content>${WIZARD_ICON}</Content><Id>4f0568a41894116ebce904f8b1004077281643ea28cba96d903078210e434757</Id></CustomIcon><Page><Name>Common Settings</Name><Row><Name>Divisible Room Type</Name><Widget><WidgetId>dws_setup_nway</WidgetId><Name>${SETUP_VARIABLES['dws_setup_nway']}</Name><Type>Text</Type><Options>size=3;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_edit_nway</WidgetId><Name>Edit</Name><Type>Button</Type><Options>size=1</Options></Widget></Row><Row><Name>Switch Type</Name><Widget><WidgetId>dws_setup_switchtype</WidgetId><Name>${SETUP_VARIABLES['dws_setup_switchtype']}</Name><Type>Text</Type><Options>size=3;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_edit_switchtype</WidgetId><Name>Edit</Name><Type>Button</Type><Options>size=1</Options></Widget></Row><Row><Name>Default Camera Automation</Name><Widget><WidgetId>dws_setup_automode</WidgetId><Name>${SETUP_VARIABLES['dws_setup_automode']}</Name><Type>Text</Type><Options>size=3;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_edit_automode</WidgetId><Name>Edit</Name><Type>Button</Type><Options>size=1</Options></Widget></Row><Row><Name>Common Node Username</Name><Widget><WidgetId>dws_setup_username</WidgetId><Name>${SETUP_VARIABLES['dws_setup_username']}</Name><Type>Text</Type><Options>size=3;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_edit_username</WidgetId><Name>Edit</Name><Type>Button</Type><Options>size=1</Options></Widget></Row><Row><Name>Common Node Password</Name><Widget><WidgetId>dws_setup_password</WidgetId><Name>${SETUP_VARIABLES['dws_setup_password']}</Name><Type>Text</Type><Options>size=3;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_edit_password</WidgetId><Name>Edit</Name><Type>Button</Type><Options>size=1</Options></Widget></Row><Row><Name/><Widget><WidgetId>dws_next_common</WidgetId><Name>Next</Name><Type>Button</Type><Options>size=2</Options></Widget></Row><PageId>setup_common</PageId><Options>hideRowNames=0</Options></Page></Panel></Extensions>`;
+
+      // REDRAW PANEL TO PREVIOUS PAGE
+      drawPanel(PANEL_COMMON);
     }
-    else if( event.Type == 'released' && event.WidgetId == 'dws_setup_back3' )
+    else if( event.Type == 'released' && event.WidgetId == 'dws_back_node1' )
     {
-      xapi.Command.UserInterface.Extensions.Panel.Open( { PageId: 'setup_primary_mics', PanelId: 'dws_wizard' });
+      PANEL_PRIMARY = "<Extensions><Version>1.11</Version><Panel><Order>2</Order><PanelId>dws_wizard</PanelId><Origin>local</Origin><Location>HomeScreen</Location><Icon>Custom</Icon><Name>Setup Wizard</Name><ActivityType>Custom</ActivityType><CustomIcon><Content>${WIZARD_ICON}</Content><Id>4f0568a41894116ebce904f8b1004077281643ea28cba96d903078210e434757</Id></CustomIcon><Page><Name>Select Presenter Microphone</Name><Row><Name/><Widget><WidgetId>widget_273</WidgetId><Name>Please select the Presenter Microphone for your workspace.</Name><Type>Text</Type><Options>size=4;fontSize=small;align=center</Options></Widget></Row><Row><Name>Available Microphones</Name><Widget><WidgetId>dws_setup_presenter_mic</WidgetId><Type>GroupButton</Type><Options>size=4;columns=2</Options><ValueSpace>";
+
+      // AUTOMATE THE CREATION OF OPTIONS BASED ON MICROPHONE COUNT
+      let COUNTER = 0;
+      SETUP_VARIABLES['dws_setup_primary_mics'].forEach(() => {
+        PANEL_PRIMARY += "<Value><Key>" + SETUP_VARIABLES['dws_setup_primary_mics'][COUNTER] + "</Key><Name>Eth " + (COUNTER+1) + ": " + SETUP_VARIABLES['dws_setup_primary_mics'][COUNTER] + "</Name></Value>";
+        COUNTER++;
+      });
+
+      PANEL_PRIMARY += '<Value><Key>USB</Key><Name>USB</Name></Value><Value><Key>Analog</Key><Name>Analog (All)</Name></Value></ValueSpace></Widget></Row><Row><Name/><Widget><WidgetId>dws_back_primary</WidgetId><Name>Back</Name><Type>Button</Type><Options>size=2</Options></Widget><Widget><WidgetId>dws_next_primary</WidgetId><Name>Next</Name><Type>Button</Type><Options>size=2</Options></Widget></Row><PageId>setup_primary</PageId><Options/></Page></Panel></Extensions>';
+
+      drawPanel(PANEL_PRIMARY);           
     }
-    else if( event.Type == 'released' && event.WidgetId == 'dws_setup_back4' )
+    else if( event.Type == 'released' && event.WidgetId == 'dws_back_node1_details' )
     {
-      xapi.Command.UserInterface.Extensions.Panel.Open( { PageId: 'setup_secondary_codec', PanelId: 'dws_wizard' });
+      PANEL_NODE1 = `<Extensions><Version>1.11</Version><Panel><Order>2</Order><PanelId>dws_wizard</PanelId><Origin>local</Origin><Location>HomeScreen</Location><Icon>Custom</Icon><Name>Setup Wizard</Name><ActivityType>Custom</ActivityType><CustomIcon><Content>${WIZARD_ICON}</Content><Id>4f0568a41894116ebce904f8b1004077281643ea28cba96d903078210e434757</Id></CustomIcon><Page><Name>Node 1 Settings</Name><Row><Name/><Widget><WidgetId>widget_193</WidgetId><Name>Enter the details for Node 1. The Node Alias will be used on the room control panel to provide a user friendly way to ensure the correct rooms are selected.</Name><Type>Text</Type><Options>size=4;fontSize=small;align=center</Options></Widget></Row><Row><Name>Node 1 IP or FQDN</Name><Widget><WidgetId>dws_setup_node1_host</WidgetId><Name>${SETUP_VARIABLES['dws_setup_node1_host']}</Name><Type>Text</Type><Options>size=3;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_edit_node1_host</WidgetId><Name>Edit</Name><Type>Button</Type><Options>size=1</Options></Widget></Row><Row><Name>Node 1 Alias</Name><Widget><WidgetId>dws_setup_node1_alias</WidgetId><Name>${SETUP_VARIABLES['dws_setup_node1_alias']}</Name><Type>Text</Type><Options>size=3;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_edit_node1_alias</WidgetId><Name>Edit</Name><Type>Button</Type><Options>size=1</Options></Widget></Row><Row><Name>Hardware Configuration</Name><Widget><WidgetId>dws_setup_node1_configuration</WidgetId><Name>${SETUP_VARIABLES['dws_setup_node1_configuration']}</Name><Type>Text</Type><Options>size=3;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_edit_node1_configuration</WidgetId><Name>Edit</Name><Type>Button</Type><Options>size=1</Options></Widget></Row><Row><Name>Presenter PTZ Type</Name><Widget><WidgetId>dws_setup_node1_presenter</WidgetId><Name>${SETUP_VARIABLES['dws_setup_node1_presenter']}</Name><Type>Text</Type><Options>size=3;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_edit_node1_presenter</WidgetId><Name>Edit</Name><Type>Button</Type><Options>size=1</Options></Widget></Row><Row><Name/><Widget><WidgetId>dws_back_node1</WidgetId><Name>Back</Name><Type>Button</Type><Options>size=2</Options></Widget><Widget><WidgetId>dws_connect_node1</WidgetId><Name>Connect</Name><Type>Button</Type><Options>size=2</Options></Widget></Row><PageId>setup_node1</PageId><Options/></Page></Panel></Extensions>`;
+
+      // REDRAW PANEL TO PREVIOUS PAGE
+      drawPanel(PANEL_NODE1);
     }
-    else if( event.Type == 'released' && event.WidgetId == 'dws_setup_back5' )
+    else if( event.Type == 'released' && event.WidgetId == 'dws_back_node2' )
     {
-      xapi.Command.UserInterface.Extensions.Panel.Open( { PageId: 'setup_secondary_mics', PanelId: 'dws_wizard' });
+      PANEL_NODE1 = `<Extensions><Version>1.11</Version><Panel><Order>2</Order><PanelId>dws_wizard</PanelId><Origin>local</Origin><Location>HomeScreen</Location><Icon>Custom</Icon><Name>Setup Wizard</Name><ActivityType>Custom</ActivityType><CustomIcon><Content>${WIZARD_ICON}</Content><Id>4f0568a41894116ebce904f8b1004077281643ea28cba96d903078210e434757</Id></CustomIcon><Page><Name>Node 1 Settings</Name><Row><Name/><Widget><WidgetId>widget_193</WidgetId><Name>Enter the details for Node 1. The Node Alias will be used on the room control panel to provide a user friendly way to ensure the correct rooms are selected.</Name><Type>Text</Type><Options>size=4;fontSize=small;align=center</Options></Widget></Row><Row><Name>Node 1 IP or FQDN</Name><Widget><WidgetId>dws_setup_node1_host</WidgetId><Name>${SETUP_VARIABLES['dws_setup_node1_host']}</Name><Type>Text</Type><Options>size=3;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_edit_node1_host</WidgetId><Name>Edit</Name><Type>Button</Type><Options>size=1</Options></Widget></Row><Row><Name>Node 1 Alias</Name><Widget><WidgetId>dws_setup_node1_alias</WidgetId><Name>${SETUP_VARIABLES['dws_setup_node1_alias']}</Name><Type>Text</Type><Options>size=3;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_edit_node1_alias</WidgetId><Name>Edit</Name><Type>Button</Type><Options>size=1</Options></Widget></Row><Row><Name>Hardware Configuration</Name><Widget><WidgetId>dws_setup_node1_configuration</WidgetId><Name>${SETUP_VARIABLES['dws_setup_node1_configuration']}</Name><Type>Text</Type><Options>size=3;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_edit_node1_configuration</WidgetId><Name>Edit</Name><Type>Button</Type><Options>size=1</Options></Widget></Row><Row><Name>Presenter PTZ Type</Name><Widget><WidgetId>dws_setup_node1_presenter</WidgetId><Name>${SETUP_VARIABLES['dws_setup_node1_presenter']}</Name><Type>Text</Type><Options>size=3;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_edit_node1_presenter</WidgetId><Name>Edit</Name><Type>Button</Type><Options>size=1</Options></Widget></Row><Row><Name/><Widget><WidgetId>dws_back_node1</WidgetId><Name>Back</Name><Type>Button</Type><Options>size=2</Options></Widget><Widget><WidgetId>dws_connect_node1</WidgetId><Name>Connect</Name><Type>Button</Type><Options>size=2</Options></Widget></Row><PageId>setup_node1</PageId><Options/></Page></Panel></Extensions>`;
+
+      // REDRAW PANEL TO PREVIOUS PAGE
+      drawPanel(PANEL_NODE1);
     }
-    else if( event.Type == 'released' && event.WidgetId == 'dws_setup_back6' )
+    else if( event.Type == 'released' && event.WidgetId == 'dws_back_node2_details' )
     {
-      xapi.Command.UserInterface.Extensions.Panel.Open( { PageId: 'setup_settings', PanelId: 'dws_wizard' });
+      PANEL_NODE2 = `<Extensions><Version>1.11</Version><Panel><Order>2</Order><PanelId>dws_wizard</PanelId><Origin>local</Origin><Location>HomeScreen</Location><Icon>Custom</Icon><Name>Setup Wizard</Name><ActivityType>Custom</ActivityType><CustomIcon><Content>${WIZARD_ICON}</Content><Id>4f0568a41894116ebce904f8b1004077281643ea28cba96d903078210e434757</Id></CustomIcon><Page><Name>Node 2 Settings</Name><Row><Name/><Widget><WidgetId>widget_193</WidgetId><Name>Enter the details for Node 2. The Node Alias will be used on the room control panel to provide a user friendly way to ensure the correct rooms are selected.</Name><Type>Text</Type><Options>size=4;fontSize=small;align=center</Options></Widget></Row><Row><Name>Node 2 IP or FQDN</Name><Widget><WidgetId>dws_setup_node2_host</WidgetId><Name>${SETUP_VARIABLES['dws_setup_node2_host']}</Name><Type>Text</Type><Options>size=3;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_edit_node2_host</WidgetId><Name>Edit</Name><Type>Button</Type><Options>size=1</Options></Widget></Row><Row><Name>Node 2 Alias</Name><Widget><WidgetId>dws_setup_node2_alias</WidgetId><Name>${SETUP_VARIABLES['dws_setup_node2_alias']}</Name><Type>Text</Type><Options>size=3;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_edit_node2_alias</WidgetId><Name>Edit</Name><Type>Button</Type><Options>size=1</Options></Widget></Row><Row><Name>Hardware Configuration</Name><Widget><WidgetId>dws_setup_node2_configuration</WidgetId><Name>${SETUP_VARIABLES['dws_setup_node2_configuration']}</Name><Type>Text</Type><Options>size=3;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_edit_node2_configuration</WidgetId><Name>Edit</Name><Type>Button</Type><Options>size=1</Options></Widget></Row><Row><Name>Presenter PTZ Type</Name><Widget><WidgetId>dws_setup_node2_presenter</WidgetId><Name>${SETUP_VARIABLES['dws_setup_node2_presenter']}</Name><Type>Text</Type><Options>size=3;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_edit_node2_presenter</WidgetId><Name>Edit</Name><Type>Button</Type><Options>size=1</Options></Widget></Row><Row><Name/><Widget><WidgetId>dws_back_node2</WidgetId><Name>Back</Name><Type>Button</Type><Options>size=2</Options></Widget><Widget><WidgetId>dws_connect_node2</WidgetId><Name>Connect</Name><Type>Button</Type><Options>size=2</Options></Widget></Row><PageId>setup_node2</PageId><Options/></Page></Panel></Extensions>`;
+
+      // REDRAW PANEL TO PREVIOUS PAGE
+      drawPanel(PANEL_NODE2);
+    }
+    else if( event.Type == 'released' && event.WidgetId == 'dws_back_setup' )
+    {
+      // N-WAY TYPE CHECK
+      if (SETUP_VARIABLES['dws_setup_nway'] == 'Two Way')
+      {
+        PANEL_NODE1 = `<Extensions><Version>1.11</Version><Panel><Order>2</Order><PanelId>dws_wizard</PanelId><Origin>local</Origin><Location>HomeScreen</Location><Icon>Custom</Icon><Name>Setup Wizard</Name><ActivityType>Custom</ActivityType><CustomIcon><Content>${WIZARD_ICON}</Content><Id>4f0568a41894116ebce904f8b1004077281643ea28cba96d903078210e434757</Id></CustomIcon><Page><Name>Node 1 Settings</Name><Row><Name/><Widget><WidgetId>widget_193</WidgetId><Name>Enter the details for Node 1. The Node Alias will be used on the room control panel to provide a user friendly way to ensure the correct rooms are selected.</Name><Type>Text</Type><Options>size=4;fontSize=small;align=center</Options></Widget></Row><Row><Name>Node 1 IP or FQDN</Name><Widget><WidgetId>dws_setup_node1_host</WidgetId><Name>${SETUP_VARIABLES['dws_setup_node1_host']}</Name><Type>Text</Type><Options>size=3;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_edit_node1_host</WidgetId><Name>Edit</Name><Type>Button</Type><Options>size=1</Options></Widget></Row><Row><Name>Node 1 Alias</Name><Widget><WidgetId>dws_setup_node1_alias</WidgetId><Name>${SETUP_VARIABLES['dws_setup_node1_alias']}</Name><Type>Text</Type><Options>size=3;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_edit_node1_alias</WidgetId><Name>Edit</Name><Type>Button</Type><Options>size=1</Options></Widget></Row><Row><Name>Hardware Configuration</Name><Widget><WidgetId>dws_setup_node1_configuration</WidgetId><Name>${SETUP_VARIABLES['dws_setup_node1_configuration']}</Name><Type>Text</Type><Options>size=3;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_edit_node1_configuration</WidgetId><Name>Edit</Name><Type>Button</Type><Options>size=1</Options></Widget></Row><Row><Name>Presenter PTZ Type</Name><Widget><WidgetId>dws_setup_node1_presenter</WidgetId><Name>${SETUP_VARIABLES['dws_setup_node1_presenter']}</Name><Type>Text</Type><Options>size=3;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_edit_node1_presenter</WidgetId><Name>Edit</Name><Type>Button</Type><Options>size=1</Options></Widget></Row><Row><Name/><Widget><WidgetId>dws_back_node1</WidgetId><Name>Back</Name><Type>Button</Type><Options>size=2</Options></Widget><Widget><WidgetId>dws_connect_node1</WidgetId><Name>Connect</Name><Type>Button</Type><Options>size=2</Options></Widget></Row><PageId>setup_node1</PageId><Options/></Page></Panel></Extensions>`;
+
+        // REDRAW PANEL TO PREVIOUS PAGE
+        drawPanel(PANEL_NODE1);
+      }
+      else
+      {
+        PANEL_NODE2 = `<Extensions><Version>1.11</Version><Panel><Order>2</Order><PanelId>dws_wizard</PanelId><Origin>local</Origin><Location>HomeScreen</Location><Icon>Custom</Icon><Name>Setup Wizard</Name><ActivityType>Custom</ActivityType><CustomIcon><Content>${WIZARD_ICON}</Content><Id>4f0568a41894116ebce904f8b1004077281643ea28cba96d903078210e434757</Id></CustomIcon><Page><Name>Node 2 Settings</Name><Row><Name/><Widget><WidgetId>widget_193</WidgetId><Name>Enter the details for Node 2. The Node Alias will be used on the room control panel to provide a user friendly way to ensure the correct rooms are selected.</Name><Type>Text</Type><Options>size=4;fontSize=small;align=center</Options></Widget></Row><Row><Name>Node 2 IP or FQDN</Name><Widget><WidgetId>dws_setup_node2_host</WidgetId><Name>${SETUP_VARIABLES['dws_setup_node2_host']}</Name><Type>Text</Type><Options>size=3;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_edit_node2_host</WidgetId><Name>Edit</Name><Type>Button</Type><Options>size=1</Options></Widget></Row><Row><Name>Node 2 Alias</Name><Widget><WidgetId>dws_setup_node2_alias</WidgetId><Name>${SETUP_VARIABLES['dws_setup_node2_alias']}</Name><Type>Text</Type><Options>size=3;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_edit_node2_alias</WidgetId><Name>Edit</Name><Type>Button</Type><Options>size=1</Options></Widget></Row><Row><Name>Hardware Configuration</Name><Widget><WidgetId>dws_setup_node2_configuration</WidgetId><Name>${SETUP_VARIABLES['dws_setup_node2_configuration']}</Name><Type>Text</Type><Options>size=3;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_edit_node2_configuration</WidgetId><Name>Edit</Name><Type>Button</Type><Options>size=1</Options></Widget></Row><Row><Name>Presenter PTZ Type</Name><Widget><WidgetId>dws_setup_node2_presenter</WidgetId><Name>${SETUP_VARIABLES['dws_setup_node2_presenter']}</Name><Type>Text</Type><Options>size=3;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_edit_node2_presenter</WidgetId><Name>Edit</Name><Type>Button</Type><Options>size=1</Options></Widget></Row><Row><Name/><Widget><WidgetId>dws_back_node2</WidgetId><Name>Back</Name><Type>Button</Type><Options>size=2</Options></Widget><Widget><WidgetId>dws_connect_node2</WidgetId><Name>Connect</Name><Type>Button</Type><Options>size=2</Options></Widget></Row><PageId>setup_node2</PageId><Options/></Page></Panel></Extensions>`;
+
+        // REDRAW PANEL TO PREVIOUS PAGE
+        drawPanel(PANEL_NODE2);
+      }
     }
     else if( event.Type == 'released' && event.WidgetId == 'dws_setup_begin' )
     {
-      // CHECK SETUP IS SUFFICIENTLY COMPLETED BY PAGE
-      if ( SETUP_VARIABLES['dws_setup_switchtype'] == undefined || SETUP_VARIABLES['dws_setup_automode'] == undefined || SETUP_VARIABLES['dws_setup_advpin'] == undefined)
+      if(SETUP_VARIABLES['dws_setup_advpin'] == undefined)
       {
-        xapi.Command.UserInterface.Message.Alert.Display({ Duration: '5', Title:"Missing Variables", Text: "Please ensure a Switch type, Automation Mode, and PIN are entered."});
-        xapi.Command.UserInterface.Extensions.Panel.Open( { PageId: 'setup_credentials', PanelId: 'dws_wizard' });
-        console.log("DWS: Missing Variables. Prompting User to enter required details.");
-        return;
-      }
-      else if(SETUP_VARIABLES['dws_setup_primic_1'] == undefined || SETUP_VARIABLES['dws_setup_primic_pres'] == undefined)
-      {
-        xapi.Command.UserInterface.Message.Alert.Display({ Duration: '5', Title:"Missing Variables", Text: "Please configure at least one Primary Microphone and the Presenter Microphone Serial Number."});
-        xapi.Command.UserInterface.Extensions.Panel.Open( { PageId: 'setup_primary_mics', PanelId: 'dws_wizard' });
-        console.log("DWS: Missing Variables. Prompting User to enter required details.");
-        return;
-      }
-      else if (SETUP_VARIABLES['dws_setup_sec_host'] == undefined || SETUP_VARIABLES['dws_setup_sec_screens'] == undefined || SETUP_VARIABLES['dws_setup_username'] == undefined || SETUP_VARIABLES['dws_setup_password'] == undefined)
-      {
-        xapi.Command.UserInterface.Message.Alert.Display({ Duration: '5', Title:"Missing Variables", Text: "Please set the Host, # of Displays, Username and Password"});
-        xapi.Command.UserInterface.Extensions.Panel.Open( { PageId: 'setup_secondary_codec', PanelId: 'dws_wizard' });
-        console.log("DWS: Missing Variables. Prompting User to enter required details.");
-        return;
-      }      
-      else if(SETUP_VARIABLES['dws_setup_secmic_1'] == undefined)
-      {
-        xapi.Command.UserInterface.Message.Alert.Display({ Duration: '5', Title:"Missing Variables", Text: "Please configure at least one Secondary Microphone Serial Number."});
-        xapi.Command.UserInterface.Extensions.Panel.Open( { PageId: 'setup_secondary_mics', PanelId: 'dws_wizard' });
-        console.log("DWS: Missing Variables. Prompting User to enter required details.");
-        return;
-      }
-      else if (SETUP_VARIABLES['dws_setup_sec_control'] == undefined )
-      {
-        xapi.Command.UserInterface.Message.Alert.Display({ Duration: '5', Title:"Missing Variables", Text: "Please configure the Secondary Room Control Navigator."});
-        xapi.Command.UserInterface.Extensions.Panel.Open( { PageId: 'setup_settings', PanelId: 'dws_wizard' });
-        console.log("DWS: Missing Variables. Prompting User to enter required details.");
+        xapi.Command.UserInterface.Message.Alert.Display({ Duration: '5', Title:"Missing Configuration", Text: "Please configure the Advanced Settings Lock PIN."});
         return;
       }
 
       console.log ('DWS: Beginning Divisible Workspace Initilization.');
-      
+
+      // ONLY STORE THE BASE64 USERNAME:PASSWORD
+      SETUP_VARIABLES['dws_setup_login'] = btoa(`${SETUP_VARIABLES['dws_setup_username']}:${SETUP_VARIABLES['dws_setup_password']}`);
+
       // GET PRODUCT PLATFORM THEN CONTINUE
       xapi.Status.SystemUnit.ProductPlatform.get()
       .then ((productPlatform) => {
-
-        // ALLOW FOR UNDEFINED SCHEDULER PANEL
-        if(SETUP_VARIABLES['dws_setup_sec_scheduler'] == undefined)
-        {
-          SETUP_VARIABLES['dws_setup_sec_scheduler'] = '';
-        }
-
-        let COMBINED_PRI_MICS = [SETUP_VARIABLES['dws_setup_primic_1']];
-        let COMBINED_SEC_MICS = [SETUP_VARIABLES['dws_setup_secmic_1']];
-
-        // CHECK FOR BLANK MICROPHONE ENTRIES AND ENTER THEM AS ONE
-        if (SETUP_VARIABLES['dws_setup_primic_2'] != null)
-        {
-          COMBINED_PRI_MICS.push(SETUP_VARIABLES['dws_setup_primic_2'])
-        }
-        if (SETUP_VARIABLES['dws_setup_primic_3'] != null)
-        {
-          COMBINED_PRI_MICS.push(SETUP_VARIABLES['dws_setup_primic_3'])
-        }
-
-        // CHECK FOR BLANK MICROPHONE ENTRIES AND ENTER THEM AS ONE
-        if (SETUP_VARIABLES['dws_setup_secmic_2'] != null)
-        {
-          COMBINED_SEC_MICS.push(SETUP_VARIABLES['dws_setup_secmic_2'])
-        }
-        if (SETUP_VARIABLES['dws_setup_secmic_3'] != null)
-        {
-          COMBINED_SEC_MICS.push(SETUP_VARIABLES['dws_setup_secmic_3'])
-        }
-        if (SETUP_VARIABLES['dws_setup_secmic_4'] != null)
-        {
-          COMBINED_SEC_MICS.push(SETUP_VARIABLES['dws_setup_secmic_4'])
-        }
-
-        // CHECK AUTOMATION MODE FOR PANDA
-        if (SETUP_VARIABLES['dws_setup_automode'] == 'panda')
-        {
-          SETUP_VARIABLES['dws_setup_automode'] = 'off';
-          SETUP_VARIABLES['dws_setup_panda'] = 'on';
-        }
-        else{
-          SETUP_VARIABLES['dws_setup_panda'] = 'off';
-        }
-
+ 
+        // LOAD SETUP MACROS
         loadMacros()
         .then (result => {
 
-          // LOAD SETUP MACRO FROM GITHUB
           if (result)
           {
-            // CREATE MACRO BODY
+            // CREATE CONFIG MACRO BODY
             const dataStr = `
 /*========================================================================//
-This file is part of the "Divisible Workspace" blueprint for Two-Way 
-Divisible Rooms leveraging Cisco IP Microphones.
+This file is part of the "Divisible Workspace" blueprint for Two-Way and
+Three-Way Divisible Rooms leveraging Cisco IP Microphones.
 
 Macro Author:  
 Mark Lula
@@ -327,71 +538,101 @@ Robert(Bobby) McGonigle Jr
 Chase Voisin
 William Mills
 
-Version: 0.9.2 (BETA)
-Released: 04/04/2025
+Version: 0.9.3 (BETA)
 
 Complete details for this macro are available on Github:
 https://cs.co/divisibleworkspaceblueprint
 
 //=========================================================================//
-//                     **** DO NOT EDIT BELOW HERE ****                    //
+//                        **** ADMIN SETTINGS ****                         //
 //=========================================================================*/
 
 // ENABLE OR DISABLE ADDITIONAL "DEBUG" LEVEL CONSOLE OUTPUT
-// ACCEPTED VALUES: 'true', 'false'
-
-const DEBUG = 'true'; 
+// TRACKING DEBUG PROVIDES MICROPHONE ACTIVITY "DEBUG" DURING COMBINED CALLS
+// ACCEPTED VALUES: true, false
+const DEBUG = true; 
+const TRACKING_DEBUG = false;
 
 // ONLY CHANGE IF YOU ARE NOT USING THE DEFAULT U:P IN USB CONFIGURATION FILE
 const SWITCH_USERNAME = 'dwsadmin';
 const SWITCH_PASSWORD = 'D!vi$ible1';
 
-// ONLY CHANGE TO TWEAK AZM TRIGGER LEVELS
-const MICS_HIGH = '35';
-const MICS_LOW = '30';
+// ENABLE OR DISABLE THE COMBINED ROOM BANNER ON DISPLAYS
+// ACCEPTED VALUES: 'true', 'false'
+const COMBINED_BANNER = true;
 
 //=========================================================================//
 //                     **** DO NOT EDIT BELOW HERE ****                    //
 //=========================================================================*/
 
+const NWAY = ${JSON.stringify(SETUP_VARIABLES['dws_setup_nway'], null, 2)};
 const SWITCH_TYPE = ${JSON.stringify(SETUP_VARIABLES['dws_setup_switchtype'], null, 2)};
-const MACRO_USERNAME = ${JSON.stringify(SETUP_VARIABLES['dws_setup_username'], null, 2)};
-const MACRO_PASSWORD = ${JSON.stringify(SETUP_VARIABLES['dws_setup_password'], null, 2)};
-const SECONDARY_HOST = ${JSON.stringify(SETUP_VARIABLES['dws_setup_sec_host'], null, 2)};     
-const SECONDARY_SCREENS = ${JSON.stringify(SETUP_VARIABLES['dws_setup_sec_screens'], null, 2)};            
-const SECONDARY_NAV_CONTROL = ${JSON.stringify(SETUP_VARIABLES['dws_setup_sec_control'], null, 2)};
-const SECONDARY_NAV_SCHEDULER = ${JSON.stringify(SETUP_VARIABLES['dws_setup_sec_scheduler'], null, 2)};
-const PRESENTER_MIC = ${JSON.stringify(SETUP_VARIABLES['dws_setup_primic_pres'], null, 2)};
-const PRIMARY_MICS = ${JSON.stringify(COMBINED_PRI_MICS, null, 2)};
-const SECONDARY_MICS = ${JSON.stringify(COMBINED_SEC_MICS, null, 2)};
+const MACRO_LOGIN = ${JSON.stringify(SETUP_VARIABLES['dws_setup_login'], null, 2)};
+const NODE1_HOST = ${JSON.stringify(SETUP_VARIABLES['dws_setup_node1_host'], null, 2)};
+const NODE1_ALIAS = ${JSON.stringify(SETUP_VARIABLES['dws_setup_node1_alias'], null, 2)};     
+const NODE1_DISPLAYS = ${JSON.stringify(SETUP_VARIABLES['dws_setup_node1_displays'], null, 2)};
+const NODE1_PRESENTER = ${JSON.stringify(SETUP_VARIABLES['dws_setup_node1_presenter'], null, 2)};               
+const NODE1_NAV_CONTROL = ${JSON.stringify(SETUP_VARIABLES['dws_setup_node1_control'], null, 2)};
+const NODE1_NAV_SCHEDULER = ${JSON.stringify(SETUP_VARIABLES['dws_setup_node1_scheduler'], null, 2)};
+const NODE2_HOST = ${JSON.stringify(SETUP_VARIABLES['dws_setup_node2_host'], null, 2)}; 
+const NODE2_ALIAS = ${JSON.stringify(SETUP_VARIABLES['dws_setup_node2_alias'], null, 2)};    
+const NODE2_DISPLAYS = ${JSON.stringify(SETUP_VARIABLES['dws_setup_node2_displays'], null, 2)}; 
+const NODE2_PRESENTER = ${JSON.stringify(SETUP_VARIABLES['dws_setup_node2_presenter'], null, 2)};           
+const NODE2_NAV_CONTROL = ${JSON.stringify(SETUP_VARIABLES['dws_setup_node2_control'], null, 2)};
+const NODE2_NAV_SCHEDULER = ${JSON.stringify(SETUP_VARIABLES['dws_setup_node2_scheduler'], null, 2)};
+const PRESENTER_MIC = ${JSON.stringify(SETUP_VARIABLES['dws_setup_presenter_mic'], null, 2)};
+const PRESENTER_USB = ${JSON.stringify(SETUP_VARIABLES['dws_setup_mics_usb'], null, 2)};
+const PRESENTER_ANALOG = ${JSON.stringify(SETUP_VARIABLES['dws_setup_mics_analog'], null, 2)};
+const PRIMARY_MICS = ${JSON.stringify(SETUP_VARIABLES['dws_setup_primary_mics'], null, 2)};
+const NODE1_MICS = [${SETUP_VARIABLES['dws_setup_node1_mics']}];
+const NODE2_MICS = [${SETUP_VARIABLES['dws_setup_node2_mics']}];
 const AUTOMODE_DEFAULT = ${JSON.stringify(SETUP_VARIABLES['dws_setup_automode'], null, 2)};
-const PANDA_DEFAULT = ${JSON.stringify(SETUP_VARIABLES['dws_setup_panda'], null, 2)};
-const UNLOCK_PIN = ${JSON.stringify(SETUP_VARIABLES['dws_setup_advpin'], null, 2)};      
+const UNLOCK_PIN = ${JSON.stringify(SETUP_VARIABLES['dws_setup_advpin'], null, 2)};
 const PRIMARY_VLAN = '100';
-const SECONDARY_VLAN = '200';
+const NODE1_VLAN = '200';
+const NODE2_VLAN = '300';
 const PLATFORM = '${productPlatform}';
+const MICS_HIGH_PRI = 30;
+const MICS_HIGH_NODE1 = 30;
+const MICS_HIGH_NODE2 = 30;
+const PRIMARY_DELAY = 0;
 
 export default {
+  COMBINED_BANNER,
   DEBUG,
+  TRACKING_DEBUG,
+  NWAY,
   SWITCH_USERNAME,
   SWITCH_PASSWORD, 
-  MACRO_USERNAME, 
-  MACRO_PASSWORD, 
+  MACRO_LOGIN,
   SWITCH_TYPE, 
-  SECONDARY_HOST, 
-  SECONDARY_NAV_CONTROL, 
-  SECONDARY_NAV_SCHEDULER, 
-  SECONDARY_SCREENS,
+  NODE1_HOST, 
+  NODE1_ALIAS,
+  NODE1_DISPLAYS,
+  NODE1_PRESENTER,
+  NODE1_NAV_CONTROL, 
+  NODE1_NAV_SCHEDULER,
+  NODE2_HOST, 
+  NODE2_ALIAS,
+  NODE2_DISPLAYS,
+  NODE2_PRESENTER,
+  NODE2_NAV_CONTROL, 
+  NODE2_NAV_SCHEDULER,   
   PRESENTER_MIC, 
+  PRESENTER_USB,
+  PRESENTER_ANALOG,
   PRIMARY_MICS, 
-  SECONDARY_MICS,
-  MICS_HIGH,
-  MICS_LOW,
+  NODE1_MICS,
+  NODE2_MICS,
+  MICS_HIGH_PRI,
+  MICS_HIGH_NODE1,
+  MICS_HIGH_NODE2,
+  PRIMARY_DELAY,
   AUTOMODE_DEFAULT,
-  PANDA_DEFAULT,
   UNLOCK_PIN,  
   PRIMARY_VLAN, 
-  SECONDARY_VLAN,
+  NODE1_VLAN,
+  NODE2_VLAN,
   PLATFORM
 };`;
             // SAVE CONFIG MACRO
@@ -447,6 +688,14 @@ async function updateWidget(widgetId, value)
     {
       SETUP_VARIABLES[widgetId] = 'C9K-24P';
     }
+    else if (value == 'Dual Screen')
+    {
+      SETUP_VARIABLES[widgetId] = '2';
+    }
+    else if (value == 'One Screen')
+    {
+      SETUP_VARIABLES[widgetId] = '1';
+    }
     // STORE ALL OTHER ENTERED DATA INTO THE SETUP ARRAY
     else
     {
@@ -466,87 +715,269 @@ async function loadMacros()
   let coreMacro = '';
   let azmLoaded = false;
   let azmMacro = '';
+  let imagesLoaded = false;
+  let imagesMacro = '';
 
-  // DOWNLOAD THE MACROS
-  try {
-    const getSetup = await xapi.Command.HttpClient.Get({ Url:'https://raw.githubusercontent.com/DevicesCoe/DivisibleWorkspaceBlueprint/refs/heads/main/macros/DWS_Setup.js' })
-      .then( result => {
-        console.debug("DWS: Setup Macro Downloaded Successfully.");
-        setupMacro = result.Body;
-        setupLoaded = true;
-      })
-      .catch (e => {
-        console.warn('DWS: Setup Macro URL not found.');
-      });      
-    
-  } catch (e) {
-    console.warn('DWS: Unable to reach GitHub for Setup Macro.');
-  }
-
-  // LOAD CORE MACRO FROM GITHUB
-  try {
-    const getCore = await xapi.Command.HttpClient.Get({ Url:'https://raw.githubusercontent.com/DevicesCoe/DivisibleWorkspaceBlueprint/refs/heads/main/macros/DWS_Core.js' })
-      .then( result => {
-        console.debug("DWS: Core Macro Downloaded Successfully.");
-        coreMacro = result.Body;
-        coreLoaded = true;
-      })
-      .catch (e => {
-        console.warn('DWS: Core Macro URL not found.');
-      });      
-    
-  } catch (e) {
-    console.warn('DWS: Unable to reach GitHub for Core Macro.');
-  }
-
-  // LOAD AZM MACRO FROM GITHUB
-  try {
-    const getAZM = await xapi.Command.HttpClient.Get({ Url: 'https://raw.githubusercontent.com/DevicesCoe/DivisibleWorkspaceBlueprint/refs/heads/main/macros/DWS_AZM_Lib.js' })
-      .then( result => {
-        console.debug("DWS: AZM Macro Downloaded Successfully.");
-        azmMacro = result.Body;
-        azmLoaded = true;
-      })
-      .catch (e => {
-        console.warn('DWS: AZM Macro URL not found.');
-      });    
-    
-  } catch (e) {
-    console.warn('DWS: Unable to reach GitHub for AZM Library.')
-  }
-
-  if (setupLoaded && coreLoaded && azmLoaded)
+  if(LOADED_MACROS.includes('DWS_Setup') && LOADED_MACROS.includes('DWS_Core') && LOADED_MACROS.includes('DWS_AZM_Lib') && LOADED_MACROS.includes('DWS_Images'))
   {
-    console.log("DWS: All Macros Downloaded Successfully from GitHub.");
-
-    // LOAD THE SETUP MACRO
-    xapi.Command.Macros.Macro.Save({ Name: 'DWS_Setup', Overwrite: 'True' }, setupMacro)
-    .then (() => {
-      console.debug ("DWS: Setup Macro saved to Primary successfully.");
-    })
-
-    // LOAD THE CORE MACRO
-    xapi.Command.Macros.Macro.Save({ Name: 'DWS_Core', Overwrite: 'True' }, coreMacro)
-    .then (() => {
-      console.debug ("DWS: Core Macro saved to Primary successfully.");
-    })
-
-    // LOAD THE AZM LIB MACRO
-    xapi.Command.Macros.Macro.Save({ Name: 'DWS_AZM_Lib', Overwrite: 'True' }, azmMacro)
-    .then (() => {
-      console.debug ("DWS: AZM Lib Macro saved to Primary successfully.");
-    })
-
+    console.debug ("DWS: All required Macro files present. Performing local install.")
     return true;
   }
   else
   {
-    return false;
+    // LOAD SETUP MACRO FROM GITHUB
+    const getSetup = await xapi.Command.HttpClient.Get({ Url:'https://raw.githubusercontent.com/DevicesCoe/DivisibleWorkspaceBlueprint/refs/heads/main/macros/DWS_Setup.js' })
+    .then( result => {
+      console.debug("DWS: Setup Macro Downloaded Successfully.");
+      setupMacro = result.Body;
+      setupLoaded = true;
+    })
+    .catch (e => {
+      console.warn('DWS: Setup Macro URL not found.');
+    });
+
+    // LOAD IMAGES MACRO FROM GITHUB
+    const getImages = await xapi.Command.HttpClient.Get({ Url:'https://raw.githubusercontent.com/DevicesCoe/DivisibleWorkspaceBlueprint/refs/heads/main/macros/DWS_Images.js' })
+    .then( result => {
+      console.debug("DWS: Images Macro Downloaded Successfully.");
+      imagesMacro = result.Body;
+      imagesLoaded = true;
+    })
+    .catch (e => {
+      console.warn('DWS: Images Macro URL not found.');
+    });
+
+    // LOAD CORE MACRO FROM GITHUB
+    const getCore = await xapi.Command.HttpClient.Get({ Url:'https://raw.githubusercontent.com/DevicesCoe/DivisibleWorkspaceBlueprint/refs/heads/main/macros/DWS_Core.js' })
+    .then( result => {
+      console.debug("DWS: Core Macro Downloaded Successfully.");
+      coreMacro = result.Body;
+      coreLoaded = true;
+    })
+    .catch (e => {
+      console.warn('DWS: Core Macro URL not found.');
+    });
+
+    // LOAD AZM MACRO FROM GITHUB
+    const getAZM = await xapi.Command.HttpClient.Get({ Url: 'https://raw.githubusercontent.com/DevicesCoe/DivisibleWorkspaceBlueprint/refs/heads/main/macros/DWS_AZM_Lib.js' })
+    .then( result => {
+      console.debug("DWS: AZM Macro Downloaded Successfully.");
+      azmMacro = result.Body;
+      azmLoaded = true;
+    })
+    .catch (e => {
+      console.warn('DWS: AZM Macro URL not found.');
+    });
+
+    if (setupLoaded && coreLoaded && azmLoaded && imagesLoaded)
+    {
+      console.log("DWS: All Macros Downloaded Successfully from GitHub.");
+
+      // LOAD THE SETUP MACRO
+      xapi.Command.Macros.Macro.Save({ Name: 'DWS_Setup', Overwrite: 'True' }, setupMacro)
+      .then (() => {
+        console.debug ("DWS: Setup Macro saved to Primary successfully.");
+      })
+
+      // LOAD THE SETUP MACRO
+      xapi.Command.Macros.Macro.Save({ Name: 'DWS_Images', Overwrite: 'True' }, imagesMacro)
+      .then (() => {
+        console.debug ("DWS: Images Macro saved to Primary successfully.");
+      })
+
+      // LOAD THE CORE MACRO
+      xapi.Command.Macros.Macro.Save({ Name: 'DWS_Core', Overwrite: 'True' }, coreMacro)
+      .then (() => {
+        console.debug ("DWS: Core Macro saved to Primary successfully.");
+      })
+
+      // LOAD THE AZM LIB MACRO
+      xapi.Command.Macros.Macro.Save({ Name: 'DWS_AZM_Lib', Overwrite: 'True' }, azmMacro)
+      .then (() => {
+        console.debug ("DWS: AZM Lib Macro saved to Primary successfully.");
+      })
+
+      return true;
+    }
+    else
+    {
+      return false;
+    }
   }
 }
 
+function drawPanel(panelname)
+{
+  xapi.Command.UserInterface.Extensions.Panel.Save({PanelId: 'dws_wizard'}, panelname)
+  .catch(e => console.log('Error saving panel: ' + e.message))
+}
+
+function connectNode(node,host)
+{
+  let Params = {};
+  Params.Timeout = 5;
+  Params.AllowInsecureHTTPS = 'True';
+  Params.ResultBody = 'PlainText';
+  Params.Url = `https://${host}/getxml?location=Status/Peripherals/ConnectedDevice`;
+  Params.Header = ['Authorization: Basic ' + btoa(`${SETUP_VARIABLES['dws_setup_username']}:${SETUP_VARIABLES['dws_setup_password']}`), 'Content-Type: application/json']; 
+
+  xapi.Command.HttpClient.Get(Params)
+  .then(response => {
+
+    const NODE1_MICS = [];
+    const NODE2_MICS = [];
+
+    console.log(`DWS: Connected to ${host} successfully`);
+  
+    const devicesArray = extractDevices(response.Body);
+
+    // Extract only the desired fields
+    const filteredDevices = devicesArray.map(device => ({
+      ID: device.ID || null,
+      Type: device.Type || null,
+      SerialNumber: device.SerialNumber || null,
+      Role: device.Role || null
+    }));
+
+    if (node == '1')
+    {
+      filteredDevices.forEach(device => {       
+
+        // AGGREGATE MICROPHONE SERIALS
+        if (device.Type == 'AudioMicrophone')
+        {
+          NODE1_MICS.push(JSON.stringify(device.SerialNumber,null,2));
+        }
+        // STORE CONTROL MAC ADDRESS
+        else if (device.Type == 'TouchPanel' && device.Role == 'Controller')
+        {
+          SETUP_VARIABLES['dws_setup_node1_control'] = device.ID;
+
+          // UPDATE PANEL DETAILS TO SHOW NEW VALUE
+          updateWidget('dws_setup_node1_control', device.ID);
+        }
+        // STORE SCHEDULER MAC ADDRESS
+        else if (device.Type == 'RoomScheduler' && device.Role == 'Scheduler')
+        {
+          SETUP_VARIABLES['dws_setup_node1_scheduler'] = device.ID;
+
+          // UPDATE PANEL DETAILS TO SHOW NEW VALUE
+          updateWidget('dws_setup_node1_scheduler', device.ID);
+        }
+      });
+      
+      SETUP_VARIABLES['dws_setup_node1_mics'] = NODE1_MICS;
+
+      // UPDATE PANEL DETAILS TO SHOW NEW VALUES
+      updateWidget('dws_setup_node1_host', host);
+      updateWidget('dws_setup_node1_mics', NODE1_MICS.toString());
+    }
+    else if (node == '2')
+    {
+      filteredDevices.forEach(device => {
+
+        // AGGREGATE MICROPHONE SERIALS
+        if (device.Type == 'AudioMicrophone')
+        {
+          NODE2_MICS.push(JSON.stringify(device.SerialNumber,null,2));
+        }
+        // STORE CONTROL MAC ADDRESS
+        else if (device.Type == 'TouchPanel' && device.Role == 'Controller')
+        {
+          SETUP_VARIABLES['dws_setup_node2_control'] = device.ID;
+
+          // UPDATE PANEL DETAILS TO SHOW NEW VALUE
+          updateWidget('dws_setup_node2_control', device.ID);
+        }
+        // STORE SCHEDULER MAC ADDRESS
+        else if (device.Type == 'RoomScheduler' && device.Role == 'Scheduler')
+        {
+          SETUP_VARIABLES['dws_setup_node2_scheduler'] = device.ID;
+
+          // UPDATE PANEL DETAILS TO SHOW NEW VALUE
+          updateWidget('dws_setup_node2_scheduler', device.ID);
+        } 
+      });
+
+      SETUP_VARIABLES['dws_setup_node2_mics'] = NODE2_MICS;
+
+      // UPDATE PANEL DETAILS TO SHOW NEW VALUES
+      updateWidget('dws_setup_node2_host', host);
+      updateWidget('dws_setup_node2_mics', NODE2_MICS.toString());
+    }
+  })
+  .catch((error) => {
+    console.error('DWS: Error connecting to Node Codec:', error);
+
+    // ALERT THE USER AND RETURN THEM TO THE CONNECT PAGE
+    xapi.Command.UserInterface.Message.Alert.Display({ Duration: '10', Title:"Connect Error", Text: "Please confirm your Node codec details."});
+    
+    if(node == '1')
+    {
+      drawPanel(PANEL_NODE1);
+    }
+    else
+    {
+      drawPanel(PANEL_NODE2);
+    }
+  });
+
+}
+
+function extractDevices(xml) {
+  xml = xml.replace(/<\?xml.*\?>/, '');
+
+  const deviceRegex = /<ConnectedDevice [^>]*>([\s\S]*?)<\/ConnectedDevice>/g;
+  let match;
+  const devices = [];
+
+  while ((match = deviceRegex.exec(xml)) !== null) {
+    const deviceXml = match[1];
+    const device = {};
+
+    // Match all simple tags inside ConnectedDevice
+    const tagRegex = /<(\w+)>([\s\S]*?)<\/\1>/g;
+    let tagMatch;
+    while ((tagMatch = tagRegex.exec(deviceXml)) !== null) {
+      const tag = tagMatch[1];
+      let value = tagMatch[2].trim();
+
+      // Parse numbers if applicable
+      if (!isNaN(value) && value !== '') {
+        value = Number(value);
+      }
+      device[tag] = value;
+    }
+
+    // Extract item attribute
+    const itemMatch = /item="(\d+)"/.exec(match[0]);
+    if (itemMatch) device.item = itemMatch[1];
+
+    devices.push(device);
+  }
+
+  return devices;
+}
+
 // LONG VARIABLE STORAGE
-const WIZARD_ICON = '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';
+const WIZARD_ICON = 'iVBORw0KGgoAAAANSUhEUgAABAAAAAQACAYAAAB/HSuDAAAAAXNSR0IArs4c6QAAIABJREFUeF7s3W2MnWd9P/h75jgPjpNxZjhOS7dK9F/yl1oErwKJ4xjLL4pnBkWNxMZO0jeNlPgBP2ZKqaBdbaNula0UREqKQwNEgLoqFEdZ/myFE15laUpS1K602wLaStVCVYEU3JAHSACfOWf3Nj7mODO25+G+7nM9fCz5BeGc6/79Pr/L9pzvuc91Jiq/CBAgQIAAAQIECBAgQIAAgewFJrLvUIMECBAgQIAAAQIECBAgQIBAJQCwCQgQIECAAAECBAgQIECAQAECAoAChqxFAgQIECBAgAABAgQIECAgALAHCBAgQIAAAQIECBAgQIBAAQICgAKGrEUCBAgQIECAAAECBAgQICAAsAcIECBAgAABAgQIECBAgEABAgKAAoasRQIECBAgQIAAAQIECBAgIACwBwgQIECAAAECBAgQIECAQAECAoAChqxFAgQIECBAgAABAgQIECAgALAHCBAgQIAAAQIECBAgQIBAAQICgAKGrEUCBAgQIECAAAECBAgQICAAsAcIECBAgAABAgQIECBAgEABAgKAAoasRQIECBAgQIAAAQIECBAgIACwBwgQIECAAAECBAgQIECAQAECAoAChqxFAgQIECBAgAABAgQIECAgALAHCBAgQIAAAQIECBAgQIBAAQICgAKGrEUCBAgQIECAAAECBAgQICAAsAcIECBAgAABAgQIECBAgEABAgKAAoasRQIECBAgQIAAAQIECBAgIACwBwgQIECAAAECBAgQIECAQAECAoAChqxFAgQIECBAgAABAgQIECAgALAHCBAgQIAAAQIECBAgQIBAAQICgAKGrEUCBAgQIECAAAECBAgQICAAsAcIECBAgAABAgQIECBAgEABAgKAAoasRQIECBAgQIAAAQIECBAgIACwBwgQIECAAAECBAgQIECAQAECAoAChqxFAgQIECBAgAABAgQIECAgALAHCBAgQIAAAQIECBAgQIBAAQICgAKGrEUCBAgQIECAAAECBAgQICAAsAcIECBAgAABAgQIECBAgEABAgKAAoasRQIECBAgQIAAAQIECBAgIACwBwgQIECAAAECBAgQIECAQAECAoAChqxFAgQIECBAgAABAgQIECAgALAHCBAgQIAAAQIECBAgQIBAAQICgAKGrEUCBAgQIECAAAECBAgQICAAsAcIECBAgAABAgQIECBAgEABAgKAAoasRQIECBAgQIAAAQIECBAgIACwBwgQIECAAAECBAgQIECAQAECAoAChqxFAgQIECBAgAABAgQIECAgALAHCBAgQIAAAQIECBAgQIBAAQICgAKGrEUCBAgQIECAAAECBAgQICAAsAcIECBAgAABAgQIECBAgEABAgKAAoasRQIECBAgQIAAAQIECBAgIACwBwgQIECAAAECBAgQIECAQAECAoAChqxFAgQIECBAgAABAgQIECAgALAHCBAgQIAAAQIECBAgQIBAAQICgAKGrEUCBAgQIECAAAECBAgQICAAsAcIECBAgAABAgQIECBAgEABAgKAAoasRQIECBAgQIAAAQIECBAgIACwBwgQIECAAAECBAgQIECAQAECAoAChqxFAgQIECBAgAABAgQIECAgALAHCBAgQIAAAQIECBAgQIBAAQICgAKGrEUCBAgQIECAAAECBAgQICAAsAcIECBAgAABAgQIECBAgEABAgKAAoasRQIECBAgQIAAAQIECBAgIACwBwgQIECAAAECBAgQIECAQAECAoAChqxFAgQIECBAgAABAgQIECAgALAHCBAgQIAAAQIECBAgQIBAAQICgAKGrEUCBAgQIECAAAECBAgQICAAsAcIECBAgAABAgQIECBAgEABAgKAAoasRQIECBAgQIAAAQIECBAgIACwBwgQIECAAAECBAgQIECAQAECAoAChqxFAgQIECBAgAABAgQIECAgALAHCBAgQIAAAQIECBAgQIBAAQICgAKGrEUCBAgQIECAAAECBAgQICAAsAcIECBAgAABAgQIECBAgEABAgKAAoasRQIECBAgQIAAAQIECBAgIACwBwgQIECAAAECBAgQIECAQAECAoAChqxFAgQIECBAgAABAgQIECAgALAHCBAgQIAAAQIECBAgQIBAAQICgAKGrEUCBAgQIECAAAECBAgQICAAsAcIECBAgAABAgQIECBAgEABAgKAAoasRQIECBAgQIAAAQIECBAgIACwBwgQIECAAAECBAgQIECAQAECAoAChqxFAgQIECBAgAABAgQIECAgALAHCBAgQIAAAQIECBAgQIBAAQICgAKGrEUCBAgQIECAAAECBAgQICAAsAcIECBAgAABAgQIECBAgEABAgKAAoasRQIECBAgQIAAAQIECBAgIACwBwgQIECAAAECBAgQIECAQAECAoAChqxFAgQIECBAgAABAgQIECAgALAHCBAgQIAAAQIECBAgQIBAAQICgAKGrEUCBAgQIECAAAECBAgQICAAsAcIECBAgAABAgQIECBAgEABAgKAAoasRQIECBAgQIAAAQIECBAgIACwBwgQIECAAAECBAgQIECAQAECAoAChqxFAgQIECBAgAABAgQIECAgALAHCBAgQIAAAQIECBAgQIBAAQICgAKGrEUCBAgQIECAAAECBAgQICAAsAcIECBAgAABAgQIECBAgEABAgKAAoasRQIECBAgQIAAAQIECBAgIACwBwgQIECAAAECBAgQIECAQAECAoAChqxFAgQIECBAgAABAgQIECAgALAHCBAgQIAAAQIECBAgQIBAAQICgAKGrEUCBAgQIECAAAECBAgQICAAsAcIECBAgAABAgQIECBAgEABAgKAAoasRQIECBAgQIAAAQIECBAgIACwBwgQIECAAAECBAgQIECAQAECAoAChqxFAgQIECBAgAABAgQIECAgALAHCBAgQIAAAQIECBAgQIBAAQICgAKGrEUCBAgQIECAAAECBAgQICAAsAcIECBAgAABAgQIECBAgEABAgKAAoasRQIECBAgQIAAAQIECBAgIACwBwgQIECAAAECBAgQIECAQAECAoAChqxFAgQIECBAgAABAgQIECAgALAHCBAgQIAAAQIECBAgQIBAAQICgAKGrEUCBAgQIECAAAECBAgQICAAsAcIECBAgAABAgQIECBAgEABAgKAAoasRQIECBAgQIAAAQIECBAgIACwBwgQIECAAAECBAgQIECAQAECAoAChqxFAgQIECBAgAABAgQIECAgALAHCBAgQIAAAQIECBAgQIBAAQICgAKGrEUCBAgQIECAAAECBAgQICAAsAcIECBAgAABAgQIECBAgEABAgKAAoasRQIECBAgQIAAAQIECBAgIACwBwgQIECAAAECBAgQIECAQAECAoAChqxFAgQIECBAgAABAgQIECAgALAHCBAgQIAAAQIECBAgQIBAAQICgAKGrEUCBAgQIECAAAECBAgQICAAsAcIECBAgAABAgQIECBAgEABAgKAAoasRQIECBAgQIAAAQIECBAgIACwBwgQIECAAAECBAgQIECAQAECAoAChqxFAgQIECBAgAABAgQIECAgALAHCBAgQIAAAQIECBAgQIBAAQICgAKGrEUCBAgQIECAAAECBAgQICAAsAcIECBAgAABAgQIECBAgEABAgKAAoasRQIECBBISqD+t7n+3U+q6qXF1j0MEu9B+QQIECBAICsBAUBW49QMAQIECCQsUP+bPFlV1WLCPby59M7ZIEMQkNFQtUKAAAEC6QoIANKdncoJECBAIH2B4bv99QvkMy+Sf/VXf3XLb/zGb/x3zz777P+V8DvodV9XVFX107MjWtJn+qPTAQECBAgQSE9AAJDezFRMgAABAukLLHm3f2ZmZurw4cP/w8LCwv947bXXfvb/fwH9v3zyk5+c+tKXvvTas88+20uk5TO3/f/Kr/zKpn/4h3848Vd/9Vf/+8c//vH/9dSpU6+N1O+ugESGqUwCBAgQyE9AAJDfTHVEgAABAvEK1Lf417+HL+g3zs3NveOBBx44eOutt+6cmpr69aqqNrz88ssfnJ6e/tiDDz549dvf/vbOW9/61sknnnjijc997nM/i/yugOHn/q94/fXX/5+NGzfe8Morr/y/L7zwwv/x53/+5489/fTT/1JV1Rtnx7Ph7McDUj/rIN7dpjICBAgQIPAmAQGALUGAAAECBMIKLLn9fcuWLVcfPnz4noMHD+7vdrs3VFXVrUs4ffr04oYNGyZ//OMf/8HU1NRHzx4GONi3b99lb3vb2668/fbbL3v22Wd/fujQoZ9EGgScCwBefvnlf960adONGzZsGP6scerUqVPfe+yxxx7/xCc+8YUf/vCHPz7LPrwbog4CnBUQdi9anQABAgQKFxAAFL4BtE+AAAECwQSW3OY/Pz+/dfv27bft27dvT7fbvbm+8mAwqPr9fn9ycrJ+/OLExMSG11577UNnA4D6dvnRQwEnjh8/vuk973nPZU899dTi97///Tc+9alPnQ7WweoXPhcAvPLKK/8yNTX1trq3wWAwMVk3OPGLHztOnTr1zU996lNfeu655/7+5MmTL4xcxscDVm/uGQQIECBAYMUCAoAVU3kgAQIECBBYkcCS2/xnZ2ffubCw8IHZ2dk7qqqarlfp9XqDTqdTnX1RfObf48FgUAcAnYsEAMMCJu69994r7r777qs6nc7ipz71qTdOnDjx8xVVF/ZBbw4AbhwMBv2JiYnaZFCHHYuLi9XIXQGvPP3003/z9a9//YVPf/rTT46cFeDQwLBzsjoBAgQIFCogACh08NomQIAAgUYFVnSb/9kXwIudTmf4bvh5/w6vIgA4V/z8/PwVO3fuvHx+fn7D888//7P9+/e/3mhnq1vsYgHAcKVhENDvdDqd4V0BL7300j/9xV/8xV9+/OMfP/GjH/3olZHLuitgdTPwaAIECBAgcEEBAYDNQYAAAQIE1i6wqtv869e7Zz/Xv+wV1xIAjL5QfvTRRze95S1v6bz88sunDx06VB+2N/rxgbV3ufJnriQAGF1tsLi4eCYQqM8+qA8FfPXVV//9+eeff9ahgStH90gCBAgQILBSAQHASqU8jgABAgQI/FLgzC3tI4fWbVzpbf4XQ1xnADBcevLxxx+/8n3ve9+Vf/3Xf3365MmTb7T4NYKrDQCGNQ/vCpjYsKH+coAzvxwa6E8cAQIECBBoWEAA0DCo5QgQIEAgW4Elp9XPzMxMHT16dM+hQ4cODE/zv9Rt/i0EAMNLTDz44IMb3/72t19Wf43gQw899PrJkyfrcwJCnrS/1gDgvCCgPjfQoYHZ/jnSGAECBAiMUUAAMEZ8lyZAgACBJASW3Oa/a9euWxYWFg5s27Zt59TU1PVVVU0OT/O/1G3+LQYA5y5Vf43gr/3ar23cvXv3hsBfI7jeAGCUx6GBSfzxUCQBAgQIpCQgAEhpWmolQIAAgTYFzrvNv9vtXrN37947d+zYsXVubu6uqqo218X0er2q0+kMRk/zX2uRDX0E4GKXnzx+/PhV9dcInjx5svdv//ZvP234awSbDACGfTg0cK0byvMIECBAgMCbBAQAtgQBAgQIEPilwJLb/KenpzcfO3Zs95EjRw7MzMzcVD90+G7/L77a/sw/pY38e9pCADDs9LyvETxx4sTrDQUBIQKA0f3p0EB/WgkQIECAwDoEGvmBZR3X91QCBAgQIBCDwIpu8+/1evV32tfv+F/0NP+1NtRiAHCuxHvvvffK3/zN37zs7rvv3vD7v//7Pz1x4kT97QFr/RU6ABjW5dDAtU7I8wgQIECgaAEBQNHj1zwBAgSKF2j9Nv+LiY8jABipp/PVr351U7/f73zve9+rv0bw9fpr+Va5Q9oKAM4LAhwauMopeTgBAgQIFCsgACh29BonQIBAsQJjvc0/4gBgWFrn8ccfv2KNXyPYdgAwyunQwGL/SGucAAECBFYqIABYqZTHESBAgEDqAvW7/fXv3rCR5U7zD32bfwIBwLDEiYcffviqG2+88bLLLrts4vOf//xPTpw4UX+N4MV+jTMAGNbl0MDU/6SqnwABAgSCCQgAgtFamAABAgQiEBh+Vn9Qn91X19PGaf5r7XvMHwG4YNm7d+++/Hd/93c3vf766/3vfe97vQ996EP1xwPOeL7pVwwBwGhJDg1c62b0PAIECBDIUkAAkOVYNUWAAIHiBZYc6jc/P791+/btt91///17rrvuuptroVCn+a9VP9YAYKSfzhNPPHHVu9/97g311wiePHnyjWefffbcHRVnvw2hDgaueOWVV/5lamrqxsFgUB+cWN95Mc5fDg0cp75rEyBAgEA0AgKAaEahEAIECBBoQODNt/lvnJ2dfefCwsIHZmdn76iqarq+Rq/XG0xMTAxCnea/1j4SCACGrU3ee++9l995550bJycnF7/85S+/Mfo1gjfeeOMV//RP/xRTADCs+0wQ4NDAte5QzyNAgACB1AUEAKlPUP0ECBAgsOQ2/y1btlx9+PDhew4ePLi/2+3eUN/5X7/wW1xcXOx0OpP1V/mdfbc6Kr2EAoBzbvXXCO7Zs+fy+tsDPv/5zw+/RvCyl19++dubN2+O5Q6A5ebs0MCodr9iCBAgQKANAQFAG8quQYAAAQIhBC54m/++ffv2dLvd827zj+3d/gu8Il2cmJjovPbaax+ampr6aFVVnaqqFkPgNb3m7t27O/v27bv6Rz/6UfUf//EfnaNHj36z0+m87exXCY77IwAXa9ehgU1vBusRIECAQLQCAoBoR6MwAgQIELiAwIpv8+90OlWs7/bnFgCM9NN57LHHpu67775/vPzyy//7BAKA0VE4NNBfOwQIECCQtYAAIOvxao4AAQLZCAzf7e8PT59P9Tb/S7wVnewdAGf7Gn4LQAofAVjJXQETGzZsGD7u1KlTp7732GOPPf6JT3ziCz/84Q9/PNJzHUqd25vZ/KnTCAECBAhkJyAAyG6kGiJAgEBWAtnd5l9IABDbtwCs9Q+FQwPXKud5BAgQIBClgAAgyrEoigABAsUL1O+o1l8nd+a75rvd7jV79+69c8eOHVvn5ubuqqpqc/3f69P8U7vNXwCQ7N52aGCyo1M4AQIECAwFBAD2AgECBAjEIrDkNv/p6enNx44d233kyJEDMzMzN9WFpnCa/1pBU/wWgDf1OvwIQC53ACw3SocGrnWDex4BAgQIjF1AADD2ESiAAAECxQssuc1/165dtywsLBzYtm3bzqmpqeurqprs9Xr9+kC/FE7zX+tEBQBrlRvb8xwaODZ6FyZAgACBtQgIANai5jkECBAg0ITASm/zr1/0D1I6zX+tOAKAtcqN/XnDuwIcGjj2USiAAAECBC4mIACwPwgQIECgTYEV3+bf7/f7k5OTEyW88B8OQADQ5lYMci2HBgZhtSgBAgQINCUgAGhK0joECBAgcDGB+t3++ndv+KBSb/O/GJIAIKs/RA4NzGqcmiFAgEAeAgKAPOaoCwIECMQoUP8bMzwU7lKn+Rdzm78AIMatGrQmhwYG5bU4AQIECKxGQACwGi2PJUCAAIGVCCw51G9+fn7r9u3bb7v//vv3XHfddTfXi9Sn+Zd4m78AYCVbKNvHODQw29FqjAABAmkICADSmJMqCRAgkILAm2/z3zg7O/vOhYWFD8zOzt5RVdV03USv16sP9BvkfJr/WoflIwBrlUvueQ4NTG5kCiZAgEAeAgKAPOaoCwIECIxLYMlt/lu2bLn68OHD9xw8eHB/t9u9oaqqbv1u/+Li4mKn06lP9atr9e/PMhMTAIxrG4/tug4NHBu9CxMgQKBMAT+AlTl3XRMgQGC9Ahe8zX/fvn17ut3uebf5e7d/ZdwCgJU5ZfoohwZmOlhtESBAICYBAUBM01ALAQIE4hdY8W3+nU6n8m7/6gYqAFidV6aPdmhgpoPVFgECBGIQEADEMAU1ECBAIG4Bt/m3NB8BQEvQ6VzGoYHpzEqlBAgQSEJAAJDEmBRJgACBsQi4zb9ldgFAy+DpXM6hgenMSqUECBCIWkAAEPV4FEeAAIGxCNS3+Q/O/q4LuOBp/m7zb3Y+AoBmPTNczaGBGQ5VSwQIEGhTQADQprZrESBAIF6B4bv9/eEL/5mZmamjR4/uOXTo0AGn+bczOAFAO86ZXMWhgZkMUhsECBBoU0AA0Ka2axEgQCA+gSW3+e/ateuWhYWFA9u2bds5NTV1fVVVk/XX+PX7/b7T/MMOUAAQ1jfT1R0amOlgtUWAAIEQAgKAEKrWJECAQPwC593m3+12r9m7d++dO3bs2Do3N3dXVVWb6xZ6vV7V6XQGTvNvZ6ACgHacM76KQwMzHq7WCBAg0ISAAKAJRWsQIEAgDYElt/lPT09vPnbs2O4jR44cmJmZualuY/hu/+Tk5IQX/u0OVgDQrnfGV3NoYMbD1RoBAgTWIyAAWI+e5xIgQCANgRXd5t/r9fr1C363+Y9vqAKA8dlnemWHBmY6WG0RIEBgrQICgLXKeR4BAgTiFqj/fq9/nzvN323+cQ/s7N0XixMTE53XXnvtQ1NTUx+tqqpTVdVi/JWfq3C456545ZVX/mVqaurGwWBQB0v1R078Gq+AQwPH6+/qBAgQiEJAABDFGBRBgACBxgSWvNs/PV1tPnbsQbf5N0YcbiF3AISztfI5AYcG2gwECBAoWEAAUPDwtU6AQFYC9Tus9e/e2a42zs3NveOBBx44eOutt547zd9t/nHPXAAQ93wyrM6hgRkOVUsECBC4mIAAwP4gQIBAugJLbvPfsmXL1YcPH77n4MGD+7vd7g1VVXXr9pzmn8aQBQBpzCnDKld7aOB5Hy/K0ENLBAgQyFZAAJDtaDVGgEDGAktu85+fn9+6ffv22/bt27en2+3eXPfuNP/0doAAIL2ZZVaxQwMzG6h2CBAg8GYBAYA9QYAAgXQEltzmPzs7+86FhYUPzM7O3lFV1fTZd/sHnU6n8hV+6Qx2WKkAIL2ZZVzxcocG/uiZZ575b4888sgnn3nmmX+uquqNs/0P70bqZ+yhNQIECGQhIADIYoyaIEAgY4EV3eZfv9u/uLi42Ol0Jr3wT3c3CADSnV3GlS93aOCpU6dOfe/48eN/+eijj37ppZdeenUkCKiDyjoIqL+BxC8CBAgQiExAABDZQJRDgACBN/0gfe4r4C52m3+n0xkGBYkD1q8Zyv2nSQCQ+PbNv/wzhwZOTk4Og8b+q6+++u/f+MY3nn3kkUf+8mtf+9o/jBBsOBsEuCsg/32hQwIEEhIo96eshIakVAIEihJwm39R4z6/WQFAwcNPq/XlDg185emnn/6br3/96y98+tOffvLUqVOvjYSZDg1Ma76qJUAgYwEBQMbD1RoBAskIDA/1O3fb7HKn+bvNP5l5rrlQAcCa6TxxPALLHhr44osvfvMzn/nMl5577rm/P3ny5AsjpXV8PGA8g3JVAgQIDAUEAPYCAQIExiewqtP887nNf3zgsV9ZABD7hNR3EYEzHw8YDAYTGzZsGP586dBAW4YAAQKRCQgAIhuIcggQKEKgvs2//rD7mUOyut3uNXv37r1zx44dW+fm5u6qqmpz/d97vZ7T/IvYDr9sUgBQ2MDzbNehgXnOVVcECGQiIADIZJDaIEAgeoElt/lPT09vPnbs2O4jR44cmJmZuanuwG3+0c8xaIECgKC8Fm9fwKGB7Zu7IgECBC4qIACwQQgQIBBWYMlt/rt27bplYWHhwLZt23ZOTU1dX1XVZK/X69df3+c2/7DDiH11AUDsE1LfGgUcGrhGOE8jQIBA0wICgKZFrUeAAIFfCKz0Nv/6Rf+gfvFf9Pff2TVnBAQANkLmAg4NzHzA2iNAIH4BAUD8M1IhAQLpCKz4Nv9+v9//xVdpe+GfznjDVyoACG/sCtEIODQwmlEohACBkgQEACVNW68ECIQSqN/tr3/3hhdwm38o6rzXFQDkPV/dLSvg0EAbgwABAi0KCABaxHYpAgSyEqj//qx/r+Q0f7f5ZzX6cM0IAMLZWjkJAYcGJjEmRRIgkLKAACDl6amdAIFxCCw51G9+fn7r9u3bb7v//vv3XHfddTfXRdWn+bvNfxzjSfuaAoC056f6xgQcGtgYpYUIECBwvoAAwI4gQIDAygTefJv/xtnZ2XcuLCx8YHZ29o6qqqbrZXq9Xn2g38Bp/itD9ajzBQQAdgSB8wQcGmhDECBAoGEBAUDDoJYjQCArgSW3+W/ZsuXqw4cP33Pw4MH93W73hqqquvW7/YuLi4udTqc+1a8G8HdrVtugvWYEAO1Zu1JyAg4NTG5kCiZAIEYBP6TGOBU1ESAwboEL3ua/b9++Pd1u97zb/L3bP+5x5XN9AUA+s2y+k/q4ET+2/eITVmdC136n/sv3F6HrqVOnTn3v+PHjf/noo49+6aWXXnr1rP+Sb2Zpfi5WJECAQFoC/iVJa16qJUAgrMCKb/PvdDqVd/vDDqPE1QUAJU5dz+sQcGjgOvA8lQCBMgUEAGXOXdcECPxSwG3+dkM0AgKAaEahkLQEHBqY1rxUS4DAGAUEAGPEd2kCBMYq4Db/sfK7+HICAgD7gsC6BBwauC4+TyZAoAQBAUAJU9YjAQKjAvVt/vWHaevf9a8LnubvNn8bp20BAUDb4q6XsYBDAzMertYIEFi7gABg7XaeSYBAOgJLDoKamZmZOnr06J5Dhw4dcJp/OoPMvVIBQO4T1t8YBBwaOAZ0lyRAIF4BAUC8s1EZAQLrF1hym/+uXbtuWVhYOLBt27adU1NT11dVNVmfKN3v9+sTpYfnAaz/ylYgsAYBAcAa0DyFwMoFHBq4ciuPJEAgUwEBQKaD1RaBwgXOu82/2+1es3fv3jt37NixdW5u7q6qqjbXPr1er+p0OgOn+Re+WyJqXwAQ0TCUkrOAQwNznq7eCBC4qIAAwAYhQCAXgSW3+U/JYyfvAAAgAElEQVRPT28+duzY7iNHjhyYmZm5qW50+G7/5OTkhBf+uYw+nz4EAPnMUidJCDg0MIkxKZIAgSYFBABNalqLAIFxCKzoNv9er9evX/C7zX8cI3LNlQoIAFYq5XEEGhdwaGDjpBYkQCBGAQFAjFNREwEClxIYflb/3Gn+bvO/FJn/PwUBAUAKU1Jj5gIODcx8wNojULqAAKD0HaB/AmkJLHm3323+aQ1QtRcXEADYIQSiEnBoYFTjUAwBAk0ICACaULQGAQKhBepD/erfvbMX2jg3N/eOBx544OCtt9567jR/t/mHHoP1QwsIAEILW5/AmgQcGrgmNk8iQCBGAQFAjFNREwECtcCS2/y3bNly9eHDh+85ePDg/m63e0NVVd36gU7zt2FyERAA5DJJfWQq4NDATAerLQIlCQgASpq2XgmkIbDkNv/5+fmt27dvv23fvn17ut3uzXUbTvNPY5iqXJ2AAGB1Xh5NYIwCDg0cI75LEyCwdgEBwNrtPJMAgWYFltzmPzs7+86FhYUPzM7O3lFV1fTZd/sHnU6n8hV+zeJbLQ4BAUAcc1AFgVUIODRwFVgeSoDA+AUEAOOfgQoIlCywotv863f7FxcXFzudzqQX/iVvl/x7FwDkP2MdZi3g0MCsx6s5AnkICADymKMuCKQmsKrb/DudzjAoSK1P9RJYlYAAYFVcHkwgVgGHBsY6GXURIHDmkC2/CBAg0JaA2/zbks7kOoOzp0Fm0s4l2xAAXJLIAwikJODQwJSmpVYChQgIAAoZtDYJjFFg+G5/vz67r65judP8k7jNv7RXo2PcNKVeWgBQ6uT1XYCAQwMLGLIWCaQgIABIYUpqJJCmgNv805ybqscoIAAYI75LE2hHwKGB7Ti7CgECFxAQANgaBAg0LVDf5l+/V37m3f5ut3vN3r1779yxY8fWubm5u6qq2lz/916v5zT/puWtl7yAACD5EWqAwGoEHBq4Gi2PJUCgEQEBQCOMFiFQvMCS2/ynp6c3Hzt2bPeRI0cOzMzM3FQLJXGbf/GjBDBOAQHAOPVdm8CZf6nGcfKIQwNtPgIEWhMQALRG7UIEshRYcpv/rl27bllYWDiwbdu2nVNTU9dXVTXZ6/X69df3Oc0/yz2gqQYFBAANYlqKQHoCDg1Mb2YqJpCcgAAguZEpmEAUAiu9zb9+0T+oX/yP4y2VKKQUQWAVAgKAVWB5KIG8BRwamPd8dUdgbAICgLHRuzCB5ARWfJt/v9/vT05OTnjhn9yMFTxmAQHAmAfg8gTiE3BoYHwzURGBpAUEAEmPT/EEWhGo3+2vf/eGV3ObfyvuLlKggACgwKFrmcDKBRwauHIrjyRA4AICAgBbgwCB5QTqvxvq3ys5zd9t/vYQgYYEBAANQVqGQN4CDg3Me766IxBUQAAQlNfiBJITWHKo3/z8/Nbt27ffdv/99++57rrrbq47qk/zd5t/crNVcAICAoAEhqREAvEIODQwnlmohEAyAgKAZEalUAJBBd58m//G2dnZdy4sLHxgdnb2jqqqpuur93q9+kC/gdP8g87C4gULCAAKHr7WCaxPwKGB6/PzbALFCAgAihm1RgksEVhym/+WLVuuPnz48D0HDx7c3+12b6iqqlu/27+4uLjY6XTqU/3qRfy9YTMRCCQgAAgEa1kC5Qg4NLCcWeuUwJoE/CC/JjZPIpC0wAVv89+3b9+ebrd73m3+3u1PetaKT0xAAJDYwJRLIG4BhwbGPR/VERiLgABgLOwuSmAsAiu+zb/T6VTe7R/LjFy0cAEBQOEbQPsEwgg4NDCMq1UJJCkgAEhybIomsGKB4bv9/bMn+ldu81+xnQcSaF1AANA6eUYXrL+0xY91GQ00RCsODQyhak0CiQn4lyKxgSmXwAoF3Oa/QigPIxCTgAAgpmmohUDWAg4NzHq8miNwYQEBgN1BIC+B+jb/+m2g+nfV7Xav2bt37507duzYOjc3d1dVVZvr/16f5u82/7wGr5s8BAQAecxRFwRSEDh7z4hDA1MYlhoJNCggAGgQ01IExiSw5Db/6enpzceOHdt95MiRAzMzMzfVdTnNf0zTcVkCqxAQAKwCy0MJEGhawKGBTYtaj0CEAgKACIeiJAIrFFhym/+uXbtuWVhYOLBt27adU1NT11dVNdnr9fr1gX5O81+hqocRGKOAAGCM+C5NgMBQwKGB9gKBjAUEABkPV2vZCqz0Nv/6Rf/Aaf7Z7gONZSggAMhwqFoikK6AQwPTnZ3KCVxQQABgcxBIQ2DFt/n3+/3+5OTkhBf+aQxWlQRGBQQA9gMBApEKODQw0sEoi8BqBQQAqxXzeALtCrjNv11vVyMwVgEBwFj5XZwAgUsLODTw0kYeQSBqAQFA1ONRXKEC9Z/L+vdKTvN3m3+hm0TbeQoUGQD4+vo8N7OuShBwaGAJU9ZjdgICgOxGqqGEBZa823+h0/zd5p/wlJVO4CICRQYAdgQBAqkLODQw9QmqvygBAUBR49ZspAL1oX71797Z+jbOzc2944EHHjh46623Os0/0qEpi0AIAQFACFVrEiDQkoBDA1uCdhkC6xEQAKxHz3MJrF1gyW3+W7Zsufrw4cP3HDx4cH+3272hqqpuvXyv13Ob/9qdPZNAUgICgKTGpVgCBC4s4NBAu4NApAICgEgHo6xsBZbc5j8/P791+/btt+3bt29Pt9u9ue58MBhUbvPPdg9ojMAFBQQANgcBApkJODQws4FqJ30BAUD6M9RBGgJLbvOfnZ1958LCwgdmZ2fvqKpq+uy7/YNOp1P5Cr80hqpKAk0LCACaFrUegQYFHFi5XkyHBq5X0PMJNCAgAGgA0RIELiCwotv863f7FxcXFzudzqQX/vYSgbIFBABlz1/3BAoRcGhgIYPWZpwCAoA456KqtAVWdZt/p9MZBgVpd636RgS8wdQIY7KLCACSHZ3CCRBYvYBDA1dv5hkE1i0gAFg3oQUInBOob/OvX7/Vv+tfG93mb3cQILAaAQHAarQ8lgCBjAQcGpjRMLUSt4AAIO75qC5+geG7/f3hC/+ZmZmpo0eP7jl06NCB4Wn+bvOPf5AqJBCDgAAghimogQCBMQo4NHCM+C5dhoAAoIw567J5gSW3+e/ateuWhYWFA9u2bds5NTV1fVVVk8PT/N3m3/wArEggRwEBQI5T1RMBAmsUcGjgGuE8jcDFBAQA9geB1Qmcd5t/t9u9Zu/evXfu2LFj69zc3F1VVW2ul+v1elWn0xk41G91uB5NoHQBAUDpO0D/BAgsI+DQQNuCQIMCAoAGMS2VrcCS2/ynp6c3Hzt2bPeRI0cOzMzM3FR3Pny3f3KyPsz/zB8tf76y3RIaIxBGQAAQxtWqBAiEE2jx8FqHBoYbo5ULEvACpaBha3XVAiu6zb/X6/XrF/xu81+1rycQIPAmAQGALUGAAIEVCTg0cEVMHkRgqYAAwK4gsFTAbf52RcQCLb7XErFCrqUJAHKdrL4IEAgk4NDAQLCWzVdAAJDvbHW2OgG3+a/Oy6MJEAggIAAIgGpJAgRKEXBoYCmT1ue6BAQA6+Lz5AwE6nf769+9YS/LnebvNv8MJq0FAgkICAASGJISCRCIXcChgbFPSH1jFRAAjJXfxcckUO/7+nd9L3X9u3Ka/5gm4bIECJwnIACwIQgQINCYgEMDG6O0UE4CAoCcpqmXSwksOdRvfn5+6/bt22+7//7791x33XU31ws4zf9SjP5/AgRCCQgAQslalwCBwgUcGlj4BtD+LwUEAHZDCQJvvs1/4+zs7DsXFhY+MDs7e0dVVdM1Qq/XG0xMTAyc5l/CltAjgTgFBABxzkVVBAhkI+DQwGxGqZG1CggA1irnebELLLnNf8uWLVcfPnz4noMHD+7vdrs31Hf+1+/2Ly4uLnY6ncn6q/zOfjQg9t7UR4BApgICgEwHqy0CBGIUcGhgjFNRU3ABAUBwYhdoWeCCt/nv27dvT7fbPe82f+/2tzwdlyNA4KICAgAbhAABAq0LODSwdXIXHKeAAGCc+q7dpMCKb/PvdDqVd/ubpLcWAQJNCQgAmpK0DgECBFYt4NDAVZN5QooCAoAUp6bmocDw3f7+8DR/t/nbHAQIpCwgAEh5emonQCAjAYcGZjRMrZwvIACwI1IUcJt/ilNTMwEClxQQAFySyAMIECDQpoBDA9vUdq1WBAQArTC7SEMC9W3+g+G7/d1u95q9e/feuWPHjq1zc3N3VVW1ub5OfZq/2/wbErcMAQKtCggAWuV2MQIECKxGwKGBq9Hy2GgFBADRjkZhZwWW3OY/PT29+dixY7uPHDlyYGZm5qb6cU7zt18IEMhBQACQwxT1QIBA5gIODcx8wLm3JwDIfcLp9rfkNv9du3bdsrCwcGDbtm07p6amrq+qarLX6/XrA/2c5p/uoFVOgMAvBQQAdgMBAgSSEXBoYDKjUuiogADAfohNYKW3+dcv+gdO849tfOohQGA9AgKA9eh5LgECBMYm4NDAsdG78GoFBACrFfP4EAIrvs2/3+/3JycnJ7zwDzEGaxIgMG4BAcC4J+D6BAgQWJeAQwPXxefJbQgIANpQdo0LCbjN394gQIDAiIAAwHYgQIBANgIODcxmlHk1IgDIa56pdOM2/1QmpU4CBFoVEAC0yu1iBAgQaENgLYcG9tsozDXKFBAAlDn3cXV93gv/C53m7zb/cY3HdQkQGLeAAGDcE3B9AgQIBBNYzaGB9Wu0+quv/SLQuIAAoHFSC15AoH7xfybNnJ+f33r06NH9TvO3VwgQIHC+gADAjiBAgEARAhc8NPDP/uzPjj/77LP/51kFdwIUsR3abVIA0K53qVfbUFVV773vfe+7PvjBDx6anZ29o6qq6Rqj1+s5zb/UXaFvAgSWCAgAbAoCBAgUJXDu0MD6nOvLL7984uGHH/69P/iDP3ikqqozPz8XpaHZVgQEAK0wF32RM+/833777Td/+ctfPtHpdK7v9/vVYDBwmn/R20LzBAgsJyAAsC8IECBQpsDp06d7k5OTkw8++ODBP/3TP31cAFDmPmijawFAG8rlXmP44v/Wp5566gudTueGfr+/uGHDhvq/n7f36g852YzlbhSdEyDwCwEBgJ1AgACBMgVOnz69eNlll3X++I//+OCf/MmffFIAUOY+aKNrr7naUC7zGmf21pYtWzZ997vfff6qq656x9nD/eoX/35lKSDGyXKsmmpVQADQKreLESBAIBoBAUA0o8i+EAFA9iMeW4NnPrf04Q9/+N6HHnro06dPn564/PLLl7zzP7bqXJgAAQIRCggAIhyKkggsKyD0tjGaFRAANOtptQsLCADsjlACdQCw+NBDDx35yEc+8vHhX2qhLmZdAgQI5CAgAMhhinogQIDA6gUEAKs384y1CQgA1ubmWRcXGH536ZUvvvji323ZsuVd9RGnExMT9pudQ4AAgYsICABsDwIECJQpIAAoc+7j6NoLsnGo53/NYQBwxY9//OPvbNq06b/Up/5PTEz4/H/+s9chAQLrEBAArAPPUwkQIJCwgAAg4eElVroAILGBJVLuuQDglVde+eepqan/KgBIZHLKJEBgrAICgLHyu3iyAj6Pn+zoFH5OQABgM7QlIABoS7qs64wGAP8yNTV1owCgrA2gWwIE1iYgAFibm2cRIEAgdQEBQOoTTKd+AUA6s0qpUgFAStNSKwEC0QgIAKIZhUIIECDQqoAAoFXuoi8mACh6/MGaFwAEo7UwAQI5CwgAcp6u3ggQIHBhAQGA3dGWgACgLemyriMAKGveuiVAoCEBAUBDkJYhQIBAYgICgMQGlnC5AoCEhxdx6QKAiIejNAIE4hUQAMQ7G5URIEAgpIAAIKSutUcFBAD2QwgBAUAIVWsSIJC9gAAg+xFrkAABAssKCABsjLYEBABtSZd1HQFAWfPWLQECDQkIABqCtAwBAgQSExAAJDawhMsVACQ8vIhLFwBEPBylESAQr4AAIN7ZqIwAAQIhBQQAIXWtPSogALAfQggIAEKoWpMAgewFBADZj1iDBAgQWFZAAGBjtCUgAGhLuqzrCADKmrduCRBoSEAA0BCkZQgQIJCYgAAgsYElXK4AIOHhRVy6ACDi4SiNAIF4BQQA8c5GZQQIEAgpIAAIqWvtUQEBgP0QQkAAEEJ1TGsOqqryF8WY8F22OAEBQHEj1zABAgTOCAgAbIS2BPxc35Z0WdcRAJQ1b90SINCQgACgIUjLECDQqIA3AxrlXHYxAUB4Y1f4hYAAwE4IISAACKFqTQIEshcQAGQ/Yg0SIEBAAGAPjFVAADBW/mwvLgDIdrQaI0AgpIAAIKSutQkQIBCvgDsA4p1NbpUJAHKbaBz9CADimIMqCBBITEAAkNjAlEuAAIGGBAQADUFa5pICAoBLEnnAGgQEAGtAK/0pPl9Y+g7Qfy0gALAPCBAgUKaAAKDMuY+jawHAONTzv6YAIP8Z65AAgQACAoAAqJYkQIBAAgICgASGlEmJAoBMBhlZGwKAyAaiHAIE0hAQAKQxJ1USIECgaQEBQNOi1ruQgADA3gghIAAIoWpNAgSyFxAAZD9iDRIgQGBZAQGAjdGWgACgLemyriMAKGveuiVAoCEBAUBDkJYhQIBAYgICgMQGlnC5AoCEhxdx6QKAiIejNAIE4hUQAMQ7G5URIEAgpIAAIKSutUcFBAD2QwgBAUAIVWuWKeDrEYqauwCgqHFrlgABAucEBAA2Q1sCAoC2pMu6jgCgrHnrlgCBhgQEAA1BWoYAAQKJCQgAEhtYwuUKABIeXsSlCwAiHo7SCBCIV0AAEO9sVEaAAIGQAgKAkLrWHhUQANgPIQQEACFUrUmAQPYCAoDsR6xBAgQILCsgALAx2hIQALQlXdZ1BABlzVu3BAg0JCAAaAjSMgQIEEhMQACQ2MASLlcAkPDwIi5dABDxcJRGgEC8AgKAeGejMgIECIQUEACE1LX2qIAAwH4IISAACKFqTQI5CPhWg4tOUQCQwybXAwECBFYvIABYvZlnrE1AALA2N8+6uIAAwA4hQIDAGgQEAGtA8xQCBAhkICAAyGCIibQgAEhkUImVKQBIbGDKJUAgDgEBQBxzUAUBAgTaFhAAtC1e7vUEAOXOPmTnAoCQutYmQCBbAQFAtqPVGAECBC4qIACwQdoSEAC0JV3WdQQALczbR6lbQHYJAi0LCABaBnc5AgQIRCIgAIhkEAWUIQAoYMhjaFEAMAZ0lyRAIH0BAUD6M9QBAQIE1iIgAFiLmuesRUAAsBY1z7mUwCUCAO9dXwrQ/0+AQJkCAoAy565rAgQICADsgbYEBABtSZd1HXcAlDXvVXcrAlo1mScUIiAAKGTQ2iRAgMCbBAQAtkRbAgKAtqTLuo4AoKx565YAgYYEBAANQVqGAAECiQkIABIbWMLlCgASHl7EpQsAIh6O0ggQiFdAABDvbFRGgACBkAICgJC61h4VEADYDyEEBAAhVK1JgED2AgKA7EesQQIECCwrIACwMdoSEAC0JV3WdQQAZc1btwQINCQgAGgI0jIECBBITEAAkNjAEi5XAJDw8CIuXQAQ8XCURoBAvAICgHhnozICBAiEFBAAhNS19qiAAMB+CCEgAAihak0CBLIXEABkP2INEiBAYFkBAYCN0ZaAAKAt6bKuIwAoa966JUCgIQEBQEOQliFAgEBiAgKAxAaWcLkCgISHF3HpAoCIh6M0AgTiFRAAxDsblREgQCCkgAAgpK61RwUEAPZDCAEBQAhVaxIgkL2AACD7EWuQAAECywoIAGyMtgQEAG1Jl3UdAUBZ89YtAQINCQgAGoK0DAECBBITEAAkNrCEyxUAJDy8iEsXAEQ8HKURIBCvgAAg3tmojAABAiEFBAAhda09KiAAsB9CCAgAQqhakwCB7AUEANmPWIMECBBYVkAAYGO0JSAAaEu6rOsIAMqat24JEGhIQADQEKRlCBAgkJiAACCxgSVcrgAg4eFFXLoAIOLhKI0AgXgFBADxzkZlBAgQCCkgAAipa+1RAQGA/RBCQAAQQtWaBAhkLyAAyH7EGiRAgMCyAgIAG6MtAQFAW9JlXUcAUNa8dUuAQEMCAoCGIC1DgACBxAQEAIkNLOFyBQAJDy/i0gUAEQ9HaQQIxCsgAIh3NiojQIBASAEBQEhda48KCADshxACAoAQqtYkQCB7AQFA9iPWIAECBJYVEADYGG0JCADaki7rOgKAsuatWwIEGhIQADQEaRkCBAgkJiAASGxgCZcrAEh4eBGXLgCIeDhKI0AgXgEBQLyzURkBAgRCCggAQupae1RAAGA/hBAQAIRQtSYBAtkLCACyH7EGCRAgsKyAAMDGaEtAANCWdFnXEQCUNW/dEiDQkIAAoCFIyxAgQCAxAQFAYgNLuFwBQMLDi7h0AUDEw1FaeQKDqqr8ZZ/G3AUAacxJlQQIEGhaQADQtKj1LiTgZ0J7I4SAACCEqjUJEMheQACQ/Yg1SIAAgWUFBAA2RlsCAoC2pMu6jgCgrHnrlgCBhgQEAA1BWoYAAQKJCQgAEhtYwuUKABIeXsSlCwAiHo7SIhBwT34EQ4izBAFAnHNRFQECBEILCABCC1t/KCAAsBdCCAgAQqhakwCB7AUEANmPWIMECBBYVkAAYGO0JSAAaEu6rOsIAMqat24JEGhIQADQEKRlCBAgkJiAACCxgSVcrgAg4eFFXLoAIOLhKI0AgXgFBADxzkZlBAgQCCkgAAipa+1RAQGA/RBCQAAQQtWaBAhkLyAAyH7EGiRAgMCyAgIAG6MtAQFAW9JlXUcAUNa8dUuAQEMCAoCGIC1DgACBxAQEAIkNLOFyBQAJDy/i0gUAEQ9HaQQIxCsgAIh3NiojQIBASAEBQEhda48KCADshxACAoAQqtYkQCB7AQFA9iPWIAECBJYVEADYGG0JCADaki7rOgKAsuatWwIEGhIQADQEaRkCBAgkJiAASGxgCZcrAEh4eBGXLgCIeDhKI0AgXgEBQLyzURkBAgRCCggAQupae1RAAGA/hBAQAIRQtSYBAtkLCACyH7EGCYQTGFRV5Sf7cL6BVxYABAa2/DkBf03YDCEEBAAhVK1JgED2AgKA7EesQQIECCwrIACwMdoSEAC0JV3WdQQAZc1btwQINCQgAGgI0jIECBBITEAAkNjAEi5XAJDw8CIuXQAQ8XCURoBAvAICgHhnozICBAiEFBAAhNS19qiAAMB+CCEgAAihak0CBLIXEABkP2INEiBAYFkBAYCN0ZaAAKAt6bKuIwAoa966JUCgIQEBQEOQliFAgEBiAgKAxAaWcLkCgISHF3HpAoCIh6M0AgTiFRAAxDsblREgQCCkgAAgpK61RwUEAPZDCAEBQAhVaxIgkL2AACD7EWuQAAECywoIAGyMtgQEAG1Jl3UdAUBZ89YtAQINCQgAGoK0DAECBBITEAAkNrCEyxUAJDy8iEsXAEQ8HKURIBCvgAAg3tmojAABAiEFBAAhda09KiAAsB9CCAgAQqhakwCB7AUEANmPWIMECBBYVkAAYGO0JSAAaEu6rOsIAMqat26LFBhUVeWfkKZHLwBoWtR6BAgQSENAAJDGnHKo0k9vOUwxvh4EAPHNREUECEQsMIxTBAARD0lpBAgQCCggAAiIa+nzBAQANkQIAQFACFVrEiCQvYAAIPsRa5AAAQLLCggAbIy2BAQAbUmXdR0BQFnz1i0BAg0JCAAagrQMAQIEEhMQACQ2sITLFQAkPLyISxcABBuOz10Ho7UwgQgEBAARDEEJBAgQGIOAAGAM6IVeUgBQ6OADty0ACAxseQIE8hQQAOQ5V10RIEDgUgICgEsJ+f+bEhAANCVpnVEBAYD9QIAAgTUICADWgOYpBAgQyEBAAJDBEBNpQQCQyKASK1MAkNjAlEuAQBwCAoA45qAKAgQItC0gAGhbvNzrCQDKnX3IzgUAIXWtTYBAtgICgGxHqzECBAhcVEAAYIO0JSAAaEu6rOsIAMqat24JEGhIQADQEKRlCBAgkJiAACCxgSVcrgAg4eFFXLoAIOLhKI0AgXgFBADxzkZlBAgQCCkgAAipa+1RAQGA/RBCQAAQQtWaBAhkLyAAyH7EGiRAgMCyAgIAG6MtAQFAW9JlXUcAUNa8dUuAQEMCAoCGIC1DgACBxAQEAIkNLOFyBQAJDy/i0gUAEQ9HaQQIxCsgAIh3NiojQIBASAEBQEhda48KCADshxACAoAQqtYkQCB7AQFA9iPWIAECBJYVEADYGG0JCADaki7rOgKAsuatWwIEGhIQADQEaRkCBAgkJiAASGxgCZcrAEh4eBGXLgCIeDhKI0AgXgEBQLyzURkBAgRCCggAQupae1RAAGA/hBAQAIRQtSYBAtkLCACyH7EG3yQwqKrKD6O2BYGqEgDYBW0J+Du3LemyriMAKGveuiVAoCEBAUBDkJYhQIBAYgICgMQGlnC5AoCEhxdx6QKAiIejNAIE4hUQAMQ7G5URIEAgpIAAIKSutUcFBAD2QwgBAUAIVWsSIJC9gAAg+xFrkAABAssKCABsjLYEBABtSZd1HQFAWfPWLQECDQkIABqCtAwBAgQSExAAJDawhMsVACQ8vIhLFwBEPBylESAQr4AAIN7ZqIwAAQIhBQQAIXWtPSogALAfQggIAEKoWpMAgewFBADZj1iDBAgQWFZAAGBjtCUgAGhLuqzrCADKmrduCRBoSEAA0BCkZQgQIJCYgAAgsYElXK4AIOHhRVy6ACDi4SiNAIF4BQQA8c5GZQQIEAgpIAAIqWvtUQEBgP0QQkAAEELVmgQIZC8gAMh+xBokQIDAsgICABujLQEBQFvSZV1HAFDWvHVLgEBDAgKAhiAtQ4AAgcQEBACJDSzhcgUACQ8v4tIFABEPR2kECMQrIACIdzYqI0CAQEgBAUBIXWuPCggA7IcQAgKAEKrWJEAgewEBQPYj1iABAgSWFRAA2LGlvjwAACAASURBVBhtCQgA2pIu6zoCgOG8B1VV+VNW1u7X7aoF/DH5JZkAYNXbxxMIECCQhYAAIIsxJtGElyZJjCm5IgUAyY1MwQQIxCAgAIhhCmogQIBA+wICgPbNS72iAKDUyYftWwAQ1tfqBAhkKiAAyHSw2iJAgMAlBAQAtkhbAgKAtqTLuo4AoKx565YAgYYEBAANQVqGAAECiQkIABIbWMLlCgASHl7EpQsAIh6O0ggQiFdAABDvbFRGgACBkAICgJC61h4VEADYDyEEBAAhVK1JgED2AgKA7EesQQIECCwrIACwMdoSEAC0JV3WdQQAZc1btwQINCQgAGgI0jIECBBITEAAkNjAEi5XAJDw8CIuXQAQ8XCURoBAvAICgHhnozICBAiEFBAAhNS19qiAAMB+CCEgAAihak0CBLIXEABkP2INEiBAYFkBAYCN0ZaAAKAt6bKuIwAoa966JUCgIQEBQEOQliFAgEBiAgKAxAaWcLkCgISHF3HpAoCIh6M0AgTiFRAAxDsblREgQCCkgAAgpK61RwUEAPZDCAEBQAhVaxIgkL2AACD7EWuQAAECywoIAGyMtgQEAG1Jl3UdAUBZ89YtAQINCQgAGoK0DAECBBITEAAkNrCEyxUAJDy8iEsXAEQ8HKURIBCvgAAg3tmojEApAoOqqrxAaH/aAoD2zUu9oj/fpU4+bN8CgLC+VidAIFMBAUCmg9UWAQIELiEgALBF2hIQALQlXdZ1BABlzVu3BAg0JCAAaAjSMgQIEEhMQACQ2MASLlcAkPDwIi5dABDxcJRGgEC8AgKAeGejMgIECIQUEACE1LX2qIAAwH4IISAACKFqTQIEshcQAGQ/Yg0SIEBgWQEBgI3RloAAoC3psq4jAChr3rolQKAhAQFAQ5CWIUCAQGICAoDEBpZwuQKAhIcXcekCgIiHozQCBOIVEADEOxuVESBAIKSAACCkrrVHBQQA9kMIAQFACFVrEiCQvYAAIPsRa5AAAQLLCggAbIy2BAQAbUmXdR0BQFnz1i0BAg0JCAAagrQMAQIEEhMQACQ2sITLFQAkPLyISxcARDwcpREgEK+AACDe2aiMAAECIQUEACF1rT0qIACwH0IICABCqFqTQPECg6qq8v5nSwBQ/CYHQIBAoQICgEIHP4a28/5JagygLnlGQABgIxAgQGANAgKANaB5CgECBDIQEABkMMREWhAAJDKoxMoUACQ2sHWXm/8bs+smsgCBlQgIAFai5DEECBDIT0AAkN9MY+1IABDrZNKuSwCQ9vxUT4DAmAQEAGOCd1kCBAiMWUAAMOYBFHR5AUBBw26xVQFAi9guRYBAPgICgHxmqRMCBAisRkAAsBotj12PgABgPXqeeyEBAYC9QYAAgTUICADWgOYpBAgQyEBAAJDBEBNpQQCQyKASK1MAkNjAlEuAQBwCAoA45qAKAgQItC0gAGhbvNzrCQDKnX3IzgUAIXWtTYBAtgICgGxHqzECBAhcVEAAYIO0JSAAaEu6rOsIAMqat24JEGhIQADQEKRlCBAgkJiAACCxgSVcrgAg4eFFXLoAIOLhKI0AgXgFBADxzkZlBAgQCCkgAAipa+1RAQGA/RBCQAAQQtWaBAhkLyAAyH7EGiRAgMCyAgIAG6MtAQFAW9JlXUcAUNa8dUuAQEMCAoCGIC1DgACBxAQEAIkNLOFyBQAJDy/i0gUAEQ9HaQQIxCsgAIh3NiojQIDAcgKDqqqaeEElALC/2hJoYr+2VavrpCMgAEhnViolQCAiAQFARMNQCgECBFoUEAC0iF34pQQAhW+AQO0LAALBWpYAgbwFBAB5z7es7pp6X7QsNd2GEUhhNwoAwszeqksFBAB2RQgBAUAIVWsSIJC9gAAg+xFrkAABAssKCABsjLYEBABtSZd1HQFAWfPWLQECDQkIABqCtAwBAgQSExAAJDawhMsVACQ8vIhLFwBEPBylESAQr4AAIN7ZqIwAAQIhBQQAIXWtPSogALAfQggIAEKoWpMAgewFBADZj1iDBAgQWFZAAGBjtCUgAGhLuqzrCADKmrduCRBoSEAA0BCkZQgQIJCYgAAgsYElXK4AIOHhRVy6ACDi4SiNAIF4BQQA8c5GZQQIEAgpIAAIqWvtUQEBgP0QQkAAEELVmgQIZC8gAMh+xBocp0AK3wU3Th/XHquAAGCs/EVdXABQ1Lhba1YA0Bq1CxEgkJOAACCnaeqFAAECKxcQAKzcyiPXJyAAWJ+fZy8vIACwMwgQILAGAQHAGtA8hQABAhkICAAyGGIiLQgAEhlUYmUKABIbmHIJEIhDQAAQxxxUQYAAgbYFBABti5d7PQFAubMP2bkAIKSutQkQyFZAAJDtaDVGgACBiwoIAGyQtgQEAG1Jl3UdAUBZ89YtAQINCQgAGoK0DAECBBITEAAkNrCEyxUAJDy8iEsXAEQ8HKURIBCvgAAg3tmojAABAiEFBAAhda09KiAAsB9CCAgAQqhak0DpAgV8hZcAoPRNrn8CBEoVEACUOvn2+xYAtG9ewhUFACVMWY8ECDQuIABonNSCBAgQSEJAAJDEmLIoUgCQxRija0IAEN1IFESAQAoCAoAUpqRGAgQINC8gAGje1IrLCwgA7IwQAgKAEKrWJEAgewEBQPYj1iABAgSWFRAA2BhtCQgA2pIu6zoCgLLmrVsCBBoSEAA0BGkZAgQIJCYgAEhsYAmXKwBIeHgRly4AiHg4SiNAIF4BAUC8s1EZAQIEQgoIAELqWntUQABgP4QQEACEULUmAQLZCwgAsh+xBgkQILCsgADAxmhLQADQlnRZ1xEAlDVv3RIg0JCAAKAhSMsQIEAgMQEBQGIDS7hcAUDCw4u4dAFAxMNRGgEC8QoIAOKdjcoIECAQUkAAEFLX2qMCAgD7IYSAACCEqjUJEMheQACQ/Yg1SIAAgWUFBAA2RlsCAoC2pMu6jgCgrHnrlgCBhgQEAA1BWoYAAQKJCQgAEhtYwuUKABIeXsSlCwAiHo7SCBCIV0AAEO9sVEaAAIGQAgKAkLrWHhUQANgPIQQEACFUrUmAQPYCAoDsR6xBAgQILCsgALAx2hIQALQlXdZ1BABlzVu3BAg0JCAAaAjSMgQIEEhMQACQ2MASLlcAkPDwIi5dABDxcJRGgEC8AgKAeGejMgIECIQUEACE1LX2qIAAwH4IISAAaFR1UFWVP6qNklqMQKQCAoBIB6MsAgQIBBYQAAQGtvw5Aa8qbIYQAgKAEKrWJEAgewEBQPYj1iABAgSWFRAA2BhtCQgA2pIu6zoCgLLmrVsCBBoSEAA0BGkZAgQIJCYgAEhsYAmXKwBIeHgRly4AiHg4SiNAIF4BAUC8s1EZAQIEQgoIAELqWntUQABgP4QQEACEULUmAQLZCwgAsh+xBgkQILCsgADAxmhLQADQlnRZ1xEAlDVv3RIg0JCAAKAhSMsQIEAgMQEBQGIDS7hcAUDCw4u4dAFAxMNRGgEC8QoIAOKdjcoIECAQUkAAEFLX2qMCAgD7IYSAACCEqjUJEMheQACQ/Yg1SIAAgWUFBAA2RlsCAoC2pMu6jgCgrHnrlgCBhgQEAA1BWoYAAQKJCQgAEhtYwuUKABIeXsSlCwAiHo7SCBCIV0AAEO9sVEaAAIGQAgKAkLrWHhUQANgPIQQEACFUrVmMwKCqKn85FzPu8xoVAJQ5d10TIEBAAGAPtCXgZ8y2pMu6jgCgrHnrlgCBhgQEAA1BWoYAAQKJCQgAEhtYwuUKABIeXsSlCwAiHo7SCBCIV0AAEO9sVEaAAIGQAgKAkLrWHhUQANgPIQQEACFUrUmAQPYCAoDsR6xBAgQILCsgALAx2hIQALQlXdZ1BABlzVu3BAg0JCAAaAjSMgQIEEhMQACQ2MASLlcAkPDwIi5dABDxcJRGgEC8AgKAeGejMgIECIQUEACE1LX2qIAAwH4IISAACKFqTQIEshcQAGQ/Yg0SIEBgWQEBgI3RloAAoC3psq4z3gDAd6iVtdt0SyAjAQFARsPUCgECBFYhIABYBZaHrktAALAuPk++gMB4AwBjIUCAQKICAoBEB6dsAgQIrFNAALBOQE9fsYAAYMVUHrgKAQHAKrA8lAABAkMBAYC9QIAAgTIFBABlzn0cXQsAxqGe/zUFAPnPWIcECAQQEAAEQLUkgUQFfKIx0cGtsWwBwBrhPG3VAgKAVZN5wgoEBAArQPIQAgQIvFlAAGBPECBAoEwBAUCZcx9H1wKAcajnf00BQP4z1iEBAgEEBAABUC1JgACBBAQEAAkMKZMSBQCZDDKyNgQAkQ1EOQQIpCEgAEhjTqokQIBA0wICgKZFrXchAQGAvRFCQAAQQtWaBAhkL5B/AOBTzdlvYg0SILAmAQHAmtg8aQ0CAoA1oHnKJQUEAJck8gACBAgsFcg/ADB1AgQIEFhOQABgX7QlIABoS7qs6wgAypq3bgkQaEhAANAQpGUIECCQmIAAILGBJVyuACDh4UVcugAg4uEojQCBeAUEAPHORmUECBAIKSAACKlr7VEBAYD9EEJAABBC1ZoECGQvIADIfsQaJECAwLICAgAboy0BAUBb0mVdRwBQ1rx1S4BAQwICgIYgLUOgMQEHVzZGaaGLCggAbJC2BAQAbUmXdR0BQFnz1i0BAg0JCAAagrQMAQIEEhMQACQ2sITLFQAkPLyISxcARDwcpREgEK+AACDe2aiMAAECIQUEACF1rT0qIACwH0IICABCqFqTAIHsBQQA2Y9YgwQIEFhWQABgY7QlIABoS7qs6wgAypq3bgkQaEhAANAQpGUaFPAZ+AYxLUXgggICAJujLQEBQFvSZV1HAFDWvHVLgEBDAgKAhiAtQ4AAgcQEBACJDSzhcgUACQ8v4tIFABEPR2kECMQrIACIdzYqI0CAQEgBAUBIXWuPCggA7IcQAgKAEKrWJEAgewEBQPYj1iABAgSWFRAA2BhtCQgA2pIu6zoCgLLmrVsCBBoSEAA0BGkZAgQIJCYgAEhsYAmXKwBIeHgRly4AiHg4SiNAIF4BAUC8s1EZAQIEQgoIAELqWntUQABgP4QQEACEULUmAQLZCwgAsh+xBgkQILCsgADAxmhLQADQlnRZ1xEAlDVv3RIg0JCAAKCqfOlcQ5vJMgQIJCUgAEhqXEkXKwBIenzRFi8AiHY0CiNAIGYBAUDM01EbAQIEwgkIAMLZWvl8AQGAHRFCQAAQQtWaBAhkLyAAyH7EGiRAgMCyAgIAG6MtAQFAW9JlXUcAUNa8dUuAQEMCAoCGIC1DIBIBH2mJZBAJlCEASGBImZQoAMhkkJG1IQCIbCDKIUAgDQEBQBpzUiUBAgSaFhAANC1qvQsJCADsjRACAoAQqtYkQCB7AQFA9iPWIAECBJYVEADYGG0JCADaki7rOgKAsuatWwIEGhIQADQEaRkCBAgkJiAASGxgCZcrAEh4eBGXLgCIeDhKI0AgXgEBQLyzURkBAgRCCggAQupae1RAAGA/hBAQAIRQtSYBAtkLCACyH7EGCRAgsKyAAMDGaEtAANCWdFnXEQCUNW/dEiDQkIAAoCFIyxAgQCAxAQFAYgNLuFwBQMLDi7h0AUDEw1EaAQLxCggA4p2NyggQIBBSQAAQUtfaowICAPshhIAAIISqNQkQyF5AAJD9iDVIgACBZQUEADZGWwICgLaky7qOAKCseeuWAIGGBAQADUFahgABAokJCAASG1jC5QoAEh5exKULACIejtIIEIhXQAAQ72xURoAAgZACAoCQutYeFRAA2A8hBAQAIVStSYBA9gICgOxHrEECBAgsKyAAsDHaEhAAtCVd1nUEAGXNW7cECDQkIABoCNIyBAgQSExAAJDYwBIuVwCQ8PAiLl0AEPFwlEaAQLwCAoB4Z6MyAgQIhBQQAITUtfaogADAfgghIAAIoWpNAgSyFxAAZD9iDRIgQGBZAQGAjdGWgACgLemyriMAKGveuiVAoCEBAUBDkJYhQIBAYgICgMQGlnC5AoCEhxdx6QKAiIeTfGmDqqr8zZX8GDWwvIAAwM4gQIBAmQICgDLnPo6u/Rg9DvX8rykAyH/GOiRAIICAACAAqiUJECCQgIAAIIEhZVKiACCTQUbWhgAgsoEohwCBNAQEAGnMSZUECBBoWkAA0LSo9S4kIACwN0IICABCqFqTAIHsBQQA2Y9YgwQIEFhWQABgY7QlIABoS7qs6wgAypq3bgkQaEhAANAQpGUIECCQmIAAILGBJVyuACDh4UVcugAg4uEojQCBeAUEAPHORmUECBAIKSAACKlr7VEBAYD9EEJAABBC1ZoECGQvIADIfsQaJECAwLICAgAboy0BAUBb0mVdRwBQ1rx1S4BAQwICgIYgLUOAAIHEBAQAiQ0s4XIFAAkPL+LSBQARD0dpBAjEKyAAiHc2KiNAgEBIAQFASF1rjwoIAOyHEAICgBCq1iRAIHsBAUD2I9YgAQIElhUQANgYbQkIANqSLus6AoCy5q1bAgQaEhAANARpGQIECCQmIABIbGAJlysASHh4EZcuAIh4OEojQCBeAQFAvLNR2UoFBlVV+fFypVoeR2AoIACwF9oS8Dd0W9JlXUcAUNa8dUuAQEMCAoCGIC1DgACBxAQEAIkNLOFyBQAJDy/i0gUAEQ9HaQQIxCsgAIh3NiojQIBASAEBQEhda48KCADshxACAoAQqtYkQCB7AQFA9iNefYPuqF+9mWcQSFBAAJDg0BItWQCQ6OAiL1sAEPmAlEeAQJwCAoA456IqAgQIhBYQAIQWtv5QQABgL4QQEACEULUmAQLZCwgAsh+xBgkQILCsgADAxmhLQADQlnRZ1xEAlDVv3RIg0JCAAKAhSMsQIEAgMQEBQGIDS7hcAUDCw4u4dAFAxMNRGgEC8QoIAOKdjcoIECAQUkAAEFLX2qMCAgD7IYSAACCEqjUJEMheQACQ/Yg1SIAAgWUFBAA2RlsCAoC2pMu6jgCgrHnrlgCBiwms4hR3AYCtRIAAgTIFBABlzn0cXQsAxqGe/zUFAPnPWIcECAQQEAAEQLUkAQIEEhAQACQwpExKFABkMsjI2hAARDYQ5RAgkIaAACCNOamSAAECTQsIAJoWtd6FBAQA9kYIAQFACFVrEiCQvYAAIPsRa5AAAQLLCggAbIy2BAQAbUmXdR0BQFnz1i0BAg0JCAAagrQMAQIEEhMQACQ2sITLFQAkPLyISxcARDwcpREgEK+AACDe2aiMAAECIQUEACF1rT0qIACwH0IICABCqFqTAIHsBQQA2Y9YgwQIEFhWQABgY7QlIABoS7qs6wgAypq3bgkQaEhAANAQpGUIECCQmIAAILGBJVyuACDh4UVcugAg4uEo7WICq/jCdpAEAggIAAKgWpIAAQIJCAgAEhhSJiUKADIZZGRtCAAiG4hyCBBIQ0AAkMacVEmAAIGmBQQATYta70ICAgB7I4SAACCEqjUJEMheQACQ/Yg1SIAAgWUFBAA2RlsCAoC2pMu6jgCgrHnrlgCBhgQEAA1BWoYAAQKJCQgAEhtYwuUKABIeXsSlCwAiHo7SCBCIV0AAEO9sVEaAAIGQAgKAkLrWHhUQANgPIQQEACFUrUkgNwFnLi6ZqAAgt02unyYF/JXRpKa1YhMQAMQ2kXzrEQDkO9txdiYAGKe+axMgkKyAACDZ0SmcAAEC6xIQAKyLz5NXISAAWAWWh65YQACwYioPJECAwC8FBAB2AwECBMoUEACUOfdxdC0AGId6/tcUAOQ/Yx0SIBBAQAAQADWzJd0Gn9lAtUPgrIAAwFZoS0AA0JZ0WdcRAJQ1b90SINCQgACgIUjLECBAIDEBAUBiA0u4XAFAwsOLuHQBQMTDURoBAvEKCADinY3KCBAgEFJAABBS19qjAgIA+yGEgAAghKo1CRDIXkAAkP2INUiAAIFlBQQANkZbAgKAtqTLuo4AoKx565YAgYYEBAANQVqGAAECiQkIABIbWMLlCgASHl7EpQsAIh6O0lIRcNRXKpNqsk4BQJOa1iJAgEA6AgKAdGaVeqUCgNQnGGf9AoA456IqAgQiFxAARD4g5REgQCCQgAAgEKxllwgIAGyKEAICgBCq1iRAIHsBAUD2I9YgAQIElhUQANgYbQkIANqSLus6AoCy5q1bAgQaEhAANARpGQIECCQmIABIbGAJlysASHh4EZcuAIh4OEojQCBeAQFAvLNRGQECBEIKCABC6lp7VEAAYD+EEBAAhFC1JgEC2QsIALIfsQYJECCwrIAAwMZoS0AA0JZ0WdcRAJQ1b90SINCQgACgIUjLECBAIDEBAUBiA0u4XAFAwsOLuHQBQMTDURoBAvEKCADinY3KCBAgEFJAABBS19qjAgIA+yGEgAAghKo1CRDIXkAAkP2INUiAAIFlBQQANkZbAgKAtqTLuo4AoKx565bAGAUGVVXl80+ZAGCMW8mlCRAgMEYBAcAY8Qu7dD4/NRU2uMjbFQBEPiDlESAQp4AAIM65qIoAAQKhBQQAoYWtPxQQANgLIQQEACFUrUmAQPYCAoDsR6xBAgQILCsgALAx2hIQALQlXdZ1BABlzVu3BAg0JCAAaAjSMgQIEEhMQACQ2MASLlcAkPDwIi5dABDxcJRGgEC8AgKAeGejMgIECIQUEACE1LX2qIAAwH4IISAACKFqTQIEshcQAGQ/Yg0SIEBgWQEBgI3RloAAoC3psq6TaACQ12niZW053RLIQ0AAkMccdUGAAIHVCggAVivm8WsVEACsVc7zLiaQaABgqAQIEBivgABgvP6uToAAgXEJCADGJV/edQUA5c28jY4FAG0ouwYBAtkJCACyG6mGCBAgsCIBAcCKmDyoAQEBQAOIllgiIACwKQgQILAGAQHAGtA8hQABAhkICAAyGGIiLQgAEhlUYmUKABIbmHIJEIhDQAAQxxxUQYAAgbYFBABti5d7PQFAubMP2bkAIKSutQkQyFZAAJDtaDVGgACBiwoIAGyQtgQEAG1Jl3UdAUBZ89YtAQINCQgAGoK0DAECBBITEAAkNrCEyxUAJDy8iEsXAEQ8HKURIBCvgAAg3tmojAABAiEFBAAhda09KiAAsB9CCAgAQqhaM7jAoKoqfykGZ3aBiwgIAGwPAgQIlCkgAChz7uPo2s+641DP/5oCgPxnrEMCBAIICAACoFqSAAECCQgIABIYUiYlCgAyGWRkbQgAIhuIcggQSEMgswDgn6empv7rYDDoT0xMTKYxAVUSIEBgPAICgPG4l3hVAUCJUw/fswAgvLErECCQoUBOAcCPf/zj72zatOm/CAAy3KhaIkCgcQEBQOOkFryAgADA1gghIAAIoWpNAgSyF8goALjyxRdf/LstW7a8azAYDCYmJvy8kf3u1SABAusREACsR89zVyPgH+TVaHnsSgUEACuV8jgCBAiMCGQQANTdbKiqavGhhx468pGPfOTjwx9qDZoAAQIELiwgALA72hIQALQlXdZ1BABlzVu3BAg0JJBRAND78Ic/fO9DDz306dOnT09cfvnl9RkAfuZoaJ9YhgCB/AQEAPnNNNaO/GMc62TSrksAkPb8VE+AwJgEMgkAzvxssWXLlk3f/e53n7/qqqve0e/3+5OTkw4CHNO+clkCBOIXEADEP6NcKhQA5DLJuPoQAMQ1D9UQIJCIQCYBQK1dv9jv33777bc+9dRTX+h0Ojf0+/3FDRs2uBMgkb2oTAIE2hUQALTrXfLVBAAlTz9c7wKAcLZWJkAgY4F+v98bDAaTr7zyyofe8pa3fKyqqk79efpEWx6GADd/+ctfPtHpdK7v9/tV/a0Ak5OTw3MB/RyS6HCVTYBAswICgGY9rXZhAf/w2h0hBAQAIVStSYBArgL1QfnV4uJiv9PpDF8Z/08TExP/89nPzQ8Sbrw+ELD33ve+910f/OAHD83Ozt5RVdV03U+v16s6nU79DQH1//TzSMJDVjoBAusXEACs39AKKxPwD+7KnDxqdQICgNV5eTQBAmUKDBYXF898S96GDRuG/x6/fPLkyf/tm9/85md27979fz/33HOdL3zhCz959tlnewkTnbkToK5/fn5+69GjR/dv27Zt59TU1PX1RwV6vV6/DgE6nU5t4OeShAetdAIE1i4gAFi7nWeuTsA/tKvz8uiVCQgAVubkUQQIlCdw5t3+fr8/qA/FO/vud/Xiiy9+8zOf+cyXnnvuub8/efLkC2dZJj/2sY9d8eu//uuXv/Wtb5184okn3vjc5z73s6qqUrwjoA4B6rrP1D49Pb352LFju48cOXJgZmbmpvq/nXXx8YDy/kzomACBqqoEALZBWwICgLaky7qOAKCseeuWAIFLCwxv86/f7R8++pWnn376b77+9a+/8OlPf/rJU6dOvXb2/xi+E37mXfP61759+y5729veduXtt99+2bPPPvvzQ4cO/SSHIKDb7V6zd+/eO3fs2LF1bm7urqqqNtf9+njApTeURxAgkJeAACCvecbcjQAg5umkW5sAIN3ZqZwAgWYFztzmP/Juf//VV1/992984xvPPvLII3/5ta997R9GLlcnA/WL/nMv/JcpZeL48eOb3vOe91z21FNPLX7/+99/41Of+tTpZktuZbX634n6roBzBxzu2rXrloWFhQM+HtCKv4sQIBCZgAAgsoFkXI4AIOPhjrE1AcAY8V2aAIGxC4we6tc5e5v/qVOnTn3v+PHjf/noo49+6aWXXnr1bJXDF8L1i/7V3No/ce+9915x3333bfzBD37Q//a3v336wQcffH3sna++gCX9+3jA6hE9gwCB9AUEAOnPMJUOBACpTCqtOgUAac1LtQQINCOw3KF+P3rmmWf+2yOPPPLJZ5555p+rqnpj5IV//Xflxd7tX1FVO3fu3DA/P7/xd37ndy47ceLEG7/3e79XnxOw7nVXdPFmH3TeOQE+HtAsrtUIEIhbQAAQ93xyqk4AkNM04+lFP6Fs1AAAIABJREFUABDPLFRCgEBYgdUc6ldX0jn74nw17/avtIPO8ePHN9bnBHzxi1/snTx58o1Evz3AxwNWOnGPI0AgGwEBQDajjL4RAUD0I0qyQAFAkmNTNAECqxBYy6F+507BX8V11vTQj33sYxuvu+66y6699trOk08+WX97wE/XtNB4n7TijwcsLi4udjqd4bcq+NlmvHNzdQIE1iAgAFgDmqesScA/kmti86RLCAgAbBECBHIVaPpQv6BO9bcH3HPPPZtefvnl6vvf/37v0KFD9TkBOX88YNDpdKqz5y74GSfo7rI4AQJNCggAmtS01sUE/ONof4QQEACEULUmAQLjEmjjUL/QvZ35eMDOnTsvP3HiRO9b3/rWT0+cOPHz0BcNsP6SjwfMz89v3b59+2379u3b0+12b66vORgMqn6/3+90OsOvVAxQiiUJECDQnIAAoDlLK11cQABgh4QQEACEULUmAQJtC4zlUL/ATU7Mz89ffujQoas2bdo0eOyxx15PPAg49+0JW7Zsufrw4cP3HDx4cH+3272hqqpuHQT4eEDgHWV5AgQaERAANMJokRUICABWgOQhqxYQAKyazBMIEIhEIKZD/YKSzM/PX1HfEVAfGvjcc8/9dP/+/fU5Aal+PKD+BoHeWbCNs7Oz71xYWPjA7OzsHVVVTdf/vdfr+XhA0B1V6OL1yR5+mi50+M22LQBo1tNqFxbwV5bdEUJAABBC1ZoECIQUiPpQv5CN199MUH884Nprr73sP//zPxePHj36k6qqFgNfM8TyPh4QQtWaBAi0IiAAaIXZRWSW9kAgAQFAIFjLEiDQuEBSh/o13v2bFnz88cevuvXWW684efJk7zvf+c7phL89YPjv0JmvW/TxgNA7x/oECKxXQACwXkHPX6mAOwBWKuVxqxEQAKxGy2MJEGhbIIdD/YKa1d8esHv37qtefPHFyZdffvl04t8esKKPB0xMTNQfEXBoYNCdZXECBC4kIACwN9oSEAC0JV3WdQQAZc1btwRSEcjxUL/Q9p2HH374yrvvvvuKr3zlKz8/dOjQG7l9POD+++/fc91115337QGTk5MTvkow9NayPgECowICAPuhLQEBQFvSZV1HAFDWvHVLIGaBYg71CzyEiYcffviqG2+88bJrr722SvzbA877eEC3271m7969d+7YsWPr3NzcXVVVba4te71e1el0BoKAwDvL8gQInBEQANgIbQkIANqSLus6AoCy5q1bAjEKlHyoX9B51N8ecMstt1zx/ve/v/P888//bP/+/a8HvWC4xeuPBox+PKDatWvXLQsLCwe2bdu2c2pq6vr6/+/1ev06BPDxgHCDsDIBAgIAe6A9AQFAe9YlXUkAUNK09UogLgGH+rU3j8knnnhi02/91m9t+OxnP3v6wQcfTP3jAfVXIJ45NHB6enrzsWPHdh85cuTAzMzMTfV/GwwGVb/f7/t4QHsbzJUIlCTgDoCSpj3eXgUA4/XP9eoCgFwnqy8CcQo41G+8c5ncvXv3FR/96Eev/OxnP7v43e9+9+eJfntArVjfEVCHAGeCAB8PGO/GcnUCJQkIAEqa9nh7FQCM1z/XqwsAcp2svgjEJeBQv7jmUQ2/PeBnP/vZ5JNPPvnG5z73uZ8NX0xHVuqlyqn/HavDgMXhA3084FJk/n8CBNYjIABYj57nrkZAALAaLY9dqYAAYKVSHkeAwGoFHOq3WrExPL4OAt72trddOT8/v+Hv/u7v6q8R9PGAMczBJQkQSEdAAJDOrFKvVACQ+gTjrF8AEOdcVEUgZQGH+qU5vVy+PaDW9/GANPegqgkkISAASGJMWRQpAMhijNE1IQCIbiQKIpCsgEP9kh3d+YXX3x5w6NChq15//fX+t7/97eGhgWc+a5/YrxV9PGB4aKBvD0hsusolMCYBAcCY4Au8rACgwKG30LIAoAVklyCQsYBD/TIeblVVnSeeeOKqd7/73Rueeuqp09/61rfeOHHixLnP2ifU+jAIOPftATMzM1NHjx7dc+jQoQPdbveG+hzBOghYXFxc7HQ6k/XXCVZV5WevhIasVAJtCQgA2pJ2Hf8I2QMhBAQAIVStSSB/AYf65T/j0Q7PfHvA0aNHr/zXf/3X3n333VefE9BLlOC8jwdUVbVxdnb2nQsLCx+YnZ29o/5mwbqvXq836HQ6lSAg0Skrm0BAAQFAQFxLnycgALAhQggIAEKoWpNAngIO9ctzrqvq6mMf+9jG66677rIbbrihvjug/vaAn1dVVb+zntqvJR8PmJ+f37p9+/bb9u3bt6fb7d5cN+TjAamNVb0EwgsIAMIbu8IvBAQAdkIIAQFACFVrEshLwKF+ec2zkW6G3x5w++23X/bCCy+cvu+++36ScBAw/LfwzDkHW7Zsufrw4cP3HDx4cL+PBzSyXSxCICsBAUBW44y6GQFA1ONJtjgBQLKjUziB4AIO9QtOnMUFJo4fP75p586dl584caL3rW9966cnTpyo7wpI8Vf98YD69/DjDT4ekOIU1UwgsIAAIDCw5c8JCABshhACAoAQqtYkkK6AQ/3Snd24K5+Yn5+//A//8A+v+sEPfpDdtwdc7OMBk5P1mYEODRz3BnR9Am0JCADaknYdAYA9EEJAABBC1ZoE0hNwqF96M4u24p07d27YvXv3lb/92799+Ve/+tWf7t+//6c5fzygHkSv16s6nc5AEBDttlQYgcYEBACNUVroEgICAFskhIAAIISqNQmkIeBQvzTmlHKVnQcffHDju971rsu63e7i1q1bX0/82wPO+3jA3NzcOx544IGDt956686pqanr648P9Hq9fh0CdDqd+t9XP7ulvHvVTuACAgIAW6MtAf+ItCVd1nUEAGXNW7cEagGH+tkHrQsMvz3g2muv7Tz55JP1twfUdwWk+GvJtwdMT09vPnbs2O4jR44cmJmZuensH7Kq3+/3fTwgxRGrmcDFBQQAdkhbAgKAtqTLuo4AoKx567ZsAYf6lT3/KLqvPx7wR3/0R5tefPHFyZdffvn0oUOH6rsCUv0awfO+PaDb7V6zd+/eO3fs2LF1bm7urqqqNtfoPh4QxdZTBIHGBAQAjVFa6BICAgBbJISAACCEqjUJxCPgUL94ZqGS8wU6Dz/88JXve9/7rvjbv/3b0//4j//4s4S/PWDJXQG7du26ZWFh4cC2bdt8PMDOJ5CZgAAgs4FG3I4AIOLhJFyaACDh4SmdwEUEHOpne6QicObbAw4dOnTVpk2bBo899tjrGQQB9R0Ng3oAPh6QyjZUJ4GVCwgAVm7lkesTEACsz8+zlxcQANgZBPIRcKhfPrMsspP5+fkrbrnllive//73d55//vmf7d+//2dVVS0milEfGFiHAGeCAB8PSHSKyiawjIAAwLZoS0AA0JZ0WdcRAJQ1b93mKeBQvzznWnJX5749YHJycvF973vfTxIOAnw8oOSdrPcsBQQAWY41yqYEAFGOJfmiBADJj1ADBQs41K/g4ZfS+u7duzd+9KMfvfKLX/xi7zvf+c7pDL494JIfD1hcXFzsdDqT9dcJ+irBUna6PlMSEACkNK20axUApD2/WKsXAMQ6mRB11Tei+pskhGybazrUr01t14pGYN++fZft3r37qgy+PaA2XenHAwadTqcSBESzDRVC4IyAAMBGaEvAj+1tSZd1HQFAWfPWbboCDvVLd3Yqb1bgzLcH3H333Vd85Stf+fmhQ4feyOnjAfPz81u3b99+2//X3t3GxnWdh75fM3toi7JMieym2hinVi5qFGgSo8C1Y0s0Q6hfOKRPWgWFKMcBCjuVSdN8ETVpZBRFe+tbNAFqB2dEUaQlUkZt5CKKRSGwc1wNh594GZp6sX2BwPlyAQeNXCA9kKakRNuSZe3Zc7BGs5URhxT3vOzZe+31J8APtvbLen7PIjnzzFrP7uvr22ea5mOSLpfLCdu2bcMw5N9sXg/Wdj5xNQTKFqAAUDYZJ1QowC/8CuE47a4CFACYIAgEV4CmfsHNTT1GJj8llt/FX3L5uPzmS4jIK6+8svmhhx5q2LZtm3j55Zevp1KpL5yme4oBOX0Cbm8PaG1t3TI0NPT0wMDA86Zp7pB9BGUhgO0BimWW4YZSgAJAKNMayKAoAAQyLcoPigKA8ikkgBAK0NQvhEl1GZLzCe/t7vFrnFfyZtHltUN7WPHTA9Lp9BeHDh26pmghQObIKfxYhYQ1xuPxhxOJxAvxeHyPfLKg/P+WZSm3PYBdaKH9EdQuMAoA2qXct4ApAPhGH+obUwAIdXoJTjEBmvoplrAaDnfNTvFtbW27LMuSS9xFLBZrXFxcPDs7O3u+6L6xwooAVgXcQom+9tpr933961+PpVIp6/333782PT2t6mMES+YE2wNq+BPHpRCoQoACQBV4nFqWAAWAsrg42KUABQCXUByGgEcCNPXzCFaRy97RDE4IseanvUWxXJ2ZmXlzfn7+3NTU1OlMJvNJ4d/crBxQhKQmw4z29PTc+8wzz2x6//33s7/5zW++UPzpAc7favkhumB7QE3mCBdBoGIBCgAV03FimQIUAMoE43BXAhQAXDFxEAI1F6CpX81JlblgyRL+lpaWpgMHDuwbHBzsX73fW+77ll+yE7whu8DdejScuHTp0oUTJ06cWlhYeDeVSp0rit4orAq4daLmX/LpAd/61rcao9Fo7Kc//em1119/XfYJUHXFhOvtAZFIRG4RoGmg5vOf8L0RoADgjStXLRWgAMCs8EKAAoAXqlwTgbUFaOqn98xY/eZNdHZ2Pp5IJPrb2tp2NzU1PSiXsG/Q8Z3CUYVzSBYC/uiP/mhTd3d37Be/+MXNsD494Lnnntu3ffv2O54eEI1GIzxKsMKJw2kIrCFAAYBpUS8BCgD1ktbrPhQA9Mo30fojQFM/f9yDcNeSpfmmad7f29u7t6OjY2dXV9dTQoitcqCWZclP+HMu36ixdaTy7N5+ekBDQ0PkjTfe+Gx6elquClDxy6v5paIFY0agbgIUAOpGrf2NKABoPwU8AaAA4AkrF0UgL0BTP30nwroN3Dz4hJZ5VuE8k08PGBwc3Hzz5s3cL3/5yy9eeukl2XBR1a0TrlaYWJZlF7aTsD2gwnnDaQhQAGAO1EuAAkC9pPW6DwUAvfJNtN4L8Mms98ZBvoOrpn7yEW4e7NFmpUmFM2P37t2xv/qrv2oM2dMDZJ+DfDGjubl568jISM/w8HB/S0vLI/nqZC4nbNu22R5Q4aThNK0FKABonf66Bk8BoK7c2tyMAoA2qSZQjwXYm+0xcIAvX1ZTP8Mw5IZsGY5Xf9fpNVH5ZMk/PeDAgQOblpaWrD179sgVAVbll/P9zDsKUjXafuJ7UAwAAb8FKAD4nQF97u/VCwV9BIl0LQEKAMwLBCoX4I1W5XZhONPVkusNmvp57UBhqkLhnp6exj179jRs27bNOH369HXFnx5QsiVlrQaUbA+ocLJwmnYCFAC0S7lvAVMA8I0+1DemABDq9BKcRwIstfYIVoHLqtp0ja0pFU4uuT2gu7u7UT494L333rP279//mcKPESxZrbLe9oBsNputw2qVCrPCaQj4K0ABwF9/ne5OAUCnbNcvVgoAHlvLDZj88HqMXL/L02ytftZBu1M9m/p5HTvzuDLhyPj4+H27d+++55133rn5/vvv31D46QFSwO32gJxhGMLjbSuVZYSzEPBJgAKAT/Aa3pb3EBomvQ4hUwCoAzK3UFqAT06VTl/Vg/ezqV/Vg9/gAqxkqUw40t3dfc/f/d3fbf7P//xP++LFi9ahQ4euKfz0gHWLW319fftM03xMMvm8laWyTHEWAh4JUADwCJbLlghQAGBSeCFAAcALVa4ZBgH2Tochi5XFELSmfpVF4f4selm4t1p9pPEv//Ivm7/zne80nDlz5vPnn3/+hhAiW/nlfD2zZN63trZuGRoaenpgYOB50zR3CCFMWQhge4CveeLmARCgABCAJGgyBAoAmiS6zmFSAKgzOLcLtABvhAKdHs8Hp0JTP68RKHxVJhwdHx/fvG3btobm5ubsyy+/fG1ubk71pwfInwcnhsZ4PP5wIpF4IR6P75FPFpRM8nGWbA+obMJwltoCFADUzp9Ko6cAoFK21BkrBQB1csVIvRNgKbR3tkG/sqpN/bx2ZetLhcLy6QHf/e53G2zbdp4e8HmFlwrCaWwPCEIWGEPgBCgABC4loR0QBYDQptbXwCgA+MrPzX0WoBmazwnw8fZhaurnNSM/JxUIy6cHvPjii5uXl5eNK1eu3BwcHJR9AuwKLhWEU0oKZWwPCEJaGINfAhQA/JLX774UAPTLeT0ipgBQD2XuESQBPtkMUjbqP5YwN/XzWpOVMpUJG6+88sqmJ5988t4QPT2A7QGVzQXOCokABYCQJFKBMCgAKJAkBYdIAUDBpDHkigTY21wRWyhO0q2pn9dJo1dGZcKRnp6ehmeeeea+++67L/fyyy9fT6VSX+jy9IBoNBrhUYKVTRzOCp4ABYDg5SSsI6IAENbM+hsXBQB//bm7twK8UfHWN+hXp6mf9xmisFaBcXd3972PP/74vT09PbEzZ87cOHTokOwToPLTA5zXEjnJsdb2APn/LcsShmHkKARUMGk4JVACFAAClY5QD4YCQKjT61twFAB8o+fGHgqwVNlD3IBfmqZ+/iSIrTWVud9+esD27dvtycnJT6enp1UtBEiB1UW3xq6urq8dPHhwYNeuXbubmpoelMdYlmXLIoBhGM7Pa2V6nIWATwIUAHyC1/C2FAA0THodQqYAUAdkblE3AZqV1Y06cDeiqV9wUsLPYQW5kE8PeOaZZza9//772d/85jdfvP7666F6ekBzc/PWkZGRnuHh4f6WlpZHJFEulxO2bdtsD6hgwnCKrwIUAHzl1+rmFAC0SnfdgqUAUDdqbuSRAJ88egSryGVp6hfcRLESp4Lc9PX1NXzrW99qDOvTA0zTvL+3t3dvR0fHzq6urqeEEFslE9sDKpgsnOKbAAUA3+i1uzEFAO1SXpeAKQDUhZmbeCDA3mMPUBW5JE39FElUYZj04qgsX/mnB3z729++9+c///kXg4OD1xXuEyAFSlbpdHZ2Pp5IJPrb2trYHlDZHOEsnwQoAPgEr+FtKQBomPQ6hEwBoA7I3KJmAryRqBmlkheiqZ+Sabtj0OUU7mJCCLvwrX7klUcQeeWVVzbv2LEj9qUvfSl65MiRz6anp2+G4OkBMrf5poFsD6h8cnCmPwIUAPxx1/GuFAB0zLr3MVMA8N6YO1QvwFLi6g1VvQJN/VTN3N3Hve7WnYmJieNHjx49efny5U8LlyhZ8RFOko2j6unpuefRRx+995vf/GZD4ekB1xQuBMiA79jCw/aAjecARwRDgAJAMPKgwygoAOiQ5frHSAGg/ubc0b0AzcTcW4XtSJr6hS2j68ez+udcZDKZC5OTk6cWFhbeTaVS54pONQorAvKfHGv8FX3ttdfu+/rXvx5LpVJWKpW6Pjc3Zyns4Wp7gNM0kKcHKJzpkAydAkBIEqlAGBQAFEiSgkOkAKBg0kI+ZJr6hTzBG4RHUz998+/87ItYLOa85rk6MzPz5vz8/LmpqanTmUzmkwJPycoQTdmizz777D179+5tjEaj2X/913+9OT09LXsFqPpFfw9VM6fZuCkAaJZwH8OlAOAjfohvTQEgxMlVLLRy9gY7L/7lHlK+1BfgRb/6OaxlBGsVAcXS0tIHY2Njx0ZHR6eXl5evFt2QVQFCiN27d8defPHFzbZtG6dPn77++uuvf6F4/wTXxUDDMEQkkn+ZzGvlWv4kcq11BSgAMDnqJcAvtXpJ63UfCgD1yrdcsMpP8WptmvrVa/4F8z409QtmXoI0KqcwKFcFyPlir6ysfHz27Nm5w4cPT8zMzPxKCOF84k3TwEIhoLu7u7G7uzv23nvvWfv375d9ArJBSmqZY1l3O1BfX98+0zQfk9dje0CZqhoc7uXLLgoAGkyggITIW4eAJCJkw6AAELKEKhIOTf0USZQHw6SpnweoGlxyrd8ZmUwmc5Gmgetm//bTAzZv3hx944035NMD5KoAVb9Kfne0trZuGRoaenpgYOB50zR3CCFMWQjIZrNZwzCirApQNdXBHzcFgODnKCwjpAAQlkwGKw4KAMHKR9hHQ1O/sGd4/fho6qdv7msZ+ZqrhmgaeHdi+fSAZ5555r5r167ZFy9etA4dOhSGpwfIFSFO48PGeDz+cCKReCEej++RTxaUIpZl5dgeUMsfP67lCFAAYC7US4ACQL2k9boPBQC98u1HtDT180M9OPd0vY83EonIF+vOp3zBiYCRBFWApoHlZ8Z47bXXNof56QHd3d0729vbn2B7QPmTgzPcC1AAcG/FkdUJUACozo+z1xagAMDM8EqApn5eyQb/ujT1C36OwjRCmgaWn807nh7w8ssvXwvBYwSd1zP5R0SyPaD8SVGXM7zcmF+XAG7dhAJAHbE1vxUFAM0ngEfhUwDwCFbTy9LUT9PEF8KmqZ/e+Q9C9DQNLDMLzz777KZ9+/bd09jYGJ2YmLgxPT19IwRPD3C1PYBVR2VOFg6/LUABgMlQLwEKAPWS1us+FAD0yrdX0dLUzyvZ4F+Xpn7Bz5GOI6RpYJlZl48RXPX0gM8ULwTQd6TMOcDh7gUoALi34sjqBCgAVOfH2WsLUABgZlQjQFO/avTUPpcX12rnT5fR0zSw/Eznnx7w5JNP3vvOO+/cfP/99+WqgFA9PcA0zft7e3v3dnR07Ozq6npKCLFVMlmWJQzDyPH0gPInjW5nUADQLeP+xUsBwD/7MN+ZAkCYs+tNbDT188ZVlavS1E+VTDHO1QI0DSxvTkR6enoaDhw4cF8mk8l99NFHN0P49ADR2dn5eCKR6G9ra9vd1NT0oBAialmWLYsANCUtb8LodDQFAJ2y7W+sFAD89Q/r3SkAhDWztY+Lpn61N1XlijT1UyVTjNONAE0D3SjdeYwxPj7e+Bd/8Rf3/PSnP71x6NChz4UQ2fIvE5gzSn6nNTc3bx0ZGekZHh7ub2lpeUSONJfLCdu27Wg0GmFVQGByF4iBUAAIRBq0GAQFAC3SXPcgKQDUnVypG9LUT6l01XywNPWrOSkXDJgATQPLS0h0fHx887Zt2xqam5uzb7311vXJycmb5V0icEffsaqJ7QGBy08gB0QBIJBpCeWgKACEMq2+B0UBwPcUBHIANPULZFrqMiia+tWFmZsETICmgWUmRD494Mtf/vI9jz76qPHGG298Pj09fb3MSwTt8JK+JmwPCFqKgjMeCgDByUXYR0IBIOwZ9ic+CgD+uAf1rjT1C2pmvB8XTf28N+YOwRegaWCZOerp6TH6+vq2fPrpp5Hf/va31uDg4LWQPD3AlrsAJMd62wOy2WzWMAy5P0AeVtbrdHnhsk4oMy8c7q0ABQBvfbn67wT4PcFs8EKAAoAXqmpdk6Z+auWr1qOlqV+tRbleWARoGlheJo1XXnllUzwev+dnP/tZ9vz58zdSqdSN8i4RuKPdbg/IGYYhKikEBC5iBuRKgAKAKyYOqoEABYAaIHKJEgEKAPpOCpr66Zt7mvrpm3siL1+ApoHlmUW6u7vvefHFFxs/++yzyBtvvPHZ9PS07BOQ/zRd0a91V0j19fXtM03zMRmX0zSQpwcomuUyhk0BoAwsDq1KgAJAVXycvI4ABQC9pgZN/fTK9+poaeqnd/6JvnoBmgaWYdjT0yN7BNz7zW9+s+HMmTOhfHpAa2vrlqGhoacHBgaeN01zhxDClIWAarYHlEHMoT4JUADwCV7D21IA0DDpdQiZAkAdkANwC5r6BSAJPg2Bpn4+wXPbUAvQNLC89N5+esD27dvtH/zgB5/Nzc1Z5V0icEevLqg2xuPxhxOJxAvxeHyPbB0gR2xZFtsDApe66gdEAaB6Q67gToACgDsnjipPgAJAeV6qHU1TP9UyVrvx0tSvdpZcyUeBgDdLo2lgmXNDPj1g7969jVeuXMm+/fbbN8P49IDu7u6d7e3tT7A9oMzJodDhFAAUSpbiQ6UAoHgCAzp8CgABTUwVw6KpXxV4ITiVpn4hSCIhKClA08Dy0hY7c+bMZtu2jYsXL94MydMDnNdU+X4HbA8ob0KodDQFAJWypfZYKQConb+gjp4CQFAzU/641nrxuZxOp99OJpOvptPpD4UQznOanWXh8jFHfKkvQFM/9XNIBOERoGlgebk0jh8/fu+TTz656Sc/+cnNVCp1ne0B5QFydP0FKADU31zXO1IA0DXz3sZdpwJAwBdxemvs5dVZfuqlbvCvTVO/4OeIEeotQNNA9/mPvPLKK5sfeuihhoaGBufpAV+4Pz2QR5b19IBoNBrhUYKBzGPJoCgAqJGnMIySAkAYshi8GOpUAAhe4IqPqNwGVHcsS1Q8dt2HT1M/3WcA8asowO/sMrImnx7wzDPP3Hft2jX74sWL1qFDh66F4DGCG24PkESWZQnDMHIUAsqYMD4cSgHAB3RNb0kBQNPEexw2BQCPgWt8eT5NqjGoQpejqZ9CyWKoCKwjwKqt8qaG8dprr23++te/HkulUlZYtwd0dXV97eDBgwO7du3a3dTU9KAQImpZli2LAIZhOEXf8uQ42lMBCgCe8nLxIgEKAEwHLwQoAHihWttrsp+0tp6qXY2mfqpljPEi4E6Avi3unORR0WefffYe+fSAaDSafeutt65PTk7edH96II8sKeo2NzdvHRkZ6RkeHu5vaWl5RI46l8sJ27ZttgcEK4cUAIKVjzCPhgJAmLPrX2wUAPyz3+jOdJTeSCi8/05Tv/DmlsgQWC3Ak1vKmBPyMYL79u27Rz494I033vh8enr6hhBC5Ya2bOsqI/9BOZQCQFAyEf5xUAAIf479iJACgB/q69+T5aHByke9R0NTv3qLcz8EgiWQ3+YVvfVxrxyZvbKy8vHN7i9HAAAgAElEQVTi4uJcMpk8Njs7e75ouLHCG1+V3/xWrN/T02M8+uijm7u7u2PvvfeetX///s8ULwRIi5JVAZ2dnY8nEon+trY2tgdUPFtqfyIFgNqbcsW1BSgAMDO8EKAA4IVq+dcst0GUfKMoX/TlnzXMl9ICfPqjdPoYPAKeCKz1N+HqzMzMm/Pz8+empqZOZzKZTwp3Lvkd4smIgnvR/NMDnnzyyXvfeeedm++///6N6enpsDw94PbfebYHBGsCUgAIVj7CPBoKAGHOrn+xUQDwz17emaZ+/vr7eXea+vmpz70RUENgzVVhly5dunDixIlTCwsL76ZSqXNFoRgaF4cjPT09DQcOHLgvk8nkPvroo5sheHqATO0dfWBM07y/t7d3b0dHx86urq6nhBBb5UE8PaC+P9AUAOrrrfPdKADonH3vYqcA4J3telemqV/9zYN0R5r6BSkbjAUBVwJysZXvL8OcgnEkFos5g1lOp9NvJ5PJV9Pp9IdCiOurVgVouT1ACGGMj4837tmz596TJ09+fujQoc+FEFlXqQ7uQa62BzhNA3l6gLeJpADgrS9X/52A7395SEYoBSgA1C+tRU395GN98j/SLOmsn7+fd6Kpn5/63BuBcAnQNNB9PqPj4+Obt23b1tDc3By2pwfc3h7Q0tLSdODAgX2Dg4P9pmnuEEKYshCQzWazhmE4/SR4H+F+3mx4JAWADYk4oEYC/ODWCJLL3CFAAcDbCUFTP299g351mvoFPUOMDwG1BWga6DJ/8ukBX/7yl+959NFHnacHOKslXF4hkIe5XlFmGIYoNJbk/UQNUkkBoAaIXMKVAD+wrpg4qEwBCgBlgrk8nKZ+LqFCeBhN/UKYVEJCIOACNA10mSD59IDvfve79y0vLxtXrly5OTg4eC2MTw/o7u7e2d7e/kRfX98+0zQfkzxsD3A5SVwcRgHABRKH1ESAAkBNGLnIKgEKALWdEjT1q62nSlejqZ9K2WKsCIRTgKaB7vNqHD9+/N729vZN09PT1vnz52+kUqkb7k8P5JElBejW1tYtQ0NDTw8MDDzP9oDa5YwCQO0sudLdBSgAMEO8EKAAUL0qTf2qN1T5Cq6XYEYikRyNmVRONWNHQCkBmga6S1eku7v7nhdffLHxs88+i4yPj19LpVLyMYKqP2Z39Ra0xng8/nAikXghHo/vEUI0Sx7LsuTfJbYHuJsrt4+iAFAmGIdXLEABoGI6TryLAAWAyqdHUVO/2x2ZaepXuadKZ9LUT6VsMVYE9BagaaDL/Pf09MgeAfd+85vfbDhz5syNsD49gO0BLifEXQ6jAFC9IVdwJ0ABwJ0TR5UnQAGgPC+a+pXnFbajaeoXtowSDwJ6CdA00F2+808PeOCBB2JbtmzJ/eAHP/hsbm7OcndqYI9ie0ANU0MBoIaYXOquAhQAmCBeCFAAcKdKUz93TmE8iqZ+YcwqMSGgtwBNA13mXz49YO/evY1XrlzJvv322zenp6fD8vQAWdB2ihrrbg9g69raE4UCgMsfIA6rWoACQNWEXGANAQoAd58WNPXT98eGpn765p7IEdBFgKaB7jMdO3PmzGbbto2LFy/KpwfIQkDW/emBPJK/cxWmhQJAhXCcVrYABYCyyTjBhQAFgFIkmvq5mDghPoSmfiFOLqEhgMC6AjQNdDc58k8PePLJJzf9/Oc//2J6evrzMG4PME3z/t7e3r0dHR07u7q6nhJCbJU8lmUJwzBykUj+bYm2700oALj7YeGo6gW0/SGrno4r3EWAAsDvcGjqp++PCk399M19bSOXfcP5a11bU65WbwGaBroTj7z00kuNf/qnf3qPaZqRH/7wh2F9eoDo7Ox8PJFI9Le1te1uamp6UAgRtSzLlkUAXZ9sQwHA3Q8JR1UvwEuK6g25QqmA7gUAmvrp/VNBUz+980/0CCBwdwGaBrqYIc7TA7q7u2PpdPqLQ4cOXQvBYwRLCuPNzc1bR0ZGeoaHh/tbWloekTS5XE7Ytm1Ho9GITqsCKAC4+MHgkJoIUACoCSMXWSWgawGApn76/ijQ1E/f3BM5AghUJkDTQHdu+acHfOMb32hIpVJWKpW6HoLtATLyO7bGudgeEPr3LBQA3P1AcFT1AqH/YaqeiCtUIKBbAYCmfhVMkpCcQrOjkCTS7zBY5e93Bri/jwI0DXSHH3322Wfv2b9/f+PFixezly5duvm9730vDE8PKPk7utb2gJs3b8oVAaHeHkABwN0PAkdVL0ABoHpDrlAqoEMBgKZ+es98mvrpnX+iRwABbwRoGujONfbaa681/vEf/3HsyJEjn09PT98QQtjuTg3sUetuD/ibv/mbF7Zs2fJ/OiO3LCtrGIbcHyD/V2jey1AACOzcDN3AQvNDE7rMqB1QmAsANPVTe25WM3qa+lWjx7kIIICAewGaBrqw6unpMR599NHNsk/Ae++9Z/34xz8O5faAl1566Q8aGxv/+5/8yZ889ud//ufFTw/IGYYhwlIIoADgYtJzSE0EKADUhJGLrBIIWwGApn56T3Ga+umdf6JHAAF/BcppGmgUPgmXu2p0+so/PeArX/lKw+bNm2XPAPn0ALkqQPWvfOE9kUjck0wm89sduru7d7a3tz/R19e3zzTNx+T/c5oGqv70AAoAqk9XdcZPAUCdXKk00rAUAGjqp9Ksq+1YaepXW0+uhgACCFQrQNNAF4Ly6QEDAwObr1y5Ij766KObYXh6wMDAwJbZ2dmbH3300RfOkxBaW1u3DA0NPT0wMPC8aZo7hBCmLARks1lltwdQAHAxwTmkJgIUAGrCyEVWCaheAKCpn75TmqZ++uaeyBFAQA2BNVflLS0tfTA2NnZsdHR0enl5+WpRKLquCjDGx8cbd+/efc8777xz89e//vXnk5OTN9VI8Z2j/P73v3/fj370o8+FENnC0wPkyjyrcFRjPB5/OJFIvBCPx/cIIZrl/7csS7ntARQAVJydao6ZAoCaeQv6qFUsANDUL+izytvx0dTPW1+ujgACCHghQMF+Y9X80wO+/e1vb7Zt23rrrbeuq1YIWFUAcCJet2Cv6vYACgAbT2aOqI0ABYDaOHKVOwVUKgDQ1E/f2UtTP31zT+SrBXgOIXNCbQG27LnI37PPPrvpy1/+8j0HDx40ent7lXl6wDoFgOJCgPO6M9/7QdXtARQAXExiDqmJAAWAmjBykVUCQS8A0NRP7ylLUz+980/0CCAQXgH+vrvIrXx6wFe/+tXGv/zLv2yQTw/Yv3//Z0F+jOAGBYDiiFf/fV93e0AkEpFbBJx+Py7UvD+EAoD3xtzhlgAFAGaCFwJBLQDwCYEX2VbjmjT1UyNPjBIBBBColQAr/FxIHj9+fPOuXbvu/dnPfpY9f/78jSA+PaCMAoATsZL9fCgAuJiwHFITAQoANWHkIqsEglYAYI+gvlNUyRcB+qaLyBFAAIGaC9DjZ2PSSE9PT0NQnx5QQQGguBBwx/YA0zTv7+3t3dvR0bGzq6vrKSHEVnmwZVnCMIxcJJJ/a+TL+yMKABtPVI6ojYAvE7w2Q+cqARYIQgGAP/gBniB1GBpN/eqAzC0QQAABxQT4QGDjhOWfHrBnz557T548+fmhQ4ec7vsbn+nREVUUAIpH5Gr7n2VZtiwC+LE9gAKARxOIy5YIUABgUngh4GcBgCV/XmRUjWvS1E+NPDFKBBBAwG8BtgRunIHo+Pj45gceeCC2ZcuW3PT09DW/nh5QowKAE3HJa4Xm5uatIyMjPcPDw/0tLS2PyANzuZywbduORqOReq0KoACw8aTkiNoIUACojSNXuVOg3gUAmv7oPQNdVfWdP+Z+VPX1Tg/RI+CHAI818ENdwXvy+sFF0pynB3z3u981vv/978unB1x3cVrNDqlxAaB4XHesFvR7ewAFgJpNGS60gQAFAKaIFwL1KgBQwfcie2pck6Z+auSJUSKAAAKqCLCCcONMGWfOnLnvxo0b0V/+8pfWSy+9JAsB2Y1Pq+4IDwsAzsBK+gV1dnY+nkgk+tva2nY3NTU9KISIer09gAJAdfOEs90LUABwb8WR7gW8LgCwh899LsJ2JE39wpZR4kEAAQSCJUAPoY3zET1+/Pim9vb2Te+8887Nubm5L7x8ekAdCgCrCwG23AUg/2c9twdQANh44nFEbQQoANTGkavcKeBFAYA/yHrPMpr66Z1/okcAAQT8EOADhw3Ue3p67pFPD/jss88i4+Pj11Kp1BfOm+daJayOBYDiIdd9ewAFgFrNGK6zkQAFgI2E+PdKBGpZAGBJXiUZCMc5NPULRx6JAgEEEFBdgC2HLgoBX/3qVzf19PTEzpw5c6OWTw/wqQDgROxqe0At+gxRAFD914Q646cAoE6uVBpptQUAmvKolO3aj5WmfrU35YoIIIAAAtUL8PpkY8P80wO2bdvWsH37drsWTw/wuQCwuhBwe3tAS0tL04EDB/YNDg72m6a5QwhhykJANpvNGoYhHx8gz3X9XosCwMaTiyNqI+B6UtbmdlxFE4FKCwBU2DWZIGuESVM/fXNP5AgggEDwBDZ+kAQrFDfImnx6wN69exuvXLmSvXTp0s3vfe97FT09ICAFgOJoXW9LNAxDuC0EUAAI3q+BsI6IAkBYM+tvXOUWANhj52++/Lw7Tf381OfeCCCAAALVCtCjaGPB2Guvvda4adOm2JUrV24ODg6W9fSAABYAVq8KuP0khO7u7p3t7e1P9PX17TNN8zF5oNvtARQANp5IHFEbAQoAtXHkKncKuCkA8AdT71njunoeiURyhmE4KwT0ViN6BBBAYF2BjT+yBs9zAT7QuDtx/ukBTz755Kaf/OQnN1Op1PW5uTlro6wEuABQXAhwXvvmnx7Q2tq6ZWho6OmBgYHn3W4PoACw0Uzg32slQAGgVpJcp1jgbgUAlszpO1do6qdv7okcAQQQ0EmALY13z3bkpZdeavzKV77S8KUvfSn6wx/+8K5PD1CgAFAc7eo+Ro3xePzhRCLxQjwe3yOfLCgPtixLfrhxx/YACgA6/YrwN1YKAP76h/XuqwsAf2Tbtp3L5SLRaNRpiiIymcyFycnJUwsLC++mUqlzRRiGEOJ2k5WwImkUV9066GpkSqgIIIAAAsEXoGngBjnq6+treOCBBxrl0wPm5ua+GBwc/Gz1YwQVKwA4Ea+7xXGt7QHy5bFlWdmGhobYP/7jPw780z/906tCiJisFQR/mjNC1QQoAKiWMTXGe7sAcOXKlQ/vu+++h2KxmDPXMplM5uLExMTxo0ePnrx8+fKnhZBKPh1WI1RGuY4ATf2YGggggAACCPxOgBWQd58N+acHfOMb32hIpVLWr3/9688nJydvylP6+vo2T05O3hBC3N5rr9DEKnk9tNb2ABnP9evXs5s2bYq+9NJLgxQAFMqwgkOlAKBg0hQY8u0CwLVr1/7/xsbGHVevXv33c+fO/b+HDx+emJmZ+ZX8PVeIQ1Y35af98psv9QVKKt7Nzc1bR0ZGeoaHh/tbWloekSE6DXFuLQgp7zE56hMRAQIIIICAxgL0QLp78iPPPvvsvfv372+8ePFi9qOPPvriD//wDxv2799/TdECQHG0JdsDurq6vnbw4MGBXbt27W5qavpv8lP/f/iHf+j/53/+5+OsAND4t4THoVMA8BhY08vnCwC///u/f9/58+enf/zjH//P0dHR/yeTyXxS5MEy/3BNjo3+qD0ohIhalmXLN/w09QtX8onmbgI0ZmN+IIDAugI0DbzL5Ni9e3esp6dn07//+7/nfvSjH8kCQL7BXgi+Sj4saWlpaerv7//Lv//7v/+/jhw5cvRv//Zv/wcFgBBkOqAhUAAIaGJCMiw5v+4VQnxeiKdkGVRI4tQ1jJJtG+sta7MsS77pz/Fpv65ThbgRQAABBO4iQNNAPadHyeviP/iDP2h96KGHHlhYWPil/OCEFbJ6Tgyvo6YA4LUw15cCfNofrnlQdmMb3viHawIQDQIIIICAJwI0DfSEVYmLlry2UmLUDFJJAQoASqZNqUE7/QCUGjSDLREop6lfyaNt8EQAAQQQQACBsgQqaRpIP6WyiAN5sPN6i1wGMj3hGBQFgHDkkSgQ8ErAdVO/bDabNQzDecwjv1u8ygjXRQABBBDQSaCcpoE8UUmnmUGsCFQowIv0CuE4DYGQC9DUL+QJJjwEEEAAAeUE1mwauLi4OJdMJo/Nzs6eL4qIpywpl14GjEB9BCgA1MeZuyCgggBN/VTIEmNEAAEEENBdYK2mgVdnZmbenJ+fPzc1NXW66MlLNGDWfbYQPwKrBCgAMCUQQICmfswBBBBAAAEE1BNYs2ngpUuXLpw4ceLUwsLCu6lU6lxRWDRlVi/HjBiBmgtQAKg5KRdEQAkBmvopkSYGiQACCCCAgCsBZ3tAJBaLOa/vl9Pp9NvJZPLVdDr9oRDieuFKNJpzRcpBCIRTgAJAOPNKVAisJ0BTP+YGAggggAAC4RVYq2lgJpPJXBwfHz925MiRU0tLSytFhQDnWfO58JIQGQIIFAtQAGA+IKCHAE399MgzUSKAAAIIIOAI5FcFRKNR5wk99srKysc0DWSCIKC3AAUAvfNP9OEWoKlfuPNLdAgggAACCLgRoGmgGyWOQUATAQoAmiSaMLUSoKmfVukmWAQQQAABBFwJ0DTQFRMHIRBuAQoA4c4v0ekjQFM/fXJNpAiUKSC39vLnvkw0Dkcg7AI0DQx7hokPgXUEeEXA1EBAbQGa+qmdP0aPAAIIIICAnwI0DfRTn3sj4IMABQAf0LklAjUQoKlfDRC5BAIIIIAAAgjcFqBpIJMBAQ0EKABokGRCDI0ATf1Ck0oCQQABBBBAILACNA0MbGoYGALVC1AAqN6QKyDgtQBN/bwW5voIIIAAAgggsFqApoHMCQRCKEABIIRJJaRQCNDULxRpJAgEEEAAAQRCIUDTwFCkkSAQoC0wcwCBoAnQ1C9oGWE8CCCAAAIIIOAI0DSQuYCA4gKsAFA8gQw/NAI09QtNKgkEAQQQQAABLQRoGqhFmgkybAIUAMKWUeJRSYCmfipli7EigAACCCCAwFoCNA1kXiCgkAAFAIWSxVBDI0BTv9CkkkAQQAABBBBAoCBA00CmAgIKCFAAUCBJDDEUAjT1C0UaCQIBBBBAAAEEXAjQNNAFEocg4IcABQA/1LmnTgI09dMp28SKAAIIIIAAAsUCNA1kPiAQMAEKAAFLCMMJjQBN/UKTSgJBAAEEEEAAgRoI0DSwBohcAoFqBSgAVCvI+Qj8ToCmfswGBBBAAAEEEEDg7gI0DWSGIOCjAAUAH/G5dWgEaOoXmlQKkRNC8IsxRAklFAQQQACBoArQNDComWFcoRbgdW6o00twHgrQ1M9DXC6NAAIIIIAAAloJ0DRQq3QTrJ8CFAD81OfeKgrQ1E/FrDFmBBBAAAEEEFBBgKaBKmSJMSotQAFA6fQx+DoK0NSvjtjcCgEEEEAAAQS0FyinaaAhhLDFrZ18fCGAwF0EKAAwPRBYX4CmfswOBBBAAAEEEEDAXwGaBvrrz91DJkABIGQJJZyaCNDUryaMXAQBBBBAAAEEEKiZwJpNA5eWlj4YGxs7Njo6Or28vHy16G6sCqgZPRcKkwAFgDBlk1iqEaCpXzV6nIsAAggggAACCNRPwGkaKGKxmNymaa+srHx89uzZucOHD0/MzMz8SghxvTCcWGF7gNwiwBcC2gtQANB+CmgPQFM/7acAAAgggAACCCCgqMBa2wMymUzm4sTExPGjR4+evHz58qeF2Eq2dioaM8NGoCoBCgBV8XGy4gJy/jvNYjZ1dXU9fPDgwYFdu3btbmpqelAIEbUsy45EIsIwDGeFgOIhM3wEEEAAAQQQQCB0AmtuD8hkMhcmJydPLSwsvJtKpc6FLmoCQqACAQoAFaBxSngEtm3btm14eHjv8PBwX2tr6/8hhDBldJZlyTf9OfnmXwjBz0l4Uk4kCCCAAAIIIBBuAWdVgNwe4LyGu/Jv//Zvp86dO/f/vfHGG//zP/7jP/5XYVtAuCWIDoE1BHhjw7TQUSC/V+zP/uzPHnn99dd/+OCDD3ZKhJs3b4pcLmc1NDREI7fe+fPzoePsIGYEVBWQ65n4raVq9hg3AgjUWEBWAbLZrH3z5k27sbGxoXD53548efJfv/Od7/zfQogsRYAao3M5JQR4qaBEmhikFwItLS1NDQ0Nm3p7e//84MGD/b/3e7/3qLxPLpcTtm3b0ahTB+AltRf+XBMBBBBAAAEEEKixgPPpv23I/Zu3VnKK//qv/3p/dHT01VdffXU6k8nIngBOydTZClrjYXA5BIIrQAEguLlhZHUUME3z/t7e3r0dHR07u7q6nhJCbJW3ZytAHZPArRBAAAEEEEAAgcoE1lr2f3VmZubN+fn5c1NTU6czmcwnlV2asxAIlwAFgHDlk2jKFyh5CkBnZ+fjiUSiv62tjWaA5XtyBgIIIIAAAgggUC+B/OMAo7eWbebveZfGf0ZhyT+f+tcrO9wnkAIUAAKZFgblg0DJo2Gam5u3joyM9AwPD/e3tLQ8IsfE9gAfMsMtEUAAAQQQQACB3wmstcyfR/8xQxBwKUABwCUUh2klIJsEyupwvkLM9gCtck+wCCCAAAIIIBBMgbWW+S+n0+m3k8nkq+l0+kMhxPXC0GOFT/vtYIbCqBDwT4ACgH/23Dn4AmwPCH6OGCECCCCAAAIIhFuAZf7hzi/R1VmAAkCdwbmdkgKutwdks9msYRjOPjR+vpRMN4NGAAEEEEAAAZ8Fyl3mL19z3V696fPYuT0CgRbgDUqg08PgAijgdntAzjAMUWhIw89ZABPJkBBAAAEEEEAgcAL5T/tzuVwkFos5r59Y5h+4NDEglQV4Y6Jy9hi7nwIl2wO6u7t3tre3P9HX17fPNM3H5OCcpoHyUbRCCH7e/MwY90YAAQQQQACBIArkP+23bfuObv6XLl26cOLEiVMLCwvvplKpc0UDp5t/ELPImJQR4A2JMqlioAEVKNke0NraumVoaOjpgYGB503T3CH7CMo/bGwPCGgGGRYCCCCAAAII+CHgLPOXn/Y79786MzPz5vz8/LmpqanTmUzmk8I/OB+ksMzfj0xxz1AJUAAIVToJxmcBuT1AfluFcTTG4/GHE4nEC/F4fI8Qoln+f8uy2B7gc6K4PQIIIIAAAgj4JuAs8xexWEy+brJXVlY+XlxcnEsmk8dmZ2fPF42Mbv6+pYkbh1WAAkBYM0tcfgqwPcBPfe6NAAIIIIAAAkETWHOZ/9LS0gdjY2PHRkdHp5eXl68WBl2yujJowTAeBFQWoACgcvYYe9AFSparsT0g6CljfAgggAACCCBQQ4FKlvnbNbw/l0IAgVUCFACYEgjUR8D19oBIJCK3CNA0sD554S4IIIAAAgggUHuBcpb509Sv9v5cEYF1BSgAMDkQqK/AutsDnnvuuX3bt2+/4+kB0Wg0wqME65sg7oYAAggggAACFQk4n/bbhvwkI3LrbQbL/Cuy5CQEPBOgAOAZLRdG4K4CJdsDTNO8v7e3d29HR8fOrq6up4QQW+UVLMsShmHkKAQwoxBAAAEEEEAggALOG3/Z1M95b7FRN3+W+QcwkQxJDwEKAHrkmSiDLbB6e4Do7Ox8PJFI9Le1te1uamp6UD5dwLIsWxYB2B4Q7GQyOgQQQAABBDQRyC/zj95arpgPOZPJXJicnDy1sLDwbiqVOlfkwDJ/TSYFYQZfgAJA8HPECPURKOl629zcvHVkZKRneHi4v6Wl5RFJkcvlhG3bNtsD9JkYRIoAAggggEBABNZa5p/JZDIXJyYmjh89evTk5cuXPy2MlW7+AUkaw0CgWIACAPMBgWAKyFUBucK3YHtAMJPEqBBAAAEEENBEYK1l/svpdPrtZDL5ajqd/lAIcb1gERNCyCX+LPPXZHIQploCFADUyhej1U+gpGkg2wP0mwREjAACCCCAgE8CLPP3CZ7bIuCVAAUAr2S5LgK1FXC9PSCbzWYNw3D24/EzXts8cDUEEEAAAQTCLlDuMn/5WuP2qsWw4xAfAqoL8OZA9Qwyfh0F3G4PyBmGIXh6gI5ThJgRQAABBBAoWyD/aX8ul4sUdfNnmX/ZjJyAQLAFKAAEOz+MDoG7CZRsD+ju7t7Z3t7+RF9f3z7TNB+TJztNA3l6AJMJAQQQQAABBFYJ5D/tt237jm7+ly5dunDixAm6+TNdEAihAAWAECaVkLQTKNke0NraumVoaOjpgYGB503T3CGEMOUfeLYHaDc3CBgBBBBAAIG1BJxl/vLTfuffr87MzLw5Pz9/bmpq6nQmk/mk8A/ydQbL/JlHCIREgAJASBJJGAgUBOT2APltFf67MR6PP5xIJF6Ix+N7hBDN8v9blsX2AKYMAggggAAC+gk4y/xFLBaTrxfslZWVjxcXF+eSyeSx2dnZ80UkdPPXb34QsQYCFAA0SDIhainA9gAt007QCCCAAAIIlAisucx/aWnpg7GxsWOjo6PTy8vLV4s+7c8XBpxHEeOJAALhEqAAEK58Eg0CqwVKlu2xPYBJggACCCCAgBYClSzzl2/8+UIAgRALUAAIcXIJDYFVAmwPYEoggAACCCAQfoH8Mv9oNOo8Evhuy/wNPu0P/4QgQgSKBSgAMB8Q0E+grO0Bt14/5H9V8PtCv7lCxAgggAACagg4n/bbhnzsz62/25lMJnNxfHz82JEjR04tLS2tFEIpaR6sRoiMEgEEaiHAC/paKHINBNQUcLU9QIZmWZYwDCNHIUDNRDNqBBBAAIHQCjhv/GVTP+d1/XI6nX47mUy+mk6nPxRCXC964y+PYZl/aKcDgSGwsQAFgI2NOAIBHQRKtgd0dXV97eDBgwO7du3a3dTU9KB8uoBlWbYsAsgPF1gRoMO0IEYEEEAAgYAKrF7mLz/uvzA5OXlqYWHh3VQqda5o3CzzD2gSGUhPCxsAACAASURBVBYCfghQAPBDnXsiEFyBku0Bzc3NW0dGRnqGh4f7W1paHpFDz+VywrZtm+0BwU0kI0MAAQQQCJ3Ausv8JyYmjh89evTk5cuXPy1EXbLKL3QaBIQAAhUJUACoiI2TEAi9QMkLB9M07+/t7d3b0dGxs6ur6ykhxFapwPaA0M8FAkQAAQQQ8FegnGX+scISf5b5+5sz7o5AYAUoAAQ2NQwMgcAIlKwK6OzsfDyRSPS3tbWxPSAwaWIgCCCAAAIhEsi/6bdtu7ibP8v8Q5RgQkHALwEKAH7Jc18E1BMo6RrM9gD1ksiIEUAAAQQCLeB82h+JxeSH+fmvfDd/lvkHOm8MDgFlBCgAKJMqBopAoARk08Bc4VuwPSBQuWEwCCCAAALqCeSb+slP/WOxmPwba6+srHx89uzZucOHD0/MzMz8qqibP8v81csvI0YgMAIUAAKTCgaCgJICrrYHOE0DeXqAkjlm0AgggAAC3gisucx/aWnpg7GxsWOjo6PTy8vLV4tuTTd/b/LAVRHQSoACgFbpJlgEPBMo2R7Q0tLSdODAgX2Dg4P9pmnuEEKYshCQzWazhmFE5eMEeZSgZ/ngwggggAACwRVYa5n/1ZmZmTfn5+fPTU1Nnc5kMp8Uhk83/+DmkZEhoKQABQAl08agEQi0wB3bA4QQjfF4/OFEIvFCPB7fI4RolqO3LCtnGIagEBDoXDI4BBBAAIHaCay5zH9xcXEumUwem52dPV90Kz7tr507V0IAgSIBCgBMBwQQ8EqgZHtAd3f3zvb29if6+vr2mab5mLwx2wO84ue6CCCAAAIBEChnmX/JaroAjJ8hIIBAyAQoAIQsoYSDQAAFSpYvtra2bhkaGnp6YGDgebYHBDBjDAkBBBBAoFqBSpb529XelPMRQACBjQQoAGwkxL8jgEAtBeT2APltFS7K9oBa6nItBBBAAAG/BfLL/KPRqNPrJt/Nn2X+fqeF+yOAgCNAAYC5gAACfgiwPcAPde6JAAIIIOCFgPNpv23Ix93canKbyWQyF8fHx48dOXLk1NLS0krhxizz9yIDXBMBBFwLUABwTcWBCCDggQDbAzxA5ZIIIIAAAnURcN74i1gs5rymXk6n028nk8lX0+n0h0KI60Vv/OUxLPOvS2q4CQIIrCdAAYC5gQACQRFwvT0gEonIJwg4xYOgjJ9xIIAAAgjoIbB6mb/8uP/C5OTkqYWFhXdTqdS5Iga6+esxJ4gSAWUEKAAokyoGioA2AutuD3juuef2bd++/Y6nB9zaZpn/VcbvM22mCIEigAACdRdYd5n/xMTE8aNHj568fPnyp4VRlaxuq/touSECCCCwjgAvmJkaCCAQVIGSF1Cmad7f29u7t6OjY2dXV9dTQoitcvCWZQnDMHIUAoKaSsaFAAIIKCtQzjL/WGGJP8v8lU03A0cg/AIUAMKfYyJEIAwCq7cHiM7OzscTiUR/W1vb7qampgfl0wUsy7JlEYDtAWFIOTEggAACvgnk3/Tbtl3czZ9l/r6lgxsjgEAtBSgA1FKTayGAgNcCJd2Tm5ubt46MjPQMDw/3t7S0PCIHUHjhZrM9wOt0cH0EEEAgVALOp/2RWEx+mJ//ynfzZ5l/qPJMMAhoLUABQOv0EzwCSgvIVQG5wrdge4DSuWTwCCCAgJ8C+aZ+sngci8Xk3xZ7ZWXl47Nnz84dPnx4YmZm5ldF3fxZ5u9nprg3AghULUABoGpCLoAAAj4LlDQNZHuAzxnh9ggggEDwBdZc5r+0tPTB2NjYsdHR0enl5eWrRWHQzT/4OWWECCDgQoACgAskDkEAASUEXG8PyGazWcMw5OMDZGD8HlQivQwSAQQQqInAWsv8r87MzLw5Pz9/bmpq6nQmk/mkcCe6+deEnIsggECQBHjhG6RsMBYEEKiVgNvtATnDMASFgFqxcx0EEEAgsAJrLvNfXFycSyaTx2ZnZ88XjZxP+wObRgaGAALVClAAqFaQ8xFAIMgCJdsDuru7d7a3tz/R19e3zzTNx+TgnaaBPD0gyKlkbAgEWUC2I+ElVQAz5HzabxvyF/ytVV9inWX+JavIAhgPQ0IAAQSqFuCvVdWEXAABBBQQKHlh19raumVoaOjpgYGB503T3CGEMGUhgO0BCmSTISKAAAJ3F3De+Mumfs5r3Y2W+dugIoAAAjoIUADQIcvEiAACxQJye4D8tgr/szEejz+cSCReiMfje4QQzfL/W5bF9gDmDQIIIKCWQH6Zf/TWM2DzI89kMhcmJydPLSwsvJtKpc4VhcMyf7Vyy2gRQKBGAhQAagTJZRBAQDkBtgcolzIGjAACCJQIrLXMP5PJZC5OTEwcP3r06MnLly9/WjiLZf5MIAQQ0F6AAoD2UwAABLQXKOnyzPYA7ecEAAggEHyBtZb5L6fT6beTyeSr6XT6QyHE9UIYMSGEXOLPMv/g55URIoCAxwIUADwG5vIIIKCUANsDlEoXg0UAAQ0FWOavYdIJGQEEaidAAaB2llwJAQTCI1DW9oBb203zv075nRqeOUAkCCAQHIFyl/nL38Xy0Qzymy8EEEAAgSIBXqwyHRBAAIH1BVxtD5CnW5YlDMPIUQhgOiGAAAI1E8h/2p/L5SJF3fxZ5l8zXi6EAAI6ClAA0DHrxIwAApUIlGwP6Orq+trBgwcHdu3atbupqelB+XQBy7JsWQSQj5xmRUAlzJyDAAKaC+Q/7bdt+45u/pcuXbpw4sQJuvlrPjkIHwEEqhegAFC9IVdAAAG9BEq2BzQ3N28dGRnpGR4e7m9paXlEchRewNpsD9BrchAtAghULOAs85ef9jsXuTozM/Pm/Pz8uampqdOZTOaTwj+UrM6q+K6ciAACCGgmQAFAs4QTLgII1Eyg5AWoaZr39/b27u3o6NjZ1dX1lBBiq7wb2wNqZs6FEEAgfALOMn8Ri8XkSit7ZWXl48XFxblkMnlsdnb2fFHIdPMPX/6JCAEE6ixAAaDO4NwOAQRCKVCyKqCzs/PxRCLR39bWxvaAUKacoLwRkD3beGnijW2grrrmMv+lpaUPxsbGjo2Ojk4vLy9fLYzY+f0qH+FHU79ApZHBIICAigL8lVUxa4wZAQSCKlDyQpXtAUFNFeNCAAEfBCpZ5i/f+POFAAIIIFAjAQoANYLkMggggMAqAbmU9fZjqNgewPxAAAGNBcpZ5m/IbQB82q/xbCF0BBDwVIACgKe8XBwBBBDIr2eWxYCsY7HW9gCnaSBPD2DGIIBASAScT/ttQ/5ii9x6ycky/5BklzAQQEBZAQoAyqaOgSOAgGICJdsDWlpamg4cOLBvcHCw3zTNHUIIUxYCstls1jCMaOEFM7+nFUu0WsNlz71a+VJitM4bf9nUz/n9tVE3f5b5K5FaBokAAmEQ4IVlGLJIDAggoJrAHdsDhBCN8Xj84UQi8UI8Ht8jhGiWAVmWlTMMQ1AIUC29jBcBLQXyy/yjt559mgfIZDIXJicnTy0sLLybSqXOFamwzF/LKULQCCAQBAEKAEHIAmNAAAFdBUq2B3R3d+9sb29/oq+vb59pmo9JGLYH6Do9iBuBwAustcw/k8lkLk5MTBw/evToycuXL39aiIJu/oFPJwNEAAEdBCgA6JBlYkQAgaALyN/F8vt208DW1tYtQ0NDTw8MDDzP9oCgp4/xIaCdwFrL/JfT6fTbyWTy1XQ6/aEQ4npBJVZo6scyf+2mCQEjgEAQBSgABDErjAkBBHQWkNsD5LdVQGB7gM6zod6x0xKg3uKq3Y9l/qpljPEigAACqwQoADAlEEAAgWAKlLU94Na22/yvdH6vBzOfjAoBVQXKXeZ/x2omVYNm3AgggEBYBXihGNbMEhcCCIRFwNX2ABmsZVnCMIwchYCwpJ44EPBVIP9pfy6XixR182eZv68p4eYIIIBA9QIUAKo35AoIIIBAvQRKtgd0dXV97eDBgwO7du3a3dTU9KDcPmBZli2LAPLR26wIqFdquA8CoRDIf9pv2/Yd3fwvXbp04cSJE3TzD0WKCQIBBHQXoACg+wwgfgQQUFGgZHtAc3Pz1pGRkZ7h4eH+lpaWR2RQztMD2B6gYooZMwJ1FXCW+ctP+50bX52ZmXlzfn7+3NTU1OlMJvNJ4R9KViXVdaTcDAEEEECgKgEKAFXxcTICCCDgq0DJC3HTNO/v7e3d29HRsbOrq+spIcRWOUK2B/iaJ26OQFAFnGX+IhaLyRVG9srKyseLi4tzyWTy2Ozs7PmigdPNP6hZZFwIIIBAGQIUAMrA4lAEEEAgwAIlqwI6OzsfTyQS/W1tbWwPCHDiGBoCdRZYc5n/0tLSB2NjY8dGR0enl5eXrxbG5PxekY/wk8+I4AsBBBBAQHEBCgCKJ5DhI4AAAqsESl6wsz2AOYIAArd2BeVENpstZ5m/fOPPFwIIIIBAiAQoAIQomYSCAAIIrBKQS3rlp3b5T+7YHsD8QEBLgXKW+RtyGwCf9ms5TwgaAQQ0EaAAoEmiCRMBBLQWYHuA1ukneA0FnE/7bUM+DiRy6+Uey/w1nAmEjAACCKwSoADAlEAAAQT0EXC9PSCbzWYNw4gW3jjwt0KfOUKkags4b/xlUz/n53ajbv4s81c754weAQQQKEuAF3VlcXEwAgggEBoBt9sDcoZhCAoBock7gZQjIDfPqPFKKb/MP3rrmZ/5CDOZzIXJyclTCwsL76ZSqXNFYbPMv5w5wLEIIIBAyATU+LMWMnTCQQABBAIkULI9oLu7e2d7e/sTfX19+0zTfEyOVTYPs21bLid2Hj0YoBAYCgJaCqy1zD+TyWQuTkxMHD969OjJy5cvf1qQoZu/llOEoBFAAIFSAQoAzAoEEEAAASlQ8gahtbV1y9DQ0NMDAwPPm6a5Q/YRLHQRZ3sAcwYB/wTWWua/nE6n304mk6+m0+kPhRDXC8OLFZr6sczfv3xxZwQQQCBQAhQAApUOBoMAAggEQkBuD5DfVmE0jfF4/OFEIvFCPB7fI4Rolv/fsizttweos0I8EPNKq0HUeG7k3/Tbts0yf61mEcEigAACtRegAFB7U66IAAIIhEWA7QFhySRxqCrgfNoficXkh/n5r7st85c/s7cf/alq0IwbAQQQQMA7AQoA3tlyZQQQQCAsAs6+/9tvLNgeEJbUEkdABfJN/eSn/rFYTK7GsVdWVj4+e/bs3OHDhydmZmZ+xTL/gGaOYSGAAAIBF6AAEPAEMTwEEEAgYAKutwdEIhG5RYCmgQFLIMMJrMCay/yXlpY+GBsbOzY6Ojq9vLx8tWj0dPMPbCoZGAIIIBBcAQoAwc0NI0MAAQSCLLDu9oDnnntu3/bt2+94esCtp5Pl/+TwdyfIWWVsfgistcz/6szMzJvz8/PnpqamTmcymU8KAytZjePHgLknAggggIC6ArwQUzd3jBwBBBAIgkDJGxLTNO/v7e3d29HRsbOrq+spIcRWOVDLsoRhGDkKAUFIG2MIgMCay/wXFxfnksnksdnZ2fNFY+TT/gAkjCEggAACYRCgABCGLBIDAgggEAyB1dsDRGdn5+OJRKK/ra1td1NT04Py6QKWZdmyCMD2gGAkjVHUVaCcZf4lj+as60i5GQIIIIBAKAUoAIQyrQSFAAII+CpQ8salubl568jISM/w8HB/S0vLI3J0hcea2WwP8DVX3Lw+ApUs87frMzTuggACCCCgkwAFAJ2yTawIIIBA/QXkqoDbTw9ge0D9E8AdfRXIL/OP3qpyyYHku/mzzN/XnHBzBBBAQGsBCgBap5/gEUAAgboJlDQNZHtA3ey5UX0FnE/7bUPuc7n1xj+TyWQujo+PHzty5MippaWllcKQWOZf39xwNwQQQEB7AQoA2k8BABBAAIG6CrA9oK7c3KyOAs4bfxGLxZzXV8vpdPrtZDL5ajqd/lAIcb3ojb88hmX+dUwQt0IAAQQQ4HFMzAEEEEAAAf8E2B7gnz13rp3A6mX+8uP+C5OTk6cWFhbeTaVS54puRTf/2rlzJQQQQACBCgRYAVABGqcggAACCNRUwNX2AKdpIE8PqKk9F6tMYN1l/hMTE8ePHj168vLly58WLl3yqMzKbslZCCCAAAIIVC9AAaB6Q66AAAIIIFAbgZLtAS0tLU0HDhzYNzg42G+a5g4hhCkLAdlsNmsYhtNYjb9ltfHnKhsLlLPMP1ZY4s8y/41dOQIBBBBAoE4CvGiqEzS3QQABBBAoS+CO7QFCiMZ4PP5wIpF4IR6P7xFCNMurWZaVMwxDFBqt8TetLGIOdimQf9Nv23ZxN3+W+bvE4zAEEEAAgWAJ8GIpWPlgNAgggAACdwqUbA/o7u7e2d7e/kRfX98+0zQfk4ezPYBp44GA82l/JBaTH+bnv/Ld/Fnm74E2l0QAAQQQqIsABYC6MHMTBBBAAIEqBUr2Ube2tm4ZGhp6emBg4Hm2B1Spy+nFAvmmfrKoFIvF5EoUe2Vl5eOzZ8/OHT58eGJmZuZXRd38WebP3EEAAQQQUEqAAoBS6WKwCCCAAAJCCPmmTH5bBQ22BzAtqhVYc5n/0tLSB2NjY8dGR0enl5eXrxbdhG7+1YpzPgIIIICALwIUAHxh56YIIIAAAjUQKGt7QDQqewbm/+zxt68G+CG5xFrL/K/OzMy8OT8/f25qaup0JpP5pBAr3fxDknTCQAABBHQW4EWQztkndgQQQCAcAq62B8hQLcsShmHkKASEI/FVRLHmMv/FxcW5ZDJ5bHZ29nzRtfm0vwpoTkUAAQQQCJYABYBg5YPRIIAAAghUJ1CyPaCrq+trBw8eHNi1a9fupqamB+X2AcuybFkEMAzDKR5Ud1fOVkGgnGX+JY+kVCFAxogAAggggMBGAhQANhLi3xFAAAEEVBQo2R7Q3Ny8dWRkpGd4eLi/paXlERmU8/QAtgeomGLXY65kmb/t+uociAACCCCAgEICFAAUShZDRQABBBAoW6Bke4Bpmvf39vbu7ejo2NnV1fWUEGKrvCrbA8q2DfoJ+WX+0VvVHTnWfDd/lvkHPW2MDwEEEEDASwEKAF7qcm0EEEAAgSAJlKwK6OzsfDyRSPS3tbWxPSBImap8LM6n/bYh93fceuOfyWQyF8fHx48dOXLk1NLS0krh8izzr9yZMxFAAAEEFBWgAKBo4hg2AggggEDFAiVv/NgeULFlUE503viLWCzmvLZZTqfTbyeTyVfT6fSHQojrRW/85TEs8w9K9hgHAggggEDdBCgA1I2aGyGAAAIIBFBANg3MFb4F2wMCmKG7D2n1Mn/5cf+FycnJUwsLC++mUqlzRafTzV+59DJgBBBAAIFaC1AAqLUo10MAAQQQUFGA7QHqZG3dZf4TExPHjx49evLy5cufFsIp6QGhTpiMFAEEEEAAgdoLUACovSlXRAABBBBQV8D19oBsNps1DMNpMMffU+9znv+0P5fLRVws848VlvizzN/7vHAHBBBAAAGFBHjBolCyGCoCCCCAQF0F3G4PyBmGIQoN5/i7WtsU5T/tt227uJu/uHTp0oUTJ06wzL+21lwNAQQQQEADAV6oaJBkQkQAAQQQqEqgZHtAd3f3zvb29if6+vr2mab5mLx64Y2q7D7vLDuv6qaan+ws85ef9jsUV2dmZt6cn58/NzU1dTqTyXxS+AeW+Ws+WQgfAQQQQMC9AAUA91YciQACCCCgt0DJ9oDW1tYtQ0NDTw8MDDxvmuYOIYQpCwFsD6h4ojjL/GU3f7kCw15ZWfl4cXFxLplMHpudnT1fdGWW+VfMzIkIIIAAAroKUADQNfPEjQACCCBQjYB8cyq/rcJFGuPx+MOJROKFeDy+RwjRLP+/ZVlsD9hYec1l/ktLSx+MjY0dGx0dnV5eXr5auExJEWbjy3MEAggggAACCDgCFACYCwgggAACCFQuwPaAyu0qWeZPU7/KvTkTAQQQQAABQQGASYAAAggggED1AiX70NkesC5qOcv8jUI3/1z1KeIKCCCAAAIIIEABgDmAAAIIIIBAbQVcbw+IRCJyi4AOTQOdT/tlk0Sj8MQEwTL/2k48roYAAggggMBGAhQANhLi3xFAAAEEEKhMYN3tAc8999y+7du33/H0gGg0GgnhowSdN/6yqZ/zmmOjbv4s869svnEWAggggAACGwpQANiQiAMQQAABBBCoSqBke4Bpmvf39vbu7ejo2NnV1fWUEGKrvINlWcIwjFwICgH5Zf7RW1WNPF4mk7kwOTl5amFh4d1UKnWuSJRl/lVNL05GAAEEEEDAvQAFAPdWHIkAAggggEC1Aqu3B4jOzs7HE4lEf1tb2+6mpqYH5dMFLMuy5RtnxbYHrLXMP5PJZC5OTEwcP3r06MnLly9/WgCkm3+1M4nzEUAAAQQQqECAAkAFaJyCAAIIIIBAlQIlb4Cbm5u3joyM9AwPD/e3tLQ8Iq+fy+WEbdt2wLcHrLXMfzmdTr+dTCZfTafTHwohrhe8YoWmfizzr3ICcToCCCCAAAKVCFAAqESNcxBAAAEEEKidgFwVILvc5zvdK7Q9gGX+tZsDXAkBBBBAAIG6CFAAqAszN0EAAQQQQGBDgZKmgQHcHlDuMn8Z0+3ixoYCHIAAAggggAACngpQAPCUl4sjgAACCCBQtkAQtwfkP+3P5XKRom7+LPMvO7WcgAACCCCAgL8CFAD89efuCCCAAAII3E3Az+0B+U/7bdu+o5v/pUuXLpw4cYJu/sxbBBBAAAEEFBSgAKBg0hgyAggggIB2Aq62BzhNA6t8eoCzzF9+2u9AX52ZmXlzfn7+3NTU1OlMJvNJ4R9KHnGoXWYIGAEEEEAAAYUEKAAolCyGigACCCCgvUDJ9oCWlpamAwcO7BscHOw3TXOH7CMoCwHZbDZrGEZUPk5QCOHm772zzF/EYjG58sBeWVn5eHFxcS6ZTB6bnZ09X6RPN3/tpyIACCCAAAIqCrh5QaBiXIwZAQQQQACBsAvcsT1ACNEYj8cfTiQSL8Tj8T1CiGYJYFlWzjAMsU4hYM1l/ktLSx+MjY0dGx0dnV5eXr5agCwpPoQdmPgQQAABBBAImwAFgLBllHgQQAABBHQTKNke0N3dvbO9vf2Jvr6+faZpPiZB5KoAy7KyhU/383v7VzX122iZv60bLPEigAACCCAQNgEKAGHLKPEggAACCOgqULIfv7W1dcvQ0NDTAwMDzzvbA1bjrKys/GadZf6G3AZQeIyfrqbEjQACCCCAQKgEKACEKp0EgwACCCCAQF5Abg+Q31bB4954PP6nHR0d3/jrv/7rnsbGxv929uzZf/vFL35xdmJi4q0rV65cKRzHMn8mEAIIIIAAAiEWoAAQ4uQSGgIIIICA9gIl2wOEEPc+8MADxm9/+9trRTrO6gGW+Ws/ZQBAAAEEEAizAAWAMGeX2BBAAAEEELgl4LzBL14VIP+fXOafZZk/0wQBBBBAAAE9BCgA6JFnokQAAQQQQMARcP725yBBAAEEEEAAAb0EKADolW+iRQABBBBAAAEEEEAAAQQQ0FSAAoCmiSdsBBBAAAEEEEAAAQQQQAABvQQoAOiVb6JFAAEEEEAAAQQQQAABBBDQVIACgKaJJ2wEEEAAAQQQQAABBBBAAAG9BCgA6JVvokUAAQQQQAABBBBAAAEEENBUgAKApoknbAQQQAABBBBAAAEEEEAAAb0EKADolW+iRQABBBBAAAEEEEAAAQQQ0FSAAoCmiSdsBBBAAAEEEEAAAQQQQAABvQQoAOiVb6JFAAEEEEAAAQQQQAABBBDQVIACgKaJJ2wEEEAAAQQQQAABBBBAAAG9BCgA6JVvokUAAQQQQAABBBBAAAEEENBUgAKApoknbAQQQAABBBBAAAEEEEAAAb0EKADolW+iRQABBBBAAAEEEEAAAQQQ0FSAAoCmiSdsBBBAAAEEEEAAAQQQQAABvQQoAOiVb6JFAAEEEEAAAQQQQAABBBDQVIACgKaJJ2wEEEAAAQQQQAABBBBAAAG9BCgA6JVvokUAAQQQQAABBBBAAAEEENBUgAKApoknbAQQQAABBBBAAAEEEEAAAb0EKADolW+iRQABBBBAAAEEEEAAAQQQ0FSAAoCmiSdsBBBAAAEEEEAAAQQQQAABvQQoAOiVb6JFAAEEEEAAAQQQQAABBBDQVIACgKaJJ2wEEEAAAQQQQAABBBBAAAG9BCgA6JVvokUAAQQQQAABBBBAAAEEENBUgAKApoknbAQQQAABBBBAAAEEEEAAAb0EKADolW+iRQABBBBAAAEEEEAAAQQQ0FSAAoCmiSdsBBBAAAEEEEAAAQQQQAABvQQoAOiVb6JFAAEEEEAAAQQQQAABBBDQVIACgKaJJ2wEEEAAAQQQQAABBBBAAAG9BCgA6JVvokUAAQQQQAABBBBAAAEEENBUgAKApoknbAQQQAABBBBAAAEEEEAAAb0EKADolW+iRQABBBBAAAEEEEAAAQQQ0FSAAoCmiSdsBBBAAAEEEEAAAQQQQAABvQQoAOiVb6JFAAEEEEAAAQQQQAABBBDQVIACgKaJJ2wEEEAAAQQQQAABBBBAAAG9BCgA6JVvokUAAQQQQAABBBBAAAEEENBUgAKApoknbAQQQAABBBBAAAEEEEAAAb0EKADolW+iRQABBBBAAAEEEEAAAQQQ0FSAAoCmiSdsBBBAAAEEEEAAAQQQQAABvQQoAOiVb6JFAAEEEEAAAQQQQAABBBDQVIACgKaJJ2wEEEAAAQQQQAABBBBAAAG9BCgA6JVvokUAAQQQQAABBBBAAAEEENBUgAKApoknbAQQQAABBBBAAAEEEEAAAb0EKADolW+iRQABBBBAAAEEEEAAAQQQ0FSAAoCmiSdsBBBAAAEEEEAAAQQQQAABvQQoAOiVb6JFAAEEEEAAAQQQQAABBBDQVIACgKaJJ2wEEEAAAQQQQAABBBBAAAG9BCgA6JVvokUAAQQQQAABBBBAAAEEENBUgAKApoknbAQQCC/t9gAABoJJREFUQAABBBBAAAEEEEAAAb0EKADolW+iRQABBBBAAAEEEEAAAQQQ0FSAAoCmiSdsBBBAAAEEEEAAAQQQQAABvQQoAOiVb6JFAAEEEEAAAQQQQAABBBDQVIACgKaJJ2wEEEAAAQQQQAABBBBAAAG9BCgA6JVvokUAAQQQQAABBBBAAAEEENBUgAKApoknbAQQQAABBBBAAAEEEEAAAb0EKADolW+iRQABBBBAAAEEEEAAAQQQ0FSAAoCmiSdsBBBAAAEEEEAAAQQQQAABvQQoAOiVb6JFAAEEEEAAAQQQQAABBBDQVIACgKaJJ2wEEEAAAQQQQAABBBBAAAG9BCgA6JVvokUAAQQQQAABBBBAAAEEENBUgAKApoknbAQQQAABBBBAAAEEEEAAAb0EKADolW+iRQABBBBAAAEEEEAAAQQQ0FSAAoCmiSdsBBBAAAEEEEAAAQQQQAABvQQoAOiVb6JFAAEEEEAAAQQQQAABBBDQVIACgKaJJ2wEEEAAAQQQQAABBBBAAAG9BCgA6JVvokUAAQQQQAABBBBAAAEEENBUgAKApoknbAQQQAABBBBAAAEEEEAAAb0EKADolW+iRQABBBBAAAEEEEAAAQQQ0FSAAoCmiSdsBBBAAAEEEEAAAQQQQAABvQQoAOiVb6JFAAEEEEAAAQQQQAABBBDQVIACgKaJJ2wEEEAAAQQQQAABBBBAAAG9BCgA6JVvokUAAQQQQAABBBBAAAEEENBUgAKApoknbAQQQAABBBBAAAEEEEAAAb0EKADolW+iRQABBBBAAAEEEEAAAQQQ0FSAAoCmiSdsBBBAAAEEEEAAAQQQQAABvQQoAOiVb6JFAAEEEEAAAQQQQAABBBDQVIACgKaJJ2wEEEAAAQQQQAABBBBAAAG9BCgA6JVvokUAAQQQQAABBBBAAAEEENBUgAKApoknbAQQQAABBBBAAAEEEEAAAb0EKADolW+iRQABBBBAAAEEEEAAAQQQ0FSAAoCmiSdsBBBAAAEEEEAAAQQQQAABvQQoAOiVb6JFAAEEEEAAAQQQQAABBBDQVIACgKaJJ2wEEEAAAQQQQAABBBBAAAG9BCgA6JVvokUAAQQQQAABBBBAAAEEENBUgAKApoknbAQQQAABBBBAAAEEEEAAAb0EKADolW+iRQABBBBAAAEEEEAAAQQQ0FSAAoCmiSdsBBBAAAEEEEAAAQQQQAABvQQoAOiVb6JFAAEEEEAAAQQQQAABBBDQVIACgKaJJ2wEEEAAAQQQQAABBBBAAAG9BCgA6JVvokUAAQQQQAABBBBAAAEEENBUgAKApoknbAQQQAABBBBAAAEEEEAAAb0EKADolW+iRQABBBBAAAEEEEAAAQQQ0FSAAoCmiSdsBBBAAAEEEEAAAQQQQAABvQQoAOiVb6JFAAEEEEAAAQQQQAABBBDQVIACgKaJJ2wEEEAAAQQQQAABBBBAAAG9BCgA6JVvokUAAQQQQAABBBBAAAEEENBUgAKApoknbAQQQAABBBBAAAEEEEAAAb0EKADolW+iRQABBBBAAAEEEEAAAQQQ0FSAAoCmiSdsBBBAAAEEEEAAAQQQQAABvQQoAOiVb6JFAAEEEEAAAQQQQAABBBDQVIACgKaJJ2wEEEAAAQQQQAABBBBAAAG9BCgA6JVvokUAAQQQQAABBBBAAAEEENBUgAKApoknbAQQQAABBBBAAAEEEEAAAb0EKADolW+iRQABBBBAAAEEEEAAAQQQ0FSAAoCmiSdsBBBAAAEEEEAAAQQQQAABvQQoAOiVb6JFAAEEEEAAAQQQQAABBBDQVIACgKaJJ2wEEEAAAQQQQAABBBBAAAG9BCgA6JVvokUAAQQQQAABBBBAAAEEENBUgAKApoknbAQQQAABBBBAAAEEEEAAAb0EKADolW+iRQABBBBAAAEEEEAAAQQQ0FSAAoCmiSdsBBBAAAEEEEAAAQQQQAABvQQoAOiVb6JFAAEEEEAAAQQQQAABBBDQVIACgKaJJ2wEEEAAAQQQQAABBBBAAAG9BCgA6JVvokUAAQQQQAABBBBAAAEEENBUgAKApoknbAQQQAABBBBAAAEEEEAAAb0EKADolW+iRQABBBBAAAEEEEAAAQQQ0FSAAoCmiSdsBBBAAAEEEEAAAQQQQAABvQQoAOiVb6JFAAEEEEAAAQQQQAABBBDQVIACgKaJJ2wEEEAAAQQQQAABBBBAAAG9BP43beJ8RF5sidIAAAAASUVORK5CYII=';
+
+// PANEL XMLS
+let PANEL_START = `<Extensions><Version>1.11</Version><Panel><Order>1</Order><PanelId>dws_wizard_new</PanelId><Origin>local</Origin><Location>HomeScreen</Location><Icon>Custom</Icon><Name>Setup Wizard</Name><ActivityType>Custom</ActivityType><CustomIcon><Content>${WIZARD_ICON}</Content><Id>4f0568a41894116ebce904f8b1004077281643ea28cba96d903078210e434757</Id></CustomIcon><Page><Name>Setup Wizard</Name><Row><Name/><Widget><WidgetId>widget_302</WidgetId><Name>Welcome to the Divisible Room Blueprint Setup Wizard</Name><Type>Text</Type><Options>size=4;fontSize=normal;align=center</Options></Widget></Row><Row><Name>Row</Name><Widget><WidgetId>widget_303</WidgetId><Name>Please ensure all codecs have been powered on and registered. All cameras, microphones and touch panels should also be connected, powered on and configured.</Name><Type>Text</Type><Options>size=4;fontSize=small;align=center</Options></Widget></Row><Row><Name>Row</Name></Row><Row><Name>Row</Name><Widget><WidgetId>widget_304</WidgetId><Name>All required documentation is available at: http://cs.co/divisibleworkspaceblueprint</Name><Type>Text</Type><Options>size=3;fontSize=normal;align=center</Options></Widget></Row><Row><Name>Row</Name></Row><Row><Name/><Widget><WidgetId>dws_next_start</WidgetId><Name>Get Started</Name><Type>Button</Type><Options>size=4</Options></Widget></Row><PageId>setup_start</PageId><Options>hideRowNames=1</Options></Page></Panel></Extensions>`;
+
+let PANEL_COMMON = `<Extensions><Version>1.11</Version><Panel><Order>1</Order><PanelId>dws_wizard_new</PanelId><Origin>local</Origin><Location>HomeScreen</Location><Icon>Custom</Icon><Name>Setup Wizard</Name><ActivityType>Custom</ActivityType><CustomIcon><Content>${WIZARD_ICON}</Content><Id>4f0568a41894116ebce904f8b1004077281643ea28cba96d903078210e434757</Id></CustomIcon><Page><Name>Common Settings</Name><Row><Name>Divisible Room Type</Name><Widget><WidgetId>dws_setup_nway</WidgetId><Name></Name><Type>Text</Type><Options>size=3;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_edit_nway</WidgetId><Name>Edit</Name><Type>Button</Type><Options>size=1</Options></Widget></Row><Row><Name>Switch Type</Name><Widget><WidgetId>dws_setup_switchtype</WidgetId><Name></Name><Type>Text</Type><Options>size=3;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_edit_switchtype</WidgetId><Name>Edit</Name><Type>Button</Type><Options>size=1</Options></Widget></Row><Row><Name>Default Camera Automation</Name><Widget><WidgetId>dws_setup_automode</WidgetId><Name></Name><Type>Text</Type><Options>size=3;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_edit_automode</WidgetId><Name>Edit</Name><Type>Button</Type><Options>size=1</Options></Widget></Row><Row><Name>Common Node Username</Name><Widget><WidgetId>dws_setup_username</WidgetId><Name></Name><Type>Text</Type><Options>size=3;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_edit_username</WidgetId><Name>Edit</Name><Type>Button</Type><Options>size=1</Options></Widget></Row><Row><Name>Common Node Password</Name><Widget><WidgetId>dws_setup_password</WidgetId><Name></Name><Type>Text</Type><Options>size=3;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_edit_password</WidgetId><Name>Edit</Name><Type>Button</Type><Options>size=1</Options></Widget></Row><Row><Name/><Widget><WidgetId>dws_next_common</WidgetId><Name>Next</Name><Type>Button</Type><Options>size=2</Options></Widget></Row><PageId>setup_common</PageId><Options>hideRowNames=0</Options></Page></Panel></Extensions>`;
+
+let PANEL_PRIMARY = `<Extensions><Version>1.11</Version><Panel><Order>2</Order><PanelId>dws_wizard</PanelId><Origin>local</Origin><Location>HomeScreen</Location><Icon>Custom</Icon><Name>Setup Wizard</Name><ActivityType>Custom</ActivityType><CustomIcon><Content>${WIZARD_ICON}</Content><Id>4f0568a41894116ebce904f8b1004077281643ea28cba96d903078210e434757</Id></CustomIcon><Page><Name>Presenter Microphone</Name><Row><Name/><Widget><WidgetId>widget_273</WidgetId><Name>Please select the Presenter Microphone for your workspace.</Name><Type>Text</Type><Options>size=4;fontSize=small;align=center</Options></Widget></Row><Row><Name>Available Microphones</Name><Widget><WidgetId>widget_274</WidgetId><Type>GroupButton</Type><Options>size=4;columns=2</Options><ValueSpace><Value><Key>dws_setup_presmics_1</Key><Name>${SETUP_VARIABLES['dws_setup_mics1']}</Name></Value><Value><Key>dws_setup_presmics_2</Key><Name>${SETUP_VARIABLES['dws_setup_mics2']}</Name></Value><Value><Key>dws_setup_mics_usb</Key><Name>USB</Name></Value><Value><Key>dws_setup_mics_analog</Key><Name>Analog (All)</Name></Value></ValueSpace></Widget></Row><Row><Name/><Widget><WidgetId>dws_back_primary</WidgetId><Name>Back</Name><Type>Button</Type><Options>size=2</Options></Widget><Widget><WidgetId>dws_next_primary</WidgetId><Name>Next</Name><Type>Button</Type><Options>size=2</Options></Widget></Row><PageId>setup_primary</PageId><Options/></Page></Panel></Extensions>`;
+
+let PANEL_NODE1 = `<Extensions><Version>1.11</Version><Panel><Order>2</Order><PanelId>dws_wizard</PanelId><Origin>local</Origin><Location>HomeScreen</Location><Icon>Custom</Icon><Name>Setup Wizard</Name><ActivityType>Custom</ActivityType><CustomIcon><Content>${WIZARD_ICON}</Content><Id>4f0568a41894116ebce904f8b1004077281643ea28cba96d903078210e434757</Id></CustomIcon><Page><Name>Node 1 Settings</Name><Row><Name/><Widget><WidgetId>widget_193</WidgetId><Name>Enter the details for Node 1. The Node Alias will be used on the room control panel to provide a user friendly way to ensure the correct rooms are selected.</Name><Type>Text</Type><Options>size=4;fontSize=small;align=center</Options></Widget></Row><Row><Name>Node 1 IP or FQDN</Name><Widget><WidgetId>dws_setup_node1_host</WidgetId><Name/><Type>Text</Type><Options>size=3;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_edit_node1_host</WidgetId><Name>Edit</Name><Type>Button</Type><Options>size=1</Options></Widget></Row><Row><Name>Node 1 Alias</Name><Widget><WidgetId>dws_setup_node1_alias</WidgetId><Name/><Type>Text</Type><Options>size=3;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_edit_node1_alias</WidgetId><Name>Edit</Name><Type>Button</Type><Options>size=1</Options></Widget></Row><Row><Name>Hardware Configuration</Name><Widget><WidgetId>dws_setup_node1_configuration</WidgetId><Name/><Type>Text</Type><Options>size=3;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_edit_node1_configuration</WidgetId><Name>Edit</Name><Type>Button</Type><Options>size=1</Options></Widget></Row><Row><Name>Presenter PTZ Type</Name><Widget><WidgetId>dws_setup_node1_presenter</WidgetId><Name/><Type>Text</Type><Options>size=3;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_edit_node1_presenter</WidgetId><Name>Edit</Name><Type>Button</Type><Options>size=1</Options></Widget></Row><Row><Name/><Widget><WidgetId>dws_back_node1</WidgetId><Name>Back</Name><Type>Button</Type><Options>size=2</Options></Widget><Widget><WidgetId>dws_connect_node1</WidgetId><Name>Connect</Name><Type>Button</Type><Options>size=2</Options></Widget></Row><PageId>setup_node1</PageId><Options/></Page></Panel></Extensions>`;
+
+let PANEL_NODE1_DETAILS = `<Extensions><Version>1.11</Version><Panel><Order>1</Order><PanelId>dws_wizard_new</PanelId><Origin>local</Origin><Location>HomeScreen</Location><Icon>Custom</Icon><Name>Setup Wizard</Name><ActivityType>Custom</ActivityType><CustomIcon><Content>${WIZARD_ICON}</Content><Id>4f0568a41894116ebce904f8b1004077281643ea28cba96d903078210e434757</Id></CustomIcon><Page><Name>Node 1 Details</Name><Row><Name>Node 1 Codec Details</Name><Widget><WidgetId>dws_setup_node1_host</WidgetId><Name>${SETUP_VARIABLES['dws_setup_node1_host']}</Name><Type>Text</Type><Options>size=4;fontSize=normal;align=center</Options></Widget></Row><Row><Name>Node 1 Microphones</Name><Widget><WidgetId>dws_setup_node1_mics</WidgetId><Name>${SETUP_VARIABLES['dws_setup_node1_mics']}</Name>node1<Type>Text</Type><Options>size=4;fontSize=normal;align=center</Options></Widget></Row><Row><Name>Control Navigator</Name><Widget><WidgetId>dws_setup_node1_control</WidgetId><Name>${SETUP_VARIABLES['dws_setup_node1_control']}</Name><Type>Text</Type><Options>size=4;fontSize=normal;align=center</Options></Widget></Row><Row><Name>Scheduler Navigator</Name><Widget><WidgetId>dws_setup_node1_scheduler</WidgetId><Name>${SETUP_VARIABLES['dws_setup_node1_scheduler']}</Name><Type>Text</Type><Options>size=4;fontSize=normal;align=center</Options></Widget></Row><Row><Name/><Widget><WidgetId>widget_155</WidgetId><Name>Please ensure all expected peripherals are detected before continuing.</Name><Type>Text</Type><Options>size=4;fontSize=small;align=center</Options></Widget></Row><Row><Name/><Widget><WidgetId>dws_back_node1_details</WidgetId><Name>Back</Name><Type>Button</Type><Options>size=2</Options></Widget><Widget><WidgetId>dws_next_node1_details</WidgetId><Name>Next</Name><Type>Button</Type><Options>size=2</Options></Widget></Row><PageId>setup_node1_details</PageId><Options/></Page></Panel></Extensions>`;
+
+let PANEL_NODE2 = `<Extensions><Version>1.11</Version><Panel><Order>2</Order><PanelId>dws_wizard</PanelId><Origin>local</Origin><Location>HomeScreen</Location><Icon>Custom</Icon><Name>Setup Wizard</Name><ActivityType>Custom</ActivityType><CustomIcon><Content>${WIZARD_ICON}</Content><Id>4f0568a41894116ebce904f8b1004077281643ea28cba96d903078210e434757</Id></CustomIcon><Page><Name>Node 2 Settings</Name><Row><Name/><Widget><WidgetId>widget_193</WidgetId><Name>Enter the details for Node 2. The Node Alias will be used on the room control panel to provide a user friendly way to ensure the correct rooms are selected.</Name><Type>Text</Type><Options>size=4;fontSize=small;align=center</Options></Widget></Row><Row><Name>Node 2 IP or FQDN</Name><Widget><WidgetId>dws_setup_node2_host</WidgetId><Name></Name><Type>Text</Type><Options>size=3;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_edit_node2_host</WidgetId><Name>Edit</Name><Type>Button</Type><Options>size=1</Options></Widget></Row><Row><Name>Node 2 Alias</Name><Widget><WidgetId>dws_setup_node2_alias</WidgetId><Name></Name><Type>Text</Type><Options>size=3;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_edit_node2_alias</WidgetId><Name>Edit</Name><Type>Button</Type><Options>size=1</Options></Widget></Row><Row><Name>Hardware Configuration</Name><Widget><WidgetId>dws_setup_node2_configuration</WidgetId><Name></Name><Type>Text</Type><Options>size=3;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_edit_node2_configuration</WidgetId><Name>Edit</Name><Type>Button</Type><Options>size=1</Options></Widget></Row><Row><Name>Presenter PTZ Type</Name><Widget><WidgetId>dws_setup_node2_presenter</WidgetId><Name></Name><Type>Text</Type><Options>size=3;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_edit_node2_presenter</WidgetId><Name>Edit</Name><Type>Button</Type><Options>size=1</Options></Widget></Row><Row><Name/><Widget><WidgetId>dws_back_node2</WidgetId><Name>Back</Name><Type>Button</Type><Options>size=2</Options></Widget><Widget><WidgetId>dws_connect_node2</WidgetId><Name>Connect</Name><Type>Button</Type><Options>size=2</Options></Widget></Row><PageId>setup_node2</PageId><Options/></Page></Panel></Extensions>`;
+
+let PANEL_NODE2_DETAILS = `<Extensions><Version>1.11</Version><Panel><Order>1</Order><PanelId>dws_wizard_new</PanelId><Origin>local</Origin><Location>HomeScreen</Location><Icon>Custom</Icon><Name>Setup Wizard</Name><ActivityType>Custom</ActivityType><CustomIcon><Content>${WIZARD_ICON}</Content><Id>4f0568a41894116ebce904f8b1004077281643ea28cba96d903078210e434757</Id></CustomIcon><Page><Name>Node 2 Details</Name><Row><Name>Node 2 Codec Details</Name><Widget><WidgetId>dws_setup_node2_host</WidgetId><Name>${SETUP_VARIABLES['dws_setup_node2_host']}</Name><Type>Text</Type><Options>size=4;fontSize=normal;align=center</Options></Widget></Row><Row><Name>Node 2 Microphones</Name><Widget><WidgetId>dws_setup_node2_mics</WidgetId><Name>${SETUP_VARIABLES['dws_setup_node2_mics']}</Name><Type>Text</Type><Options>size=4;fontSize=normal;align=center</Options></Widget></Row><Row><Name>Control Navigator</Name><Widget><WidgetId>dws_setup_node2_control</WidgetId><Name>${SETUP_VARIABLES['dws_setup_node2_control']}</Name><Type>Text</Type><Options>size=4;fontSize=normal;align=center</Options></Widget></Row><Row><Name>Scheduler Navigator</Name><Widget><WidgetId>dws_setup_node2_scheduler</WidgetId><Name>${SETUP_VARIABLES['dws_setup_node2_scheduler']}</Name><Type>Text</Type><Options>size=4;fontSize=normal;align=center</Options></Widget></Row><Row><Name/><Widget><WidgetId>widget_155</WidgetId><Name>Please ensure all expected peripherals are detected before continuing.</Name><Type>Text</Type><Options>size=4;fontSize=small;align=center</Options></Widget></Row><Row><Name/><Widget><WidgetId>dws_back_node2_details</WidgetId><Name>Back</Name><Type>Button</Type><Options>size=2</Options></Widget><Widget><WidgetId>dws_next_node2_details</WidgetId><Name>Next</Name><Type>Button</Type><Options>size=2</Options></Widget></Row><PageId>setup_node2_details</PageId><Options/></Page></Panel></Extensions>`;
+
+let PANEL_SETUP = `<Extensions><Version>1.11</Version><Panel><Order>1</Order><PanelId>dws_wizard_new</PanelId><Origin>local</Origin><Location>HomeScreen</Location><Icon>Custom</Icon><Name>Setup Wizard</Name><ActivityType>Custom</ActivityType><CustomIcon><Content>${WIZARD_ICON}</Content><Id>4f0568a41894116ebce904f8b1004077281643ea28cba96d903078210e434757</Id></CustomIcon><Page><Name>Final Step</Name><Row><Name>Adv. Settings Lock PIN:</Name><Widget><WidgetId>dws_setup_advpin</WidgetId><Name></Name><Type>Text</Type><Options>size=3;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_edit_advpin</WidgetId><Name>Edit</Name><Type>Button</Type><Options>size=1</Options></Widget></Row><Row></Row><Row><Name/><Widget><WidgetId>setup_text</WidgetId><Name>Click Begin Setup to finalize the installation of the Primary and Node codecs based on the details provided. </Name><Type>Text</Type><Options>size=4;fontSize=small;align=center</Options></Widget></Row><Row><Name/><Widget><WidgetId>dws_setup_begin</WidgetId><Name>Begin Setup</Name><Type>Button</Type><Options>size=4</Options></Widget></Row><Row></Row><Row><Name/><Widget><WidgetId>dws_back_setup</WidgetId><Name>Back</Name><Type>Button</Type><Options>size=2</Options></Widget><Widget><WidgetId>widget_310</WidgetId><Type>Spacer</Type><Options>size=2</Options></Widget></Row><PageId>setup_finish</PageId><Options>hideRowNames=0</Options></Page></Panel></Extensions>`;
 
 // START THE MACRO
 init();

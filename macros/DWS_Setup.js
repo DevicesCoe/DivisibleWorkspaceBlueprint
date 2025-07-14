@@ -1,6 +1,6 @@
 /*========================================================================//
-This file is part of the "Divisible Workspace" blueprint for Two-Way 
-Divisible Rooms leveraging Cisco IP Microphones.
+This file is part of the "Divisible Workspace" blueprint for Two-Way and
+Three-Way Divisible Rooms leveraging Cisco IP Microphones.
 
 Macro Author:  
 Mark Lula
@@ -12,8 +12,7 @@ Robert(Bobby) McGonigle Jr
 Chase Voisin
 William Mills
 
-Version: 0.9.2 (Beta)
-Released: 04/04/2025
+Version: 0.9.3 (Beta)
 
 Complete details for this macro are available on Github:
 https://cs.co/divisibleworkspaceblueprint
@@ -32,75 +31,78 @@ async function firstSetup()
 {
   console.log("DWS: Starting Automatic Setup Process.");
 
-  // ENSURE ROOM TYPE IS STANDARD
-  const roomType = await xapi.Status.Provisioning.RoomType.get();
-  if (roomType != 'Standard')
-  {
-    console.error("DWS: Only Standard Room Type Supported. Setup Aborted.");
-    return;
-  }
-
-  // DISABLE HDCP Policy on the output to allow for Extron DA Duplication
+  // DISABLE HDCP POLICY FOR BETTER DA COMPATIBILITY
   xapi.Config.Video.Output.Connector[1].HDCPPolicy.set("off");
   xapi.Config.Video.Output.Connector[2].HDCPPolicy.set("off");
-
-  // SET DEFAULT AUDIO MODE TO BE NOISE REMOVAL
-  xapi.Config.Audio.Microphones.NoiseRemoval.Mode.set("Enabled");
   
-  // CHECK FOR CONNECTED INPUTS IN CONFIGURED SPOTS
-  let input1 = '';
-  let input2 = '';
-  let input3 = '';
-
   console.log("DWS: Checking for Correct Inputs and Outputs.");
-  if(DWS.PLATFORM == 'Codec Pro')
-  {    
-    input1 = await xapi.Status.Video.Input.Connector[1].Connected.get();
-    input2 = await xapi.Status.Video.Input.Connector[2].Connected.get();
-    input3 = await xapi.Status.Video.Input.Connector[5].Connected.get();
-  }
-  else if (DWS.PLATFORM == 'Codec EQ')
+  if(DWS.NWAY == 'Two Way')
   {
-    input1 = await xapi.Status.Video.Input.Connector[1].Connected.get();
-    input2 = await xapi.Status.Video.Input.Connector[2].Connected.get();
-    input3 = await xapi.Status.Video.Input.Connector[3].Connected.get();
-  }
+  	let input1 = false;
+  	let input2 = false;
 
-  if (input1 && input2 && input3)
-  {
-    console.log("DWS: Setting Inputs/Outputs Labels and Visibility."); 
-
-    if(DWS.PLATFORM == 'Codec Pro')
+    if(DWS.PLATFORM == 'Codec Pro' || DWS.PLATFORM == 'Room Kit EQ')
     {    
-      // SET NAMES AND VISIBILITY SETTINGS
-      xapi.Config.Video.Input.Connector[1].Name.set('Audience Camera');
-      xapi.Config.Video.Input.Connector[1].CameraControl.Mode.set('On');
-      xapi.Config.Video.Input.Connector[1].Visibility.set('Never');
-      xapi.Config.Video.Input.Connector[2].Name.set('Secondary Audience');
-      xapi.Config.Video.Input.Connector[2].CameraControl.Mode.set('Off');
-      xapi.Config.Video.Input.Connector[2].Visibility.set('Never');
-      xapi.Config.Video.Input.Connector[5].Name.set('Primary PTZ Camera');
-      xapi.Config.Video.Input.Connector[5].CameraControl.Mode.set('On');
-      xapi.Config.Video.Input.Connector[5].Visibility.set('Never');
+      input1 = await xapi.Status.Video.Input.Connector[1].Connected.get();
+      input2 = await xapi.Status.Video.Input.Connector[2].Connected.get();
     }
-    else if (DWS.PLATFORM == 'Codec EQ')
+
+    if (input1 && input2)
     {
+      console.log("DWS: Setting Inputs/Outputs Labels and Visibility."); 
+
       // SET NAMES AND VISIBILITY SETTINGS
       xapi.Config.Video.Input.Connector[1].Name.set('Audience Camera');
       xapi.Config.Video.Input.Connector[1].CameraControl.Mode.set('On');
       xapi.Config.Video.Input.Connector[1].Visibility.set('Never');
+      xapi.Config.Video.Input.Connector[1].PresentationSelection.set("Manual");
       xapi.Config.Video.Input.Connector[2].Name.set('Secondary Audience');
       xapi.Config.Video.Input.Connector[2].CameraControl.Mode.set('Off');
       xapi.Config.Video.Input.Connector[2].Visibility.set('Never');
-      xapi.Config.Video.Input.Connector[3].Name.set('Primary PTZ Camera');
-      xapi.Config.Video.Input.Connector[3].CameraControl.Mode.set('On');
-      xapi.Config.Video.Input.Connector[3].Visibility.set('Never');
+      xapi.Config.Video.Input.Connector[2].PresentationSelection.set("Manual");      
+    }
+    else
+    {
+      console.error("DWS: Invalid video input connection status. Ensure camera inputs match documentation. Setup aborted.");
+      return;
     }
   }
   else
   {
-    console.error("DWS: Invalid Input Connection Status. Ensure Camera Inputs Match Documentation. Setup Aborted.");
-    return;
+  	let input1 = false;
+  	let input2 = false;
+  	let input3 = false;
+
+    if(DWS.PLATFORM == 'Codec Pro' || DWS.PLATFORM == 'Room Kit EQ')
+    {    
+      input1 = await xapi.Status.Video.Input.Connector[1].Connected.get();
+      input2 = await xapi.Status.Video.Input.Connector[2].Connected.get();
+      input3 = await xapi.Status.Video.Input.Connector[3].Connected.get();
+    }
+
+    if (input1 && input2 && input3)
+    {
+      console.log("DWS: Setting Inputs/Outputs Labels and Visibility."); 
+
+      // SET NAMES AND VISIBILITY SETTINGS
+      xapi.Config.Video.Input.Connector[1].Name.set('Audience Camera');
+      xapi.Config.Video.Input.Connector[1].CameraControl.Mode.set('On');
+      xapi.Config.Video.Input.Connector[1].Visibility.set('Never');
+      xapi.Config.Video.Input.Connector[1].PresentationSelection.set("Manual");
+      xapi.Config.Video.Input.Connector[2].Name.set(DWS.NODE1_ALIAS + ' Audience');
+      xapi.Config.Video.Input.Connector[2].CameraControl.Mode.set('Off');
+      xapi.Config.Video.Input.Connector[2].Visibility.set('Never');
+      xapi.Config.Video.Input.Connector[2].PresentationSelection.set("Manual");
+      xapi.Config.Video.Input.Connector[3].Name.set(DWS.NODE2_ALIAS + ' Audience');
+      xapi.Config.Video.Input.Connector[3].CameraControl.Mode.set('Off');
+      xapi.Config.Video.Input.Connector[3].Visibility.set('Never');
+      xapi.Config.Video.Input.Connector[3].PresentationSelection.set("Manual");
+    }
+    else
+    {
+      console.error("DWS: Invalid video input connection status. Ensure camera inputs match documentation. Setup aborted.");
+      return;
+    }
   }
 
   // SAVE STATE MACRO ON BOTH CODECS
@@ -124,8 +126,8 @@ async function setPrimaryState(state)
   // CREATE MACRO BODY
   const dataStr = `
 /*========================================================================//
-This file is part of the "Divisible Workspace" blueprint for Two-Way 
-Divisible Rooms leveraging Cisco IP Microphones.
+This file is part of the "Divisible Workspace" blueprint for Two-Way and
+Three-Way Divisible Rooms leveraging Cisco IP Microphones.
 
 Macro Author:  
 Mark Lula
@@ -137,8 +139,7 @@ Robert(Bobby) McGonigle Jr
 Chase Voisin
 William Mills
 
-Version: 0.9.1 (Beta)
-Released: 03/31/2025
+Version: 0.9.3 (Beta)
 
 Complete details for this macro are available on Github:
 https://cs.co/divisibleworkspaceblueprint
@@ -150,7 +151,7 @@ https://cs.co/divisibleworkspaceblueprint
 const STATE = '${state}';
 
 export default {
-  STATE, 
+  STATE 
 };`;
 
   // SAVE STATE MACRO
@@ -159,11 +160,14 @@ export default {
 
 async function setSecondaryState(state)
 {
-  // CREATE MACRO BODY
-  const dataStr = `
+
+//===========================//
+//    MACRO BODY FOR NODE1   //
+//===========================//
+  const dataStr_NODE1 = `
 /*========================================================================//
-This file is part of the "Divisible Workspace" blueprint for Two-Way 
-Divisible Rooms leveraging Cisco IP Microphones.
+This file is part of the "Divisible Workspace" blueprint for Two-Way and
+Three-Way Divisible Rooms leveraging Cisco IP Microphones.
 
 Macro Author:  
 Mark Lula
@@ -175,8 +179,7 @@ Robert(Bobby) McGonigle Jr
 Chase Voisin
 William Mills
 
-Version: 0.9.2 (Beta)
-Released: 04/04/2025
+Version: 0.9.3 (Beta)
 
 Complete details for this macro are available on Github:
 https://cs.co/divisibleworkspaceblueprint
@@ -191,8 +194,32 @@ function init()
   // SAVE THE INITIAL STATE MACRO
   saveStateMacro();
 
-  // LOAD NODE MACRO FROM GITHUB
-  getMacro();  
+  // PERFORM PREMISE INSTALL CHECK
+  let loadedMacros = [];
+
+  xapi.Command.Macros.Macro.Get()
+  .then (response => {
+
+    response.Macro.forEach(element => {
+      loadedMacros.push(element.Name);
+    });
+
+    // PERFORM PREMISE INSTALL CHECK
+    if(loadedMacros.includes('DWS_Node'))
+    {
+      // LOAD THE MACRO AND ENABLE IT
+      xapi.Command.Macros.Macro.Activate({ Name: "DWS_Node"})
+      .then (() => {
+        xapi.Command.Macros.Macro.Remove({Name: "DWS_Sec_Startup"})
+        .then (() => { xapi.Command.Macros.Runtime.Restart() } )
+      })
+    }
+    // OR LOAD NODE MACRO FROM GITHUB
+    else
+    {
+      getMacro(); 
+    }
+  });   
 }
 
 async function getMacro ()
@@ -229,8 +256,8 @@ function saveStateMacro()
   // CREATE MACRO BODY
   const dataStr = \`
 /*========================================================================//
-This file is part of the "Divisible Workspace" blueprint for Two-Way 
-Divisible Rooms leveraging Cisco IP Microphones.
+This file is part of the "Divisible Workspace" blueprint for Two-Way and
+Three-Way Divisible Rooms leveraging Cisco IP Microphones.
 
 Macro Author:  
 Mark Lula
@@ -242,8 +269,7 @@ Robert(Bobby) McGonigle Jr
 Chase Voisin
 William Mills
 
-Version: 0.9.2 (Beta)
-Released: 04/04/2025
+Version: 0.9.3 (Beta)
 
 Complete details for this macro are available on Github:
 https://cs.co/divisibleworkspaceblueprint
@@ -253,9 +279,9 @@ https://cs.co/divisibleworkspaceblueprint
 //=========================================================================*/
 
 const STATE = '${state}';
-const SCREENS = '${DWS.SECONDARY_SCREENS}';            
-const NAV_CONTROL = '${DWS.SECONDARY_NAV_CONTROL}';
-const NAV_SCHEDULER = '${DWS.SECONDARY_NAV_SCHEDULER}';
+const SCREENS = '${DWS.NODE1_DISPLAYS}';            
+const NAV_CONTROL = '${DWS.NODE1_NAV_CONTROL}';
+const NAV_SCHEDULER = '${DWS.NODE1_NAV_SCHEDULER}';
 const PLATFORM = '\${productPlatform}';
 
 export default {
@@ -274,8 +300,158 @@ export default {
 // START THE MACRO
 init();`;
 
-  // SAVE STATE MACRO
-  sendCommand(DWS.SECONDARY_HOST, `<Command><Macros><Macro><Save><Name>DWS_Sec_Startup</Name><OverWrite>True</OverWrite><body>${dataStr}</body></Save><Activate><Name>DWS_Sec_Startup</Name></Activate></Macro><Runtime><Start></Start></Runtime></Macros></Command>`);
+// END OF EMBEDDED MACRO
+
+  // SAVE STATE AND STARTUP MACROS ON NODE 1
+  sendCommand(DWS.NODE1_HOST, `<Command><Macros><Macro><Save><Name>DWS_Sec_Startup</Name><OverWrite>True</OverWrite><body>${dataStr_NODE1}</body></Save><Activate><Name>DWS_Sec_Startup</Name></Activate></Macro><Runtime><Start></Start></Runtime></Macros></Command>`);
+
+  // CHECK IF SECONDARY NODE IS CONFIGURED
+  if (DWS.NODE2_HOST != undefined)
+  {
+    //===========================//
+    //    MACRO BODY FOR NODE2   //
+    //===========================//
+    const dataStr_NODE2 = `
+/*========================================================================//
+This file is part of the "Divisible Workspace" blueprint for Two-Way and
+Three-Way Divisible Rooms leveraging Cisco IP Microphones.
+
+Macro Author:  
+Mark Lula
+Cisco Systems
+
+Contributing Engineers:
+Svein Terje Steffensen
+Robert(Bobby) McGonigle Jr
+Chase Voisin
+William Mills
+
+Version: 0.9.3 (Beta)
+
+Complete details for this macro are available on Github:
+https://cs.co/divisibleworkspaceblueprint
+
+//=========================================================================//
+//                     **** DO NOT EDIT BELOW HERE ****                    //
+//=========================================================================*/
+import xapi from 'xapi';
+
+function init()
+{
+  // SAVE THE INITIAL STATE MACRO
+  saveStateMacro();
+
+  // PERFORM PREMISE INSTALL CHECK
+  let loadedMacros = [];
+
+  xapi.Command.Macros.Macro.Get()
+  .then (response => {
+
+    response.Macro.forEach(element => {
+      loadedMacros.push(element.Name);
+    });
+
+    // PERFORM PREMISE INSTALL CHECK
+    if(loadedMacros.includes('DWS_Node'))
+    {
+      // LOAD THE MACRO AND ENABLE IT
+      xapi.Command.Macros.Macro.Activate({ Name: "DWS_Node"})
+      .then (() => {
+        xapi.Command.Macros.Macro.Remove({Name: "DWS_Sec_Startup"})
+        .then (() => { xapi.Command.Macros.Runtime.Restart() } )
+      })
+    }
+    // OR LOAD NODE MACRO FROM GITHUB
+    else
+    {
+      getMacro(); 
+    }
+  });   
+}
+
+async function getMacro ()
+{
+  try {
+    const getMacro = await xapi.Command.HttpClient.Get({ Url:'https://raw.githubusercontent.com/DevicesCoe/DivisibleWorkspaceBlueprint/refs/heads/main/macros/DWS_Node.js' })
+    .then( result => {
+      console.debug("DWS: Node Macro Downloaded Successfully.");
+      let setupMacro = result.Body;
+
+      // LOAD THE MACRO AND ENABLE IT
+      xapi.Command.Macros.Macro.Save({ Name: 'DWS_Node', Overwrite: 'True' }, setupMacro)
+      .then (() => {
+        xapi.Command.Macros.Macro.Activate({ Name: "DWS_Node"})
+        .then (() => {
+          xapi.Command.Macros.Macro.Remove({Name: "DWS_Sec_Startup"})
+          .then (() => { xapi.Command.Macros.Runtime.Restart() } )
+        })
+      })      
+    })
+    .catch (e => {
+      console.warn('DWS: Node Macro URL not found.' + e);
+    }); 
+  } catch (e) {
+    console.warn('DWS: Unable to reach GitHub for Node Macro.' + e);
+  }
+}
+
+function saveStateMacro()
+{
+  xapi.Status.SystemUnit.ProductPlatform.get()
+  .then ((productPlatform) => {
+
+  // CREATE MACRO BODY
+  const dataStr = \`
+/*========================================================================//
+This file is part of the "Divisible Workspace" blueprint for Two-Way and
+Three-Way Divisible Rooms leveraging Cisco IP Microphones.
+
+Macro Author:  
+Mark Lula
+Cisco Systems
+
+Contributing Engineers:
+Svein Terje Steffensen
+Robert(Bobby) McGonigle Jr
+Chase Voisin
+William Mills
+
+Version: 0.9.3 (Beta)
+
+Complete details for this macro are available on Github:
+https://cs.co/divisibleworkspaceblueprint
+
+//=========================================================================//
+//                     **** DO NOT EDIT BELOW HERE ****                    //
+//=========================================================================*/
+
+const STATE = '${state}';
+const SCREENS = '${DWS.NODE2_DISPLAYS}';            
+const NAV_CONTROL = '${DWS.NODE2_NAV_CONTROL}';
+const NAV_SCHEDULER = '${DWS.NODE2_NAV_SCHEDULER}';
+const PLATFORM = '\${productPlatform}';
+
+export default {
+  STATE,
+  SCREENS, 
+  NAV_CONTROL, 
+  NAV_SCHEDULER,
+  PLATFORM
+}\`;
+
+    // SAVE STATE MACRO
+    xapi.Command.Macros.Macro.Save({ Name: 'DWS_State', Overwrite: 'True' }, dataStr);
+  })
+}
+
+// START THE MACRO
+init();`;
+
+// END OF EMBEDDED MACRO
+
+    // SAVE STATE AND STARTUP MACROS ON NODE 2
+    sendCommand(DWS.NODE2_HOST, `<Command><Macros><Macro><Save><Name>DWS_Sec_Startup</Name><OverWrite>True</OverWrite><body>${dataStr_NODE2}</body></Save><Activate><Name>DWS_Sec_Startup</Name></Activate></Macro><Runtime><Start></Start></Runtime></Macros></Command>`);
+  }
 }
 
 //========================================//
@@ -288,7 +464,7 @@ function sendCommand(codec, command)
   Params.AllowInsecureHTTPS = 'True';
   Params.ResultBody = 'PlainText';
   Params.Url = `https://${codec}/putxml`;
-  Params.Header = ['Authorization: Basic ' + btoa(`${DWS.MACRO_USERNAME}:${DWS.MACRO_PASSWORD}`), 'Content-Type: application/json']; // CONVERT TO BASE64 ENCODED
+  Params.Header = ['Authorization: Basic ' + DWS.MACRO_LOGIN, 'Content-Type: application/json'];
 
   xapi.Command.HttpClient.Post(Params, command)
   .then(() => {
@@ -350,5 +526,3 @@ async function saveSwitch()
 
 // DOUBLE CHECK INITIAL SWITCH CONFIGURATION THEN BEGIN SETUP
 checkSwitch();
-
-
