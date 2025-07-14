@@ -1,6 +1,6 @@
 /*========================================================================//
-This file is part of the "Divisible Workspace" blueprint for Two-Way 
-Divisible Rooms leveraging Cisco IP Microphones.
+This file is part of the "Divisible Workspace" blueprint for Two-Way and
+Three-Way Divisible Rooms leveraging Cisco IP Microphones.
 
 Macro Author:  
 Mark Lula
@@ -12,8 +12,7 @@ Robert(Bobby) McGonigle Jr
 Chase Voisin
 William Mills
 
-Version: 0.9.2 (Beta)
-Released: 04/04/2025
+Version: 0.9.3 (BETA)
 
 Complete details for this macro are available on Github:
 https://cs.co/divisibleworkspaceblueprint
@@ -30,13 +29,12 @@ import DWS_SEC from './DWS_State';
 //===========================//
 
 function init() {
-  console.log ("DWS: Starting up as secondary node.");
+  console.log ("DWS: Starting up as Node.");
 
   if(DWS_SEC.SCREENS == 1)
   {
     // SET VIDEO OUTPUT ROLES
     xapi.Config.Video.Output.Connector[1].MonitorRole.set("First");
-    xapi.Config.Video.Output.Connector[3].MonitorRole.set("Third");
 
     if(DWS_SEC.PLATFORM == 'Codec Pro')
     {
@@ -45,33 +43,23 @@ function init() {
       xapi.Config.Video.Input.Connector[1].Visibility.set("Never");
       xapi.Config.Video.Input.Connector[1].CameraControl.Mode.set("On");
 
-      xapi.Config.Video.Input.Connector[3].Name.set("First Feed from Primary");
+      xapi.Config.Video.Input.Connector[3].Name.set("First Screen from Primary");
       xapi.Config.Video.Input.Connector[3].Visibility.set("Never");
       xapi.Config.Video.Input.Connector[3].CameraControl.Mode.set("Off");
       xapi.Config.Video.Input.Connector[3].PresentationSelection.set("Manual");
-
-      xapi.Config.Video.Input.Connector[5].Name.set("Presenter PTZ");
-      xapi.Config.Video.Input.Connector[5].Visibility.set("Never");
-      xapi.Config.Video.Input.Connector[5].CameraControl.Mode.set("On");
-      xapi.Config.Video.Input.Connector[5].PresentationSelection.set("Manual"); 
       
     }
-    else if (DWS_SEC.PLATFORM == 'Codec EQ')
+    else if (DWS_SEC.PLATFORM == 'Room Kit EQ')
     {
       // SET VIDEO INPUT CONFIGS
       xapi.Config.Video.Input.Connector[1].Name.set("Audience Camera");
       xapi.Config.Video.Input.Connector[1].Visibility.set("Never");
       xapi.Config.Video.Input.Connector[1].CameraControl.Mode.set("On");
 
-      xapi.Config.Video.Input.Connector[2].Name.set("Presenter PTZ");
+      xapi.Config.Video.Input.Connector[2].Name.set("First Screen from Primary");
       xapi.Config.Video.Input.Connector[2].Visibility.set("Never");
-      xapi.Config.Video.Input.Connector[2].CameraControl.Mode.set("On");
-      xapi.Config.Video.Input.Connector[2].PresentationSelection.set("Manual");
-
-      xapi.Config.Video.Input.Connector[3].Name.set("First Feed from Primary");
-      xapi.Config.Video.Input.Connector[3].Visibility.set("Never");
-      xapi.Config.Video.Input.Connector[3].CameraControl.Mode.set("Off");
-      xapi.Config.Video.Input.Connector[3].PresentationSelection.set("Manual");      
+      xapi.Config.Video.Input.Connector[2].CameraControl.Mode.set("Off");
+      xapi.Config.Video.Input.Connector[2].PresentationSelection.set("Manual");        
     }
   }
   else if(DWS_SEC.SCREENS == 2)
@@ -79,7 +67,6 @@ function init() {
     // SET VIDEO OUTPUT ROLES
     xapi.Config.Video.Output.Connector[1].MonitorRole.set("First");
     xapi.Config.Video.Output.Connector[2].MonitorRole.set("Second");
-    xapi.Config.Video.Output.Connector[3].MonitorRole.set("Third");
 
     if(DWS_SEC.PLATFORM == 'Codec Pro')
     {
@@ -88,48 +75,45 @@ function init() {
       xapi.Config.Video.Input.Connector[1].Visibility.set("Never");
       xapi.Config.Video.Input.Connector[1].CameraControl.Mode.set("On");
 
-      xapi.Config.Video.Input.Connector[3].Name.set("First Feed from Primary");
+      xapi.Config.Video.Input.Connector[3].Name.set("First Screen from Primary");
       xapi.Config.Video.Input.Connector[3].Visibility.set("Never");
       xapi.Config.Video.Input.Connector[3].CameraControl.Mode.set("Off");
       xapi.Config.Video.Input.Connector[3].PresentationSelection.set("Manual");
 
-      xapi.Config.Video.Input.Connector[4].Name.set("Second Feed from Primary");
+      xapi.Config.Video.Input.Connector[4].Name.set("Second Screen from Primary");
       xapi.Config.Video.Input.Connector[4].Visibility.set("Never");
       xapi.Config.Video.Input.Connector[4].CameraControl.Mode.set("Off");
       xapi.Config.Video.Input.Connector[4].PresentationSelection.set("Manual");
-
-      xapi.Config.Video.Input.Connector[5].Name.set("Presenter PTZ");
-      xapi.Config.Video.Input.Connector[5].Visibility.set("Never");
-      xapi.Config.Video.Input.Connector[5].CameraControl.Mode.set("On");
-      xapi.Config.Video.Input.Connector[5].PresentationSelection.set("Manual");
     }
-    else if (DWS_SEC.PLATFORM == 'Codec EQ')
+    else if (DWS_SEC.PLATFORM == 'Room Kit EQ')
     {
       // SET VIDEO INPUT CONFIGS
       xapi.Config.Video.Input.Connector[1].Name.set("Audience Camera");
       xapi.Config.Video.Input.Connector[1].Visibility.set("Never");
       xapi.Config.Video.Input.Connector[1].CameraControl.Mode.set("On");
 
-      xapi.Config.Video.Input.Connector[2].Name.set("Presenter PTZ");
+      xapi.Config.Video.Input.Connector[2].Name.set("First Screen from Primary");
       xapi.Config.Video.Input.Connector[2].Visibility.set("Never");
-      xapi.Config.Video.Input.Connector[2].CameraControl.Mode.set("On");
+      xapi.Config.Video.Input.Connector[2].CameraControl.Mode.set("Off");
       xapi.Config.Video.Input.Connector[2].PresentationSelection.set("Manual"); 
 
-      xapi.Config.Video.Input.Connector[3].Name.set("First Feed from Primary");
+      xapi.Config.Video.Input.Connector[3].Name.set("Second Screen from Primary");
       xapi.Config.Video.Input.Connector[3].Visibility.set("Never");
       xapi.Config.Video.Input.Connector[3].CameraControl.Mode.set("Off");
-      xapi.Config.Video.Input.Connector[3].PresentationSelection.set("Manual");      
-    }
+      xapi.Config.Video.Input.Connector[3].PresentationSelection.set("Manual"); 
+    }  
   }
 
   if (DWS_SEC.STATE === 'Combined') {
     console.log ('DWS: Combined State detected. Re-applying combined configuration.');
-    setSecondaryState("Combined");
+    setSecondaryState("Combined");    
+    setSecondaryConfig("Combined");
   }
   else
   {
     console.log ('DWS: Split State detected. Re-applying standard configuration.');
     setSecondaryState("Split");
+    setSecondaryConfig("Split");
   }
 
   xapi.event.on('Message Send Text', event => {
@@ -145,30 +129,8 @@ function init() {
         case 'Combine':
           console.log('DWS: Combine request received. Applying combined configuration.');
 
-          // RUN ALL COMMANDS
-          try { xapi.Command.Conference.DoNotDisturb.Activate({ Timeout: "20000" }) } catch(error) { console.error('DWS: Error Setting DND: ' + error.message); }
-          try { xapi.Command.Video.SelfView.Set({FullscreenMode: "On", Mode: "On", OnMonitorRole:"Third"}) } catch(error) { console.error('DWS: Error Setting SelfView: ' + error.message); }
-          if(DWS_SEC.SCREENS == 1)
-          {
-            try { xapi.Command.Video.Matrix.Assign({Mode: "Replace", Output: "1", SourceId: "3"}) } catch(error) { console.error('DWS: Error Setting 1S Matrix: ' + error.message); }
-          }
-          else if(DWS_SEC.SCREENS == 2 && DWS_SEC.PLATFORM == 'Codec Pro')
-          {
-            try { xapi.Command.Video.Matrix.Assign({Mode: "Replace", Output: "1", SourceId: "3"}) } catch(error) { console.error('DWS: Error Setting 2S Matrix 1: ' + error.message); }
-            try { xapi.Command.Video.Matrix.Assign({Mode: "Replace", Output: "2", SourceId: "4"}) } catch(error) { console.error('DWS: Error Setting 2S Matrix 2: ' + error.message); }
-          }
-          else{
-            console.error ("DWS: Misconfigured number of displays based on platform. Defaulting to Single Display.");
-            try { xapi.Command.Video.Matrix.Assign({Mode: "Replace", Output: "1", SourceId: "3"}) } catch(error) { console.error('DWS: Error Setting 1S Matrix: ' + error.message); }
-          }
-          
-          // SET ALL CONFIGURATIONS
-          try { xapi.Config.Peripherals.Profile.TouchPanels.set("0") } catch(error) { console.error('DWS: Error Setting Panels: ' + error.message); } 
-          try { xapi.Config.Standby.Control.set("Off") } catch(error) { console.error('DWS: Error Setting Standby Control: ' + error.message); } 
-          try { xapi.Config.Standby.Halfwake.Mode.set("Manual") } catch(error) { console.error('DWS: Error Setting Halfwake: ' + error.message); } 
-          try { xapi.Config.Audio.Input.HDMI[3].Mode.set("On") } catch(error) { console.error('DWS: Error Setting HDMI Audio Mode: ' + error.message); } 
-          try { xapi.Config.Audio.Input.HDMI[3].VideoAssociation.MuteOnInactiveVideo.set("Off") } catch(error) { console.error('DWS: Error Setting HDMI Audio: ' + error.message); } 
-          try { xapi.Config.Audio.Ultrasound.MaxVolume.set("0") } catch(error) { console.error('DWS: Error Setting Ultrasound: ' + error.message); } 
+          // UPDATE CONFIGURATION
+          setSecondaryConfig("Combined");
 
           // UPDATE STATE MACRO
           setSecondaryState("Combined");
@@ -181,29 +143,8 @@ function init() {
         case 'Split':
           console.log('DWS: Split request received. Applying split configuration.');
 
-          try { xapi.Command.Conference.DoNotDisturb.Deactivate() } catch(error) { console.error('DWS: Error Setting DND: ' + error.message); }
-          try { xapi.Command.Video.SelfView.Set({FullscreenMode: "Off", Mode: "On", OnMonitorRole:"First"}) } catch(error) { console.error('DWS: Error Setting SelfView: ' + error.message); }
-          if(DWS_SEC.SCREENS == 1)
-          {
-            try { xapi.Command.Video.Matrix.Reset({Output: "1"}) } catch(error) { console.error('DWS: Error Setting 1S Matrix: ' + error.message); }
-          }
-          else if(DWS_SEC.SCREENS == 2 && DWS_SEC.PLATFORM == 'Codec Pro')
-          {
-            try { xapi.Command.Video.Matrix.Reset({Output: "1"}) } catch(error) { console.error('DWS: Error Setting 2S Matrix 1: ' + error.message); }
-            try { xapi.Command.Video.Matrix.Reset({Output: "2"}) } catch(error) { console.error('DWS: Error Setting 2S Matrix 2: ' + error.message); }
-          }
-          else{
-            console.error ("DWS: Misconfigured number of displays based on platform. Resetting Matrix for Single Display.");
-            try { xapi.Command.Video.Matrix.Reset({Output: "1"}) } catch(error) { console.error('DWS: Error Setting 1S Matrix: ' + error.message); }
-          }
-
-          // SET ALL CONFIGURATIONS
-          try { xapi.Config.Peripherals.Profile.TouchPanels.set("1") } catch(error) { console.error('DWS: Error Setting Panels: ' + error.message); }
-          try { xapi.Config.Standby.Control.set("On") } catch(error) { console.error('DWS: Error Setting Standby Control: ' + error.message); }
-          try { xapi.Config.Standby.Halfwake.Mode.set("Auto") } catch(error) { console.error('DWS: Error Setting Halfwake: ' + error.message); }
-          try { xapi.Config.Audio.Input.HDMI[3].Mode.set("Off") } catch(error) { console.error('DWS: Error Setting HDMI Audio Mode: ' + error.message); }
-          try { xapi.Config.Audio.Input.HDMI[3].VideoAssociation.MuteOnInactiveVideo.set("On") } catch(error) { console.error('DWS: Error Setting HDMI Audio: ' + error.message); }
-          try { xapi.Config.Audio.Ultrasound.MaxVolume.set("70") } catch(error) { console.error('DWS: Error Setting Ultrasound: ' + error.message); } 
+          // UPDATE CONFIGURATION
+          setSecondaryConfig("Split");
 
           // UPDATE STATE MACRO
           setSecondaryState("Split");
@@ -215,7 +156,6 @@ function init() {
         //========================================//
         case 'EnableST':
           console.log('DWS: Enabling SpeakerTrack');
-
           xapi.Command.Cameras.SpeakerTrack.Activate();
           xapi.Command.Cameras.SpeakerTrack.Closeup.Activate();           
           break;
@@ -267,8 +207,8 @@ function setSecondaryState(state)
   // CREATE MACRO BODY
   const dataStr = `
 /*========================================================================//
-This file is part of the "Divisible Workspace" blueprint for Two-Way 
-Divisible Rooms leveraging Cisco IP Microphones.
+This file is part of the "Divisible Workspace" blueprint for Two-Way and
+Three-Way Divisible Rooms leveraging Cisco IP Microphones.
 
 Macro Author:  
 Mark Lula
@@ -280,8 +220,7 @@ Robert(Bobby) McGonigle Jr
 Chase Voisin
 William Mills
 
-Version: 0.9.2 (Beta)
-Released: 04/04/2025
+Version: 0.9.3 (Beta)
 
 Complete details for this macro are available on Github:
 https://cs.co/divisibleworkspaceblueprint
@@ -313,6 +252,78 @@ export default {
       console.error('DWS: Error saving state macro: '+error);
     })
   })
+}
+
+function setSecondaryConfig(state)
+{
+  // COMBINED CONFIGURATION
+  if(state == 'Combined')
+  {
+    try { xapi.Command.Conference.DoNotDisturb.Activate({ Timeout: "20000" }) } catch(error) { console.error('DWS: Error Setting DND: ' + error.message); }
+    
+    if(DWS_SEC.SCREENS == 1 && DWS_SEC.PLATFORM == 'Codec Pro')
+    {
+      try { xapi.Command.Video.Matrix.Assign({Mode: "Replace", Output: "1", SourceId: "3"}) } catch(error) { console.error('DWS: Error Setting 1S Matrix: ' + error.message); }
+    }
+    else if(DWS_SEC.SCREENS == 1 && DWS_SEC.PLATFORM == 'Room Kit EQ')
+    {
+      try { xapi.Command.Video.Matrix.Assign({Mode: "Replace", Output: "1", SourceId: "2"}) } catch(error) { console.error('DWS: Error Setting 1S Matrix: ' + error.message); }
+    }
+    else if(DWS_SEC.SCREENS == 2 && DWS_SEC.PLATFORM == 'Codec Pro')
+    {
+      try { xapi.Command.Video.Matrix.Assign({Mode: "Replace", Output: "1", SourceId: "3"}) } catch(error) { console.error('DWS: Error Setting 2S Matrix 1: ' + error.message); }
+      try { xapi.Command.Video.Matrix.Assign({Mode: "Replace", Output: "2", SourceId: "4"}) } catch(error) { console.error('DWS: Error Setting 2S Matrix 2: ' + error.message); }
+    }
+    else if(DWS_SEC.SCREENS == 2 && DWS_SEC.PLATFORM == 'Room Kit EQ')
+    {
+      try { xapi.Command.Video.Matrix.Assign({Mode: "Replace", Output: "1", SourceId: "2"}) } catch(error) { console.error('DWS: Error Setting 2S Matrix 1: ' + error.message); }
+      try { xapi.Command.Video.Matrix.Assign({Mode: "Replace", Output: "2", SourceId: "3"}) } catch(error) { console.error('DWS: Error Setting 2S Matrix 2: ' + error.message); }
+    }
+
+    // PREVENT ALL SCREEN SHARING WHEN COMBINED
+    if(DWS_SEC.PLATFORM == 'Codec Pro')
+    {
+      // PREVENT SHARING ON REMAINING HDMI INPUTS            
+      xapi.Config.Video.Input.Connector[2].PresentationSelection.set("Manual");
+    }
+    else if (DWS_SEC.PLATFORM == 'Room Kit EQ')
+    {
+      // PREVENT USBC CONTENT SHARING WHEN COMBINED
+      xapi.Config.Video.Input.Connector[4].PresentationSelection.set("Manual");
+    }
+
+    // SET ALL CONFIGURATIONS
+    try { xapi.Config.Peripherals.Profile.TouchPanels.set("0") } catch(error) { console.error('DWS: Error Setting Panels: ' + error.message); } 
+    try { xapi.Config.Standby.Control.set("Off") } catch(error) { console.error('DWS: Error Setting Standby Control: ' + error.message); } 
+    try { xapi.Config.Standby.Halfwake.Mode.set("Manual") } catch(error) { console.error('DWS: Error Setting Halfwake: ' + error.message); } 
+    try { xapi.Config.Audio.Input.HDMI[3].Mode.set("On") } catch(error) { console.error('DWS: Error Setting HDMI Audio Mode: ' + error.message); } 
+    try { xapi.Config.Audio.Input.HDMI[3].VideoAssociation.MuteOnInactiveVideo.set("Off") } catch(error) { console.error('DWS: Error Setting HDMI Audio: ' + error.message); } 
+    try { xapi.Config.Audio.Ultrasound.MaxVolume.set("0") } catch(error) { console.error('DWS: Error Setting Ultrasound: ' + error.message); } 
+  }
+  // SPLIT CONFIGURATION
+  else
+  {
+    try { xapi.Command.Conference.DoNotDisturb.Deactivate() } catch(error) { console.error('DWS: Error Setting DND: ' + error.message); }
+
+    if(DWS_SEC.SCREENS == 1)
+    {
+      try { xapi.Command.Video.Matrix.Reset({Output: "1"}) } catch(error) { console.error('DWS: Error Setting 1S Matrix: ' + error.message); }
+    }
+    else
+    {
+      try { xapi.Command.Video.Matrix.Reset({Output: "1"}) } catch(error) { console.error('DWS: Error Setting 2S Matrix 1: ' + error.message); }
+      try { xapi.Command.Video.Matrix.Reset({Output: "2"}) } catch(error) { console.error('DWS: Error Setting 2S Matrix 2: ' + error.message); }
+    }
+
+    // SET ALL CONFIGURATIONS
+    try { xapi.Config.Peripherals.Profile.TouchPanels.set("1") } catch(error) { console.error('DWS: Error Setting Panels: ' + error.message); }
+    try { xapi.Config.Standby.Control.set("On") } catch(error) { console.error('DWS: Error Setting Standby Control: ' + error.message); }
+    try { xapi.Config.Standby.Halfwake.Mode.set("Auto") } catch(error) { console.error('DWS: Error Setting Halfwake: ' + error.message); }
+    try { xapi.Config.Audio.Input.HDMI[3].Mode.set("Off") } catch(error) { console.error('DWS: Error Setting HDMI Audio Mode: ' + error.message); }
+    try { xapi.Config.Audio.Input.HDMI[3].VideoAssociation.MuteOnInactiveVideo.set("On") } catch(error) { console.error('DWS: Error Setting HDMI Audio: ' + error.message); }
+    try { xapi.Config.Audio.Ultrasound.MaxVolume.set("70") } catch(error) { console.error('DWS: Error Setting Ultrasound: ' + error.message); } 
+  }
+
 }
 
 // START THE MACRO
