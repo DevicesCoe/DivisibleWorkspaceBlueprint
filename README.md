@@ -41,6 +41,7 @@ The solution leverages the following:
 
 | **File** | **Purpose** |
 |---|---|
+| Presenter Camera | Refers to the Presenter Tracking enabled PTZ camera in each room. |
 | DWS_AZM_Lib.js | The Audio Zone Manager Library macro. This library contains the logic needed for clean audio based events. |
 | DWS_Wizard.js | The initial setup wizard functionality loaded onto the Primary Codec. |
 | DWS_Setup.js | A background macro that handles the installation and base configuration. |
