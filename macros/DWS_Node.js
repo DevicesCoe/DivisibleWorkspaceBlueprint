@@ -33,9 +33,6 @@ function init() {
 
   if(DWS_SEC.SCREENS == 1)
   {
-    // SET VIDEO OUTPUT ROLES
-    xapi.Config.Video.Output.Connector[1].MonitorRole.set("First");
-
     if(DWS_SEC.PLATFORM == 'Codec Pro')
     {
       // SET VIDEO INPUT CONFIGS
@@ -64,10 +61,6 @@ function init() {
   }
   else if(DWS_SEC.SCREENS == 2)
   {
-    // SET VIDEO OUTPUT ROLES
-    xapi.Config.Video.Output.Connector[1].MonitorRole.set("First");
-    xapi.Config.Video.Output.Connector[2].MonitorRole.set("Second");
-
     if(DWS_SEC.PLATFORM == 'Codec Pro')
     {
       // SET VIDEO INPUT CONFIGS
@@ -264,20 +257,24 @@ function setSecondaryConfig(state)
     if(DWS_SEC.SCREENS == 1 && DWS_SEC.PLATFORM == 'Codec Pro')
     {
       try { xapi.Command.Video.Matrix.Assign({Mode: "Replace", Output: "1", SourceId: "3"}) } catch(error) { console.error('DWS: Error Setting 1S Matrix: ' + error.message); }
+      try { xapi.Command.Video.Matrix.Assign({Mode: "Replace", Output: "3", SourceId: "4"}) } catch(error) { console.error('DWS: Error Setting 1S Matrix Confidence: ' + error.message); }
     }
     else if(DWS_SEC.SCREENS == 1 && DWS_SEC.PLATFORM == 'Room Kit EQ')
     {
       try { xapi.Command.Video.Matrix.Assign({Mode: "Replace", Output: "1", SourceId: "2"}) } catch(error) { console.error('DWS: Error Setting 1S Matrix: ' + error.message); }
+      try { xapi.Command.Video.Matrix.Assign({Mode: "Replace", Output: "3", SourceId: "3"}) } catch(error) { console.error('DWS: Error Setting 1S Matrix Confidence: ' + error.message); }
     }
     else if(DWS_SEC.SCREENS == 2 && DWS_SEC.PLATFORM == 'Codec Pro')
     {
       try { xapi.Command.Video.Matrix.Assign({Mode: "Replace", Output: "1", SourceId: "3"}) } catch(error) { console.error('DWS: Error Setting 2S Matrix 1: ' + error.message); }
       try { xapi.Command.Video.Matrix.Assign({Mode: "Replace", Output: "2", SourceId: "4"}) } catch(error) { console.error('DWS: Error Setting 2S Matrix 2: ' + error.message); }
+      try { xapi.Command.Video.Matrix.Assign({Mode: "Replace", Output: "3", SourceId: "4"}) } catch(error) { console.error('DWS: Error Setting 2S Matrix Confidence: ' + error.message); }
     }
     else if(DWS_SEC.SCREENS == 2 && DWS_SEC.PLATFORM == 'Room Kit EQ')
     {
       try { xapi.Command.Video.Matrix.Assign({Mode: "Replace", Output: "1", SourceId: "2"}) } catch(error) { console.error('DWS: Error Setting 2S Matrix 1: ' + error.message); }
       try { xapi.Command.Video.Matrix.Assign({Mode: "Replace", Output: "2", SourceId: "3"}) } catch(error) { console.error('DWS: Error Setting 2S Matrix 2: ' + error.message); }
+      try { xapi.Command.Video.Matrix.Assign({Mode: "Replace", Output: "3", SourceId: "3"}) } catch(error) { console.error('DWS: Error Setting 2S Matrix Confidence: ' + error.message); }
     }
 
     // PREVENT ALL SCREEN SHARING WHEN COMBINED
@@ -308,11 +305,13 @@ function setSecondaryConfig(state)
     if(DWS_SEC.SCREENS == 1)
     {
       try { xapi.Command.Video.Matrix.Reset({Output: "1"}) } catch(error) { console.error('DWS: Error Setting 1S Matrix: ' + error.message); }
+      try { xapi.Command.Video.Matrix.Reset({Output: "3"}) } catch(error) { console.error('DWS: Error Setting 1S Matrix Confidence: ' + error.message); }
     }
     else
     {
       try { xapi.Command.Video.Matrix.Reset({Output: "1"}) } catch(error) { console.error('DWS: Error Setting 2S Matrix 1: ' + error.message); }
       try { xapi.Command.Video.Matrix.Reset({Output: "2"}) } catch(error) { console.error('DWS: Error Setting 2S Matrix 2: ' + error.message); }
+      try { xapi.Command.Video.Matrix.Reset({Output: "3"}) } catch(error) { console.error('DWS: Error Setting 2S Matrix Confidence: ' + error.message); }
     }
 
     // SET ALL CONFIGURATIONS
