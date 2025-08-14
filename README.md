@@ -9,13 +9,14 @@ Important Considerations:
 The solution leverages the following: 
 - Cisco Codec EQs or Codec Pros
 - Cisco Table or Ceiling Microphone Pros (up to 8)
+- Cisco Room Vision PTZ / Cisco PTZ4K Cameras
 - Cisco Catalyst 9K Series Switches  
 - Custom Macros including [Audio Zone Manager Library](https://github.com/ctg-tme/audio-zone-manager-library-macro?tab=readme-ov-file)
 - Certified HDMI Distrubution Amplifiers: [Certified Third Party Devices](https://help.webex.com/en-us/article/7sw4gab/Cisco-collaboration-devices-certification-program)
 
 | Minimum RoomOS Version | Webex Cloud | Webex Edge (Hybrid Cloud) | On-Premise | Microsoft Teams Room<br>On Cisco Devices |
 |:-----------------------|:------------|:--------------------------|:-----------|:-----------------------------------------|
-| 11.30              | ✅ Yes      | ✅ Yes                    | ✅ Yes     | ❌ Not Supported   | 
+| 11.31              | ✅ Yes      | ✅ Yes                    | ✅ Yes     | ❌ Not Supported   | 
 
 ### Please join this Webex messaging space for best effort and community level support: https://eurl.io/#nakTe_Vn3
 
