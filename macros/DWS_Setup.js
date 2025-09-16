@@ -12,7 +12,7 @@ Robert(Bobby) McGonigle Jr
 Chase Voisin
 William Mills
 
-Version: 0.9.3 (Beta)
+Version: 0.9.5 (BETA)
 
 Complete details for this macro are available on Github:
 https://cs.co/divisibleworkspaceblueprint
@@ -111,14 +111,16 @@ async function firstSetup()
 
   // DELETE SETUP MACROS AND ENABLE CORE MACRO
   try { xapi.Command.UserInterface.Extensions.Panel.Remove({ PanelId: 'dws_wizard' }); } catch(error) { console.error('DWS: Error Removing Wizard Panel: ' + error.message); }
-  try { xapi.Command.Macros.Macro.Activate({ Name: 'DWS_Core' }); } catch(error) { console.error('DWS: Error Starting Core Macro: ' + error.message); }
+  try { 
+    xapi.Command.Macros.Macro.Activate({ Name: 'DWS_Core' }); 
+    setTimeout(() => {
+      xapi.Command.Macros.Runtime.Restart()
+        .catch(error => console.log('DWS: Error restarting Macro Engine: ' + error.message));
+    }, 300);
+  } 
+  catch(error) { console.error('DWS: Error Starting Core Macro: ' + error.message); }
   try { xapi.Command.Macros.Macro.Remove({ Name: "DWS_Wizard" }); } catch(error) { console.error('DWS: Error Deleting Wizard Macro: ' + error.message); }
   try { xapi.Command.Macros.Macro.Remove({ Name: "DWS_Setup" }); } catch(error) { console.log('DWS: Error Deleting Setup Macro: ' + error.message); }
-  setTimeout(() => {
-        xapi.Command.Macros.Runtime.Restart()
-          .catch(error => console.log('DWS: Error restarting Macro Engine: ' + error.message));
-      }, 300);
-
 }
 
 async function setPrimaryState(state)
@@ -139,7 +141,7 @@ Robert(Bobby) McGonigle Jr
 Chase Voisin
 William Mills
 
-Version: 0.9.3 (Beta)
+Version: 0.9.5 (BETA)
 
 Complete details for this macro are available on Github:
 https://cs.co/divisibleworkspaceblueprint
@@ -179,7 +181,7 @@ Robert(Bobby) McGonigle Jr
 Chase Voisin
 William Mills
 
-Version: 0.9.3 (Beta)
+Version: 0.9.5 (BETA)
 
 Complete details for this macro are available on Github:
 https://cs.co/divisibleworkspaceblueprint
@@ -189,37 +191,39 @@ https://cs.co/divisibleworkspaceblueprint
 //=========================================================================*/
 import xapi from 'xapi';
 
+let LOADED_MACROS = [];
+
 function init()
 {
   // SAVE THE INITIAL STATE MACRO
   saveStateMacro();
 
   // PERFORM PREMISE INSTALL CHECK
-  let loadedMacros = [];
-
   xapi.Command.Macros.Macro.Get()
   .then (response => {
-
     response.Macro.forEach(element => {
-      loadedMacros.push(element.Name);
+      LOADED_MACROS.push(element.Name);
     });
+  });  
 
-    // PERFORM PREMISE INSTALL CHECK
-    if(loadedMacros.includes('DWS_Node'))
-    {
-      // LOAD THE MACRO AND ENABLE IT
-      xapi.Command.Macros.Macro.Activate({ Name: "DWS_Node"})
-      .then (() => {
-        xapi.Command.Macros.Macro.Remove({Name: "DWS_Sec_Startup"})
-        .then (() => { xapi.Command.Macros.Runtime.Restart() } )
-      })
-    }
-    // OR LOAD NODE MACRO FROM GITHUB
-    else
-    {
-      getMacro(); 
-    }
-  });   
+  // PERFORM PREMISE INSTALL CHECK
+  if(LOADED_MACROS.includes('DWS_Node'))
+  {
+    console.log("DWS: All required Macro files present. Performing local install.");
+
+    // LOAD THE MACRO AND ENABLE IT
+    xapi.Command.Macros.Macro.Activate({ Name: "DWS_Node"})
+    .then (() => {
+      xapi.Command.Macros.Macro.Remove({Name: "DWS_Sec_Startup"})
+      .then (() => { xapi.Command.Macros.Runtime.Restart() } )
+    })
+  }
+  // OR LOAD NODE MACRO FROM GITHUB
+  else
+  {
+    console.log("DWS: Performing cloud macro install.");
+    getMacro(); 
+  }  
 }
 
 async function getMacro ()
@@ -269,7 +273,7 @@ Robert(Bobby) McGonigle Jr
 Chase Voisin
 William Mills
 
-Version: 0.9.3 (Beta)
+Version: 0.9.5 (BETA)
 
 Complete details for this macro are available on Github:
 https://cs.co/divisibleworkspaceblueprint
@@ -326,7 +330,7 @@ Robert(Bobby) McGonigle Jr
 Chase Voisin
 William Mills
 
-Version: 0.9.3 (Beta)
+Version: 0.9.5 (BETA)
 
 Complete details for this macro are available on Github:
 https://cs.co/divisibleworkspaceblueprint
@@ -336,37 +340,39 @@ https://cs.co/divisibleworkspaceblueprint
 //=========================================================================*/
 import xapi from 'xapi';
 
+let LOADED_MACROS = [];
+
 function init()
 {
   // SAVE THE INITIAL STATE MACRO
   saveStateMacro();
 
   // PERFORM PREMISE INSTALL CHECK
-  let loadedMacros = [];
-
   xapi.Command.Macros.Macro.Get()
   .then (response => {
-
     response.Macro.forEach(element => {
-      loadedMacros.push(element.Name);
+      LOADED_MACROS.push(element.Name);
     });
+  });  
 
-    // PERFORM PREMISE INSTALL CHECK
-    if(loadedMacros.includes('DWS_Node'))
-    {
-      // LOAD THE MACRO AND ENABLE IT
-      xapi.Command.Macros.Macro.Activate({ Name: "DWS_Node"})
-      .then (() => {
-        xapi.Command.Macros.Macro.Remove({Name: "DWS_Sec_Startup"})
-        .then (() => { xapi.Command.Macros.Runtime.Restart() } )
-      })
-    }
-    // OR LOAD NODE MACRO FROM GITHUB
-    else
-    {
-      getMacro(); 
-    }
-  });   
+  // PERFORM PREMISE INSTALL CHECK
+  if(LOADED_MACROS.includes('DWS_Node'))
+  {
+    console.log("DWS: All required Macro files present. Performing local install.");
+
+    // LOAD THE MACRO AND ENABLE IT
+    xapi.Command.Macros.Macro.Activate({ Name: "DWS_Node"})
+    .then (() => {
+      xapi.Command.Macros.Macro.Remove({Name: "DWS_Sec_Startup"})
+      .then (() => { xapi.Command.Macros.Runtime.Restart() } )
+    })
+  }
+  // OR LOAD NODE MACRO FROM GITHUB
+  else
+  {
+    console.log("DWS: Performing cloud macro install.");
+    getMacro(); 
+  }  
 }
 
 async function getMacro ()
@@ -416,7 +422,7 @@ Robert(Bobby) McGonigle Jr
 Chase Voisin
 William Mills
 
-Version: 0.9.3 (Beta)
+Version: 0.9.5 (BETA)
 
 Complete details for this macro are available on Github:
 https://cs.co/divisibleworkspaceblueprint

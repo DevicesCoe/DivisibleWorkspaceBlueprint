@@ -12,7 +12,7 @@ Robert(Bobby) McGonigle Jr
 Chase Voisin
 William Mills
 
-Version: 0.9.3 (Beta)
+Version: 0.9.5 (BETA)
 
 Complete details for this macro are available on Github:
 https://cs.co/divisibleworkspaceblueprint
@@ -48,6 +48,7 @@ let DWS_COMBINE_NODE1 = 'off';
 let DWS_COMBINE_NODE2 = 'off';
 let DWS_TEMP_MICS = [];
 let DWS_TEMP_NAVS = [];
+let DWS_NODE2_MICS = 0;
 
 let DWS_NODE1_MICS = DWS.NODE1_MICS.length;
 
@@ -80,7 +81,7 @@ function init() {
   .then(response => {
     if (response != 'Available')
     { 
-      xapi.Command.UserInterface.Message.Alert.Display({ Duration: '0', Title:"Action Required", Text: "Please configure Presenter Track to enable presenter camera automation when in combined mode."});
+      xapi.Command.UserInterface.Message.Alert.Display({ Duration: '60', Title:"Action Required", Text: "Please configure Presenter Track to enable presenter camera automation when in combined mode."});
     }
     else if (response == 'Available')
     {
@@ -146,7 +147,9 @@ function init() {
 
         // SHOW ROOM CONTROLS PANEL
         xapi.Command.UserInterface.Extensions.Panel.Update({ PanelId: 'dws_controls', Location: 'HomeScreen' })
-          .catch(e => console.log('Error hiding Room Controls panel: ' + e.message));
+          .catch(e => console.log('Error showing Room Controls panel: ' + e.message));
+
+
       }
       else
       {
@@ -670,7 +673,7 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
     {
       if (DWS_COMBINE_NODE1 == 'on' && DWS_COMBINE_NODE2 == 'on')
       {
-        if (DWS.DEBUG) {console.debug("DWS: Combining Workspaces: All Nodes")};
+        console.log("DWS: Combining Workspaces: All Nodes");
 
         // UPDATE CURRENT STATE
         DWS_CUR_STATE = "Combined All";
@@ -692,7 +695,7 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
       }
       else if (DWS_COMBINE_NODE1 == 'on' && DWS_COMBINE_NODE2 == 'off')
       {
-        if (DWS.DEBUG) {console.debug("DWS: Combining Workspaces: Only Node 1")};
+        console.log("DWS: Combining Workspaces: Only Node 1");
 
         // UPDATE CURRENT STATE
         DWS_CUR_STATE = "Combined Node1";
@@ -714,7 +717,7 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
       }
       else if (DWS_COMBINE_NODE1 == 'off' && DWS_COMBINE_NODE2 == 'on')
       {
-        if (DWS.DEBUG) {console.debug("DWS: Combining Workspaces: Only Node 2")};
+        console.log("DWS: Combining Workspaces: Only Node 2");
 
         // UPDATE CURRENT STATE
         DWS_CUR_STATE = "Combined Node2";
@@ -739,6 +742,9 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
     {
       if (DWS.DEBUG) {console.debug("DWS: Combining Workspaces")};
 
+      // UPDATE CURRENT STATE
+      DWS_CUR_STATE = "Combined Node1";
+
       // UPDATE VLANS FOR ACCESSORIES
       setVLANs('Combined Node1');
 
@@ -747,14 +753,21 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
 
       // INITIALIZE AZM WITH A 165 DELAY
       setTimeout(() => {startAZM()}, 165000);
+
+      if (DWS.COMBINED_BANNER)
+      {
+        // SET ONSCREEN TEXT BANNER 
+        xapi.Command.Video.Graphics.Text.Display({ Duration: 0, Target: 'LocalOutput', Text: "Combined with: " + DWS.NODE1_ALIAS});
+      }
     }
 
     // UPDATE STATUS ALERT
     updateStatus('Combine');
     DWS_INTERVAL = setInterval(() => {updateStatus('Combine')}, 3000);
 
-    // CREATE COMBINED PANELS
+    // CREATE COMBINED PANELS AND CLOSE CONTROL PANEL
     createPanels('Combined');
+    xapi.Command.UserInterface.Extensions.Panel.Close({ Target: 'Controller' });
 
     // CONFIGURE DELAY FOR AUDIO OUTPUTS
     setPrimaryDelay(DWS.PRIMARY_DELAY);
@@ -862,6 +875,9 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
   { 
     if (DWS.DEBUG) {console.debug("DWS: Split action confirmed. Splitting rooms.")}
 
+    // CLOSE THE DWS CONTROL PANEL
+    xapi.Command.UserInterface.Extensions.Panel.Close({ Target: 'Controller' });
+
     // RESET ANY COMPOSITIONS FOR MAIN VIDEO SOURCE
     xapi.Command.Video.Input.SetMainVideoSource({ ConnectorId: 1});
 
@@ -891,8 +907,7 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
 
     // UPDATE STATUS ALERT
     updateStatus('Split');
-    DWS_INTERVAL = setInterval(() => {updateStatus('Split')}, 3000);  
-    
+    DWS_INTERVAL = setInterval(() => {updateStatus('Split')}, 3000);      
   }
 
   // ADVANCED PANEL - AUTOMATION MODE TRIGGERS
@@ -1130,7 +1145,7 @@ Robert(Bobby) McGonigle Jr
 Chase Voisin
 William Mills
 
-Version: 0.9.3 (BETA)
+Version: 0.9.5 (BETA)
 
 Complete details for this macro are available on Github:
 https://cs.co/divisibleworkspaceblueprint
@@ -1253,7 +1268,7 @@ Robert(Bobby) McGonigle Jr
 Chase Voisin
 William Mills
 
-Version: 0.9.3 (BETA)
+Version: 0.9.5 (BETA)
 
 Complete details for this macro are available on Github:
 https://cs.co/divisibleworkspaceblueprint
