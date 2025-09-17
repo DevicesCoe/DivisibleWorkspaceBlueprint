@@ -97,7 +97,7 @@ These tables provides the supported combinations of codecs and number of seconda
 #### Two Way Wiring Diagrams
 | Codec | # of Displays | Vison PTZ | PTZ4K/P60 | 
 |---|---|---|---|
-| Codec EQ | Single | [Diagram](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/wire-diagrams/2W-1S-EQ-RV.png) | [Diagram](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/images/2W-1S-EQ-4K.png) |
+| Codec EQ | Single | [Diagram](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/wire-diagrams/2W-1S-EQ-RV.png) | [Diagram](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/wire-diagrams/2W-1S-EQ-4K.png) |
 | Codec EQ | Dual | [Diagram](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/wire-diagrams/2W-2S-EQ-RV.png) | Not Supported |
 | Codec Pro | Single | [Diagram](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/wire-diagrams/2W-1S-Pro-RV.png) | [Diagram](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/wire-diagrams/2W-1S-Pro-RV.png) | 
 | Codec Pro | Dual | [Diagram](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/wire-diagrams/2W-2S-Pro-RV.png) | [Diagram](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/wire-diagrams/2W-2S-Pro-RV.png) |
