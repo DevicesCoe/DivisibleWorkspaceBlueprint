@@ -193,18 +193,18 @@ import xapi from 'xapi';
 
 let LOADED_MACROS = [];
 
+// STORE LOCAL MACRO NAMES FOR PREMISE INSTALL CHECK
+xapi.Command.Macros.Macro.Get()
+.then (response => {
+  response.Macro.forEach(element => {
+    LOADED_MACROS.push(element.Name);
+  });
+}); 
+
 function init()
 {
   // SAVE THE INITIAL STATE MACRO
   saveStateMacro();
-
-  // PERFORM PREMISE INSTALL CHECK
-  xapi.Command.Macros.Macro.Get()
-  .then (response => {
-    response.Macro.forEach(element => {
-      LOADED_MACROS.push(element.Name);
-    });
-  });  
 
   // PERFORM PREMISE INSTALL CHECK
   if(LOADED_MACROS.includes('DWS_Node'))
@@ -342,18 +342,18 @@ import xapi from 'xapi';
 
 let LOADED_MACROS = [];
 
+// STORE LOCAL MACRO NAMES FOR PREMISE INSTALL CHECK
+xapi.Command.Macros.Macro.Get()
+.then (response => {
+  response.Macro.forEach(element => {
+    LOADED_MACROS.push(element.Name);
+  });
+});  
+
 function init()
 {
   // SAVE THE INITIAL STATE MACRO
   saveStateMacro();
-
-  // PERFORM PREMISE INSTALL CHECK
-  xapi.Command.Macros.Macro.Get()
-  .then (response => {
-    response.Macro.forEach(element => {
-      LOADED_MACROS.push(element.Name);
-    });
-  });  
 
   // PERFORM PREMISE INSTALL CHECK
   if(LOADED_MACROS.includes('DWS_Node'))
