@@ -161,7 +161,6 @@ Access the end user documentation here: [Admin Guide](https://github.com/Devices
 
 **Does the blueprint support Speaker Reinforcement scenarios?**
 - Speaker reinforcement (projecting the presenters voice over amplified speakers in the same room) is supported by leveraging automatic microphone ducking (lowering/raising the gain of the Cisco Ceiling Microphones when the presenter speaks into the third party USB or analog microphones) or manual toggling of presenter or audience microphones using in call controls.
-- Please review the demo recording: <URL TBD>
 
 **Where is the Partition Sensor?**
 - This blueprint does not leverage a partition sensor. The Combine/Split operation is manually controlled by the end user.
