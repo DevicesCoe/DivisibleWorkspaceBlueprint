@@ -12,7 +12,7 @@ Robert(Bobby) McGonigle Jr
 Chase Voisin
 William Mills
 
-Version: 0.9.5 (BETA)
+Version: 0.9.6 (Beta)
 
 Complete details for this macro are available on Github:
 https://cs.co/divisibleworkspaceblueprint
@@ -31,76 +31,74 @@ async function firstSetup()
 {
   console.log("DWS: Starting Automatic Setup Process.");
 
-  // DISABLE HDCP POLICY FOR BETTER DA COMPATIBILITY
-  xapi.Config.Video.Output.Connector[1].HDCPPolicy.set("off");
-  xapi.Config.Video.Output.Connector[2].HDCPPolicy.set("off");
+  // DISABLE HDCP POLICY FOR BETTER DA COMPATIBILITY  
+  try { xapi.Config.Video.Output.Connector[1].HDCPPolicy.set("off"); } catch(error) { console.error('DWS: Error setting HDCP 1: ' + error.message); }
+  try { xapi.Config.Video.Output.Connector[2].HDCPPolicy.set("off"); } catch(error) { console.error('DWS: Error setting HDCP 2: ' + error.message); }
+
+  // SET SPEAKER TRACK MODE TO CLOSE UP AS DEFAULT  
+  try { xapi.Config.Cameras.SpeakerTrack.DefaultBehavior.set('Closeup'); } catch(error) { console.error('DWS: Error setting ST Default: ' + error.message); }
+
+  // ENABLE AUDIO CONSOLE / MANUAL AUDIO ROUTING
+  if(DWS.PLATFORM == 'Room Kit EQ')
+  {    
+    try { xapi.Config.Audio.Output.ConnectorSetup.set("Manual"); } catch(error) { console.error('DWS: Error setting ConnectorSetup: ' + error.message); }
+  }
   
   console.log("DWS: Checking for Correct Inputs and Outputs.");
   if(DWS.NWAY == 'Two Way')
   {
-  	let input1 = false;
-  	let input2 = false;
-
-    if(DWS.PLATFORM == 'Codec Pro' || DWS.PLATFORM == 'Room Kit EQ')
-    {    
-      input1 = await xapi.Status.Video.Input.Connector[1].Connected.get();
-      input2 = await xapi.Status.Video.Input.Connector[2].Connected.get();
-    }
+    const input1 = await xapi.Status.Video.Input.Connector[1].Connected.get();
+    const input2 = await xapi.Status.Video.Input.Connector[2].Connected.get();
 
     if (input1 && input2)
     {
       console.log("DWS: Setting Inputs/Outputs Labels and Visibility."); 
 
-      // SET NAMES AND VISIBILITY SETTINGS
-      xapi.Config.Video.Input.Connector[1].Name.set('Audience Camera');
-      xapi.Config.Video.Input.Connector[1].CameraControl.Mode.set('On');
-      xapi.Config.Video.Input.Connector[1].Visibility.set('Never');
-      xapi.Config.Video.Input.Connector[1].PresentationSelection.set("Manual");
-      xapi.Config.Video.Input.Connector[2].Name.set('Secondary Audience');
-      xapi.Config.Video.Input.Connector[2].CameraControl.Mode.set('Off');
-      xapi.Config.Video.Input.Connector[2].Visibility.set('Never');
-      xapi.Config.Video.Input.Connector[2].PresentationSelection.set("Manual");      
+      // SET NAMES AND VISIBILITY SETTINGS      
+      try { xapi.Config.Video.Input.Connector[1].Name.set('Audience Camera'); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }      
+      try { xapi.Config.Video.Input.Connector[1].CameraControl.Mode.set('On'); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }      
+      try { xapi.Config.Video.Input.Connector[1].Visibility.set('Never'); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }      
+      try { xapi.Config.Video.Input.Connector[1].PresentationSelection.set("Manual"); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }      
+      try { xapi.Config.Video.Input.Connector[2].Name.set('Secondary Audience'); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }      
+      try { xapi.Config.Video.Input.Connector[2].CameraControl.Mode.set('Off'); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }      
+      try { xapi.Config.Video.Input.Connector[2].Visibility.set('Never'); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }      
+      try { xapi.Config.Video.Input.Connector[2].PresentationSelection.set("Manual"); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }      
     }
     else
     {
       console.error("DWS: Invalid video input connection status. Ensure camera inputs match documentation. Setup aborted.");
+      xapi.Command.UserInterface.Message.Alert.Display({ Duration: '60', Title:"Error: Invalid Input Configuration", Text: "Please ensure camera inputs match documentation. Setup aborted."});
       return;
     }
   }
   else
   {
-  	let input1 = false;
-  	let input2 = false;
-  	let input3 = false;
-
-    if(DWS.PLATFORM == 'Codec Pro' || DWS.PLATFORM == 'Room Kit EQ')
-    {    
-      input1 = await xapi.Status.Video.Input.Connector[1].Connected.get();
-      input2 = await xapi.Status.Video.Input.Connector[2].Connected.get();
-      input3 = await xapi.Status.Video.Input.Connector[3].Connected.get();
-    }
-
+  	const input1 = await xapi.Status.Video.Input.Connector[1].Connected.get();
+    const input2 = await xapi.Status.Video.Input.Connector[2].Connected.get();
+    const input3 = await xapi.Status.Video.Input.Connector[3].Connected.get();
+    
     if (input1 && input2 && input3)
     {
       console.log("DWS: Setting Inputs/Outputs Labels and Visibility."); 
 
       // SET NAMES AND VISIBILITY SETTINGS
-      xapi.Config.Video.Input.Connector[1].Name.set('Audience Camera');
-      xapi.Config.Video.Input.Connector[1].CameraControl.Mode.set('On');
-      xapi.Config.Video.Input.Connector[1].Visibility.set('Never');
-      xapi.Config.Video.Input.Connector[1].PresentationSelection.set("Manual");
-      xapi.Config.Video.Input.Connector[2].Name.set(DWS.NODE1_ALIAS + ' Audience');
-      xapi.Config.Video.Input.Connector[2].CameraControl.Mode.set('Off');
-      xapi.Config.Video.Input.Connector[2].Visibility.set('Never');
-      xapi.Config.Video.Input.Connector[2].PresentationSelection.set("Manual");
-      xapi.Config.Video.Input.Connector[3].Name.set(DWS.NODE2_ALIAS + ' Audience');
-      xapi.Config.Video.Input.Connector[3].CameraControl.Mode.set('Off');
-      xapi.Config.Video.Input.Connector[3].Visibility.set('Never');
-      xapi.Config.Video.Input.Connector[3].PresentationSelection.set("Manual");
+      try { xapi.Config.Video.Input.Connector[1].Name.set('Audience Camera'); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }      
+      try { xapi.Config.Video.Input.Connector[1].CameraControl.Mode.set('On'); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }      
+      try { xapi.Config.Video.Input.Connector[1].Visibility.set('Never'); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }      
+      try { xapi.Config.Video.Input.Connector[1].PresentationSelection.set("Manual"); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }      
+      try { xapi.Config.Video.Input.Connector[2].Name.set(DWS.NODE1_ALIAS + ' Audience'); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }      
+      try { xapi.Config.Video.Input.Connector[2].CameraControl.Mode.set('Off'); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }      
+      try { xapi.Config.Video.Input.Connector[2].Visibility.set('Never'); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }      
+      try { xapi.Config.Video.Input.Connector[2].PresentationSelection.set("Manual"); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }   
+      try { xapi.Config.Video.Input.Connector[3].Name.set(DWS.NODE2_ALIAS + ' Audience'); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }      
+      try { xapi.Config.Video.Input.Connector[3].CameraControl.Mode.set('Off'); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }      
+      try { xapi.Config.Video.Input.Connector[3].Visibility.set('Never'); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }      
+      try { xapi.Config.Video.Input.Connector[3].PresentationSelection.set("Manual"); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); } 
     }
     else
     {
       console.error("DWS: Invalid video input connection status. Ensure camera inputs match documentation. Setup aborted.");
+      xapi.Command.UserInterface.Message.Alert.Display({ Duration: '60', Title:"Error: Invalid Input Configuration", Text: "Please ensure camera inputs match documentation. Setup aborted."});
       return;
     }
   }
@@ -141,7 +139,7 @@ Robert(Bobby) McGonigle Jr
 Chase Voisin
 William Mills
 
-Version: 0.9.5 (BETA)
+Version: 0.9.6 (BETA)
 
 Complete details for this macro are available on Github:
 https://cs.co/divisibleworkspaceblueprint
@@ -181,7 +179,7 @@ Robert(Bobby) McGonigle Jr
 Chase Voisin
 William Mills
 
-Version: 0.9.5 (BETA)
+Version: 0.9.6 (BETA)
 
 Complete details for this macro are available on Github:
 https://cs.co/divisibleworkspaceblueprint
@@ -191,39 +189,39 @@ https://cs.co/divisibleworkspaceblueprint
 //=========================================================================*/
 import xapi from 'xapi';
 
-let LOADED_MACROS = [];
-
-// STORE LOCAL MACRO NAMES FOR PREMISE INSTALL CHECK
-xapi.Command.Macros.Macro.Get()
-.then (response => {
-  response.Macro.forEach(element => {
-    LOADED_MACROS.push(element.Name);
-  });
-}); 
-
 function init()
 {
+  let LOADED_MACROS = [];
+
   // SAVE THE INITIAL STATE MACRO
   saveStateMacro();
 
   // PERFORM PREMISE INSTALL CHECK
-  if(LOADED_MACROS.includes('DWS_Node'))
-  {
-    console.log("DWS: All required Macro files present. Performing local install.");
+  xapi.Command.Macros.Macro.Get()
+  .then (response => {
+    response.Macro.forEach(element => {
+     LOADED_MACROS.push(element.Name);
+    });
 
-    // LOAD THE MACRO AND ENABLE IT
-    xapi.Command.Macros.Macro.Activate({ Name: "DWS_Node"})
-    .then (() => {
-      xapi.Command.Macros.Macro.Remove({Name: "DWS_Sec_Startup"})
-      .then (() => { xapi.Command.Macros.Runtime.Restart() } )
-    })
-  }
-  // OR LOAD NODE MACRO FROM GITHUB
-  else
-  {
-    console.log("DWS: Performing cloud macro install.");
-    getMacro(); 
-  }  
+    if (LOADED_MACROS.includes("DWS_Node"))
+    {
+      // NETWORK RESTRICTED INSTALL
+      console.log("DWS: All required Macro files present. Performing local install.");
+
+      // LOAD THE MACRO AND ENABLE IT
+      xapi.Command.Macros.Macro.Activate({ Name: "DWS_Node"})
+      .then (() => {
+        xapi.Command.Macros.Macro.Remove({Name: "DWS_Sec_Startup"})
+        .then (() => { xapi.Command.Macros.Runtime.Restart() } )
+      })
+    }
+    else
+    {
+      // CLOUD INSTALL FROM GITHUB
+      console.log("DWS: Performing cloud macro install.");
+      getMacro();       
+    }
+  });  
 }
 
 async function getMacro ()
@@ -246,9 +244,11 @@ async function getMacro ()
     })
     .catch (e => {
       console.warn('DWS: Node Macro URL not found.' + e);
+      xapi.Command.UserInterface.Message.Alert.Display({ Duration: '60', Title:"Error: Macro Download Failed", Text: "Codec failed to download Macros. Setup Aborted."});
     }); 
   } catch (e) {
     console.warn('DWS: Unable to reach GitHub for Node Macro.' + e);
+    xapi.Command.UserInterface.Message.Alert.Display({ Duration: '60', Title:"Error: Macro Unreachable", Text: "No network access to GitHub. Setup Aborted."});
   }
 }
 
@@ -273,7 +273,7 @@ Robert(Bobby) McGonigle Jr
 Chase Voisin
 William Mills
 
-Version: 0.9.5 (BETA)
+Version: 0.9.6 (BETA)
 
 Complete details for this macro are available on Github:
 https://cs.co/divisibleworkspaceblueprint
@@ -330,7 +330,7 @@ Robert(Bobby) McGonigle Jr
 Chase Voisin
 William Mills
 
-Version: 0.9.5 (BETA)
+Version: 0.9.6 (BETA)
 
 Complete details for this macro are available on Github:
 https://cs.co/divisibleworkspaceblueprint
@@ -340,39 +340,39 @@ https://cs.co/divisibleworkspaceblueprint
 //=========================================================================*/
 import xapi from 'xapi';
 
-let LOADED_MACROS = [];
-
-// STORE LOCAL MACRO NAMES FOR PREMISE INSTALL CHECK
-xapi.Command.Macros.Macro.Get()
-.then (response => {
-  response.Macro.forEach(element => {
-    LOADED_MACROS.push(element.Name);
-  });
-});  
-
 function init()
 {
+  let LOADED_MACROS = [];
+
   // SAVE THE INITIAL STATE MACRO
   saveStateMacro();
 
   // PERFORM PREMISE INSTALL CHECK
-  if(LOADED_MACROS.includes('DWS_Node'))
-  {
-    console.log("DWS: All required Macro files present. Performing local install.");
+  xapi.Command.Macros.Macro.Get()
+  .then (response => {
+    response.Macro.forEach(element => {
+     LOADED_MACROS.push(element.Name);
+    });
 
-    // LOAD THE MACRO AND ENABLE IT
-    xapi.Command.Macros.Macro.Activate({ Name: "DWS_Node"})
-    .then (() => {
-      xapi.Command.Macros.Macro.Remove({Name: "DWS_Sec_Startup"})
-      .then (() => { xapi.Command.Macros.Runtime.Restart() } )
-    })
-  }
-  // OR LOAD NODE MACRO FROM GITHUB
-  else
-  {
-    console.log("DWS: Performing cloud macro install.");
-    getMacro(); 
-  }  
+    if (LOADED_MACROS.includes("DWS_Node"))
+    {
+      // NETWORK RESTRICTED INSTALL
+      console.log("DWS: All required Macro files present. Performing local install.");
+
+      // LOAD THE MACRO AND ENABLE IT
+      xapi.Command.Macros.Macro.Activate({ Name: "DWS_Node"})
+      .then (() => {
+        xapi.Command.Macros.Macro.Remove({Name: "DWS_Sec_Startup"})
+        .then (() => { xapi.Command.Macros.Runtime.Restart() } )
+      })
+    }
+    else
+    {
+      // CLOUD INSTALL FROM GITHUB
+      console.log("DWS: Performing cloud macro install.");
+      getMacro();       
+    }
+  });  
 }
 
 async function getMacro ()
@@ -395,9 +395,11 @@ async function getMacro ()
     })
     .catch (e => {
       console.warn('DWS: Node Macro URL not found.' + e);
+      xapi.Command.UserInterface.Message.Alert.Display({ Duration: '60', Title:"Error: Macro Download Failed", Text: "Codec failed to download Macros. Setup Aborted."});
     }); 
   } catch (e) {
     console.warn('DWS: Unable to reach GitHub for Node Macro.' + e);
+    xapi.Command.UserInterface.Message.Alert.Display({ Duration: '60', Title:"Error: Macro Unreachable", Text: "No network access to GitHub. Setup Aborted."});
   }
 }
 
@@ -422,7 +424,7 @@ Robert(Bobby) McGonigle Jr
 Chase Voisin
 William Mills
 
-Version: 0.9.5 (BETA)
+Version: 0.9.6 (BETA)
 
 Complete details for this macro are available on Github:
 https://cs.co/divisibleworkspaceblueprint
@@ -504,7 +506,8 @@ function checkSwitch()
   })
   .catch(error => {
     console.warn('DWS: Switch check failed. Retrying:', error.message);
-    setTimeout(() => {checkSwitch()}, 1000);
+    xapi.Command.UserInterface.Message.Alert.Display({ Duration: '25', Title:"Error: Switch Unreachable", Text: "Please ensure switch has been configured and wired to match documentation in the Blueprint. Retrying in 30 seconds."});
+    setTimeout(() => {checkSwitch()}, 30000);
   });
 }
 
@@ -527,6 +530,7 @@ async function saveSwitch()
   })
   .catch(error => {
     console.warn('DWS: Unable to save switch configuration:', error.message);
+    xapi.Command.UserInterface.Message.Alert.Display({ Duration: '60', Title:"Error: Switch Configuration Not Saved", Text: "Check Macro Logs for more details."});
   });
 }
 

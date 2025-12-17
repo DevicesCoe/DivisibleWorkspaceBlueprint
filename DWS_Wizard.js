@@ -12,7 +12,7 @@ Robert(Bobby) McGonigle Jr
 Chase Voisin
 William Mills
 
-Version: 0.9.5 (BETA)
+Version: 0.9.6 (Beta)
 
 Complete details for this macro are available on Github:
 https://cs.co/divisibleworkspaceblueprint
@@ -30,19 +30,37 @@ let THIS_PLATFORM;
 
 function init()
 {
-  // PERFORM INITIAL PLATFORM SANITY CHECK BEFORE ALLOWING THE WIZARD TO DEPLOY
-  xapi.Status.SystemUnit.ProductPlatform.get()
+  // PERFORM INITIAL PLATFORM SANITY CHECKS BEFORE ALLOWING THE WIZARD TO DEPLOY
+
+  // CHECK PLATFORM COMPATIBILITY
+  THIS_PLATFORM = xapi.Status.SystemUnit.ProductPlatform.get()
   .then (platform => {    
     if(platform != 'Codec Pro' && platform != 'Room Kit EQ')
     {    
-      THIS_PLATFORM = platform;
+      xapi.Command.UserInterface.Message.Alert.Display({ Duration: '0', Title:"Unsupported Product Platform", Text: "The Divisible Workspace Blueprint is only supported on Codec Pro and Codec EQ."}); 
 
-      xapi.Command.UserInterface.Message.Alert.Display({ Duration: '60', Title:"Error: Unsupported Product Platform", Text: "The Divisible Workspace Blueprint is only supported on Codec Pro and Codec EQ."}); 
-
-      console.error("DWS: Platform not compatible with Divisible Workspace Blueprint. Stopping installation.");
+      console.error("DWS: Platform not compatible with Divisble Workspace Blueprint. Stopping installation.");
 
       // TURN OFF MACRO
       try { xapi.Command.Macros.Macro.Deactivate({ Name: 'DWS_Wizard' }); } catch(error) { console.error('DWS: Error disabling Wizard Macro: ' + error.message); }
+      return;
+    }
+
+    if(THIS_PLATFORM == 'Room Kit EQ')
+    {
+      xapi.Command.SystemUnit.OptionKey.List()
+      .then (response => {
+        if (response.OptionKey[3].Active != 'True' && response.OptionKey[3].Installed != 'True')
+        {
+          console.error ("DWS: No AV Integrator option key installed. Stopping installation.");
+
+          xapi.Command.UserInterface.Message.Alert.Display({ Duration: '60', Title:"Error: Missing AV Integrator Option Key", Text: "The Divisible Workspace Blueprint requires the AV Integrator option key for the primary Codec EQ."}); 
+        }   
+      });
+
+      // TURN OFF MACRO
+      try { xapi.Command.Macros.Macro.Deactivate({ Name: 'DWS_Wizard' }); } catch(error) { console.error('DWS: Error disabling Wizard Macro: ' + error.message); }
+      return;
     }
   });
 
@@ -51,39 +69,15 @@ function init()
   .then (roomType => {
     if (roomType != 'Standard')
     {
-      xapi.Command.UserInterface.Message.Alert.Display({ Duration: '60', Title:"Error: Unsupported Room Type", Text: "The Divisible Workspace Blueprint is only supported using the Standard Room Type."}); 
+      xapi.Command.UserInterface.Message.Alert.Display({ Duration: '0', Title:"Unsupported Room Type", Text: "The Divisible Workspace Blueprint is only supported using the Standard Room Type."}); 
 
-      console.error("DWS: Divisible Workspace Blueprint is only supported using the Standard Room Type. Stopping installation.");
+      console.error("DWS: Divisble Workspace Blueprint only operates in Standard Room Type. Stopping installation.");
 
       // TURN OFF MACRO
       try { xapi.Command.Macros.Macro.Deactivate({ Name: 'DWS_Wizard' }); } catch(error) { console.error('DWS: Error disabling Wizard Macro: ' + error.message); }
+      return;
     }
   })
-
-  console.log ("DWS: Initializing Divisible Workspace Wizard.");
-
-  WIZARD_QUESTIONS["dws_edit_nway"] = { feedbackId: "dws_setup_nway", text: "What type of Divisible Room are you deploying?", options: { "Option.1": "Two Way", "Option.2": "Three Way"} };
-  WIZARD_QUESTIONS["dws_edit_switchtype"] = { feedbackId: "dws_setup_switchtype", text: "What Model Switch are you using?", options: { "Option.1": "Catalyst 9200CX 8 Port", "Option.2": "Catalyst 9200CX 12 Port", "Option.3": "Catalyst 9200/9300 24 Port" } };
-  WIZARD_QUESTIONS["dws_edit_username"] = { feedbackId: "dws_setup_username", text: "Enter the Username for the user created on the Node Codecs:", inputType: "SingleLine", keyboardState: "Open", placeholder: "Enter the username..."};
-  WIZARD_QUESTIONS["dws_edit_password"] = { feedbackId: "dws_setup_password", text: "Enter the Password for the user created on the Node Codecs:", inputType: "SingleLine", keyboardState: "Open", placeholder: "Enter the password..."};
-  WIZARD_QUESTIONS["dws_edit_advpin"] = { feedbackId: "dws_setup_advpin", text: "Please enter an Advanced Settings lock PIN", inputType: "Numeric", keyboardState: "Open", placeholder: "Enter your Numerical PIN" };
-  WIZARD_QUESTIONS["dws_edit_automode"] = { feedbackId: "dws_setup_automode", text: "Please select the default automated camera mode:", options: { "Option.1": "On", "Option.2": "Off" } };
-  WIZARD_QUESTIONS["dws_edit_node1_host"] = { feedbackId: "dws_setup_node1_host", text: "Enter the IP or FQDN of the Node 1 Codec:", inputType: "Numeric", keyboardState: "Open", placeholder: "Ex. 192.168.1.10 or secondary.domain.com" };
-  WIZARD_QUESTIONS["dws_edit_node1_alias"] = { feedbackId: "dws_setup_node1_alias", text: "Enter a user friendly alias for Node 1:", inputType: "SingleLine", keyboardState: "Open", placeholder: "Ex. Training A" };
-  WIZARD_QUESTIONS["dws_edit_node1_configuration"] = { feedbackId: "dws_setup_node1_configuration", text: "Please select the configuration that matches Node 1:", options: { "Option.1": "Codec Pro with One Screen", "Option.2": "Codec Pro with Two Screens", "Option.3": "Codec EQ with One Screen", "Option.4": "Codec EQ with Two Screens"} };
-  WIZARD_QUESTIONS["dws_edit_node1_presenter"] = { feedbackId: "dws_setup_node1_presenter", text: "What connection type is the Presenter PTZ for Node 1?:", options: { "Option.1": "IP", "Option.2": "HDMI", "Option.3": "None"} };
-  WIZARD_QUESTIONS["dws_edit_node2_host"] = { feedbackId: "dws_setup_node2_host", text: "Enter the IP or FQDN of the Node 2 Codec:", inputType: "Numeric", keyboardState: "Open", placeholder: "Ex. 192.168.1.10 or secondary.domain.com" };
-  WIZARD_QUESTIONS["dws_edit_node2_alias"] = { feedbackId: "dws_setup_node2_alias", text: "Enter a user friendly alias for Node 2:", inputType: "SingleLine", keyboardState: "Open", placeholder: "Ex. Training C" },
-  WIZARD_QUESTIONS["dws_edit_node2_configuration"] = { feedbackId: "dws_setup_node2_configuration", text: "Please select the configuration that matches Node 2:", options: { "Option.1": "Codec Pro with One Screen", "Option.2": "Codec Pro with Two Screens", "Option.3": "Codec EQ with One Screen", "Option.4": "Codec EQ with Two Screens"} };
-  WIZARD_QUESTIONS["dws_edit_node2_presenter"] = { feedbackId: "dws_setup_node2_presenter", text: "What connection type is the Presenter PTZ for Node 2?:", options: { "Option.1": "IP", "Option.2": "HDMI", "Option.3": "None"} };
-
-  // PERFORM PREMISE INSTALL CHECK
-  xapi.Command.Macros.Macro.Get()
-  .then (response => {
-    response.Macro.forEach(element => {
-      LOADED_MACROS.push(element.Name);
-    });
-  });
 
   // GET AND STORE PRIMARY MICROPHONES
   xapi.Command.Peripherals.List({ Connected: 'True', Type: 'AudioMicrophone' })
@@ -91,6 +85,17 @@ function init()
 
     const devicesArray = [];
     const serialArray = [];
+
+    if(response == '{"status":"OK"}')
+    {
+      xapi.Command.UserInterface.Message.Alert.Display({ Duration: '0', Title:"No Microphones Detected", Text: "The Divisible Workspace Blueprint is requires Cisco Pro Series microphones."}); 
+
+      console.error("DWS: No Microphones Detected. Blueprint is requires Cisco Pro Series microphones. Stopping installation.");
+
+      // TURN OFF MACRO
+      try { xapi.Command.Macros.Macro.Deactivate({ Name: 'DWS_Wizard' }); } catch(error) { console.error('DWS: Error disabling Wizard Macro: ' + error.message); }
+      return;
+    }
 
     let filteredDevices = JSON.parse(response);
 
@@ -119,15 +124,34 @@ function init()
 
     // SAVE MICROPHONES TO SETUP VARIABLE
     SETUP_VARIABLES['dws_setup_primary_mics'] = serialArray;
-  })
-  .catch(() => {
-    xapi.Command.UserInterface.Message.Alert.Display({ Duration: '60', Title:"Error: No Microphones Detected", Text: "The Divisible Workspace Blueprint requires Cisco Pro Series microphones to be connected."}); 
-
-      console.error("DWS: No microphones detected. Stopping installation.");
-
-      // TURN OFF MACRO
-      try { xapi.Command.Macros.Macro.Deactivate({ Name: 'DWS_Wizard' }); } catch(error) { console.error('DWS: Error disabling Wizard Macro: ' + error.message); }
   });
+
+  // STORED LOADED MACROS FOR CHECK DURING NETWORK RESTRICTED INSTALL
+  xapi.Command.Macros.Macro.Get()
+  .then (response => {
+    response.Macro.forEach(element => {
+      LOADED_MACROS.push(element.Name);
+    });
+  });
+
+  console.log ("DWS: Initializing Divisible Workspace Wizard.");
+
+  // WIZARD QUESTION AND RESPONSES
+  WIZARD_QUESTIONS["dws_edit_nway"] = { feedbackId: "dws_setup_nway", text: "What type of Divisible Room are you deploying?", options: { "Option.1": "Two Way", "Option.2": "Three Way"} };
+  WIZARD_QUESTIONS["dws_edit_switchtype"] = { feedbackId: "dws_setup_switchtype", text: "What Model Switch are you using?", options: { "Option.1": "Catalyst 9200CX 8 Port", "Option.2": "Catalyst 9200CX 12 Port", "Option.3": "Catalyst 9200/9300 24 Port" } };
+  WIZARD_QUESTIONS["dws_edit_username"] = { feedbackId: "dws_setup_username", text: "Enter the Username for the user created on the Node Codecs:", inputType: "SingleLine", keyboardState: "Open", placeholder: "Enter the username..."};
+  WIZARD_QUESTIONS["dws_edit_password"] = { feedbackId: "dws_setup_password", text: "Enter the Password for the user created on the Node Codecs:", inputType: "SingleLine", keyboardState: "Open", placeholder: "Enter the password..."};
+  WIZARD_QUESTIONS["dws_edit_advpin"] = { feedbackId: "dws_setup_advpin", text: "Please enter an Advanced Settings lock PIN", inputType: "Numeric", keyboardState: "Open", placeholder: "Enter your Numerical PIN" };
+  WIZARD_QUESTIONS["dws_edit_automode"] = { feedbackId: "dws_setup_automode", text: "Please select the default automated camera mode:", options: { "Option.1": "On", "Option.2": "Off" } };
+  WIZARD_QUESTIONS["dws_edit_ducking"] = { feedbackId: "dws_setup_ducking", text: "Please select the default setting for automatic microphone ducking:", options: { "Option.1": "On", "Option.2": "Off" } };
+  WIZARD_QUESTIONS["dws_edit_node1_host"] = { feedbackId: "dws_setup_node1_host", text: "Enter the IP or FQDN of the Node 1 Codec:", inputType: "Numeric", keyboardState: "Open", placeholder: "Ex. 192.168.1.10 or secondary.domain.com" };
+  WIZARD_QUESTIONS["dws_edit_node1_alias"] = { feedbackId: "dws_setup_node1_alias", text: "Enter a user friendly alias for Node 1:", inputType: "SingleLine", keyboardState: "Open", placeholder: "Ex. Training A" };
+  WIZARD_QUESTIONS["dws_edit_node1_configuration"] = { feedbackId: "dws_setup_node1_configuration", text: "Please select the configuration that matches Node 1:", options: { "Option.1": "Codec Pro with One Screen", "Option.2": "Codec Pro with Two Screens", "Option.3": "Codec EQ with One Screen", "Option.4": "Codec EQ with Two Screens"} };
+  WIZARD_QUESTIONS["dws_edit_node1_presenter"] = { feedbackId: "dws_setup_node1_presenter", text: "What connection type is the Presenter PTZ for Node 1?:", options: { "Option.1": "IP", "Option.2": "HDMI", "Option.3": "None"} };
+  WIZARD_QUESTIONS["dws_edit_node2_host"] = { feedbackId: "dws_setup_node2_host", text: "Enter the IP or FQDN of the Node 2 Codec:", inputType: "Numeric", keyboardState: "Open", placeholder: "Ex. 192.168.1.10 or secondary.domain.com" };
+  WIZARD_QUESTIONS["dws_edit_node2_alias"] = { feedbackId: "dws_setup_node2_alias", text: "Enter a user friendly alias for Node 2:", inputType: "SingleLine", keyboardState: "Open", placeholder: "Ex. Training C" },
+  WIZARD_QUESTIONS["dws_edit_node2_configuration"] = { feedbackId: "dws_setup_node2_configuration", text: "Please select the configuration that matches Node 2:", options: { "Option.1": "Codec Pro with One Screen", "Option.2": "Codec Pro with Two Screens", "Option.3": "Codec EQ with One Screen", "Option.4": "Codec EQ with Two Screens"} };
+  WIZARD_QUESTIONS["dws_edit_node2_presenter"] = { feedbackId: "dws_setup_node2_presenter", text: "What connection type is the Presenter PTZ for Node 2?:", options: { "Option.1": "IP", "Option.2": "HDMI", "Option.3": "None"} };
 
   // DRAW SETUP WIZARD PANEL & BUTTON
   xapi.Command.UserInterface.Extensions.Panel.Save({PanelId: 'dws_wizard'}, PANEL_START)
@@ -222,6 +246,16 @@ function init()
       // UPDATE PANEL DETAILS TO SHOW NEW VALUE
       updateWidget(event.FeedbackId, optionText);
     }
+    else if (event.FeedbackId == 'dws_setup_ducking')
+    {
+      optionText = WIZARD_QUESTIONS['dws_edit_ducking'].options[`Option.${selectedOption}`];
+
+      // STORE THE AUTO MODE DEFAULT SETTING IN ARRAY
+      SETUP_VARIABLES['dws_setup_ducking'] = optionText;
+
+      // UPDATE PANEL DETAILS TO SHOW NEW VALUE
+      updateWidget(event.FeedbackId, optionText);
+    }
     else if (event.FeedbackId == 'dws_setup_node1_configuration')
     {
       // STORE FOR DISPLAYS
@@ -312,12 +346,12 @@ function init()
     }
 
     // EDIT BUTTONS FOR TEXT INPUTS
-    else if (event.Type == 'released' && event.WidgetId.startsWith('dws_edit_') && event.WidgetId != 'dws_edit_nway' && event.WidgetId != 'dws_edit_switchtype' && event.WidgetId != 'dws_edit_automode'  && event.WidgetId != 'dws_edit_node1_presenter' && event.WidgetId != 'dws_edit_node1_configuration' && event.WidgetId != 'dws_edit_node2_presenter' && event.WidgetId != 'dws_edit_node2_configuration') 
+    else if (event.Type == 'released' && event.WidgetId.startsWith('dws_edit_') && event.WidgetId != 'dws_edit_nway' && event.WidgetId != 'dws_edit_switchtype' && event.WidgetId != 'dws_edit_automode' && event.WidgetId != 'dws_edit_ducking'  && event.WidgetId != 'dws_edit_node1_presenter' && event.WidgetId != 'dws_edit_node1_configuration' && event.WidgetId != 'dws_edit_node2_presenter' && event.WidgetId != 'dws_edit_node2_configuration') 
     {
       editDetails(event.WidgetId);
     }
     // EDIT BUTTONS FOR MULTIPLE CHOICE
-    else if (event.Type == 'released' && ( event.WidgetId == 'dws_edit_nway' || event.WidgetId == 'dws_edit_switchtype' || event.WidgetId == 'dws_edit_automode' || event.WidgetId == 'dws_edit_node1_presenter' || event.WidgetId == 'dws_edit_node1_configuration' || event.WidgetId == 'dws_edit_node2_presenter' || event.WidgetId == 'dws_edit_node2_configuration' ))
+    else if (event.Type == 'released' && ( event.WidgetId == 'dws_edit_nway' || event.WidgetId == 'dws_edit_switchtype' || event.WidgetId == 'dws_edit_automode' || event.WidgetId == 'dws_edit_ducking' || event.WidgetId == 'dws_edit_node1_presenter' || event.WidgetId == 'dws_edit_node1_configuration' || event.WidgetId == 'dws_edit_node2_presenter' || event.WidgetId == 'dws_edit_node2_configuration' ))
     {
       xapi.Command.UserInterface.Message.Prompt.Display({
         Title: `Select an Option`,
@@ -347,7 +381,7 @@ function init()
       }
       else
       {
-        PANEL_PRIMARY = "<Extensions><Version>1.11</Version><Panel><Order>2</Order><PanelId>dws_wizard</PanelId><Origin>local</Origin><Location>HomeScreen</Location><Icon>Custom</Icon><Name>Setup Wizard</Name><ActivityType>Custom</ActivityType><CustomIcon><Content>${WIZARD_ICON}</Content><Id>4f0568a41894116ebce904f8b1004077281643ea28cba96d903078210e434757</Id></CustomIcon><Page><Name>Select Presenter Microphone</Name><Row><Name/><Widget><WidgetId>widget_273</WidgetId><Name>Please select the Presenter Microphone in the primary workspace.</Name><Type>Text</Type><Options>size=4;fontSize=small;align=center</Options></Widget></Row><Row><Name>Available Microphones</Name><Widget><WidgetId>dws_setup_presenter_mic</WidgetId><Type>GroupButton</Type><Options>size=4;columns=2</Options><ValueSpace>";
+        PANEL_PRIMARY = `<Extensions><Version>1.11</Version><Panel><Order>2</Order><PanelId>dws_wizard</PanelId><Origin>local</Origin><Location>HomeScreen</Location><Icon>Custom</Icon><Name>Setup Wizard</Name><ActivityType>Custom</ActivityType><CustomIcon><Content>${WIZARD_ICON}</Content><Id>4f0568a41894116ebce904f8b1004077281643ea28cba96d903078210e434757</Id></CustomIcon><Page><Name>Select Presenter Microphone</Name><Row><Name/><Widget><WidgetId>widget_273</WidgetId><Name>Please select the Presenter Microphone in the primary workspace.</Name><Type>Text</Type><Options>size=4;fontSize=small;align=center</Options></Widget></Row><Row><Name>Available Microphones</Name><Widget><WidgetId>dws_setup_presenter_mic</WidgetId><Type>GroupButton</Type><Options>size=4;columns=2</Options><ValueSpace>`;
 
         // AUTOMATE THE CREATION OF OPTIONS BASED ON MICROPHONE COUNT
         let COUNTER = 0;
@@ -356,7 +390,7 @@ function init()
           COUNTER++;
         });
 
-        PANEL_PRIMARY += '<Value><Key>USB</Key><Name>USB</Name></Value><Value><Key>Analog</Key><Name>Analog (All)</Name></Value></ValueSpace></Widget></Row><Row><Name/><Widget><WidgetId>dws_back_primary</WidgetId><Name>Back</Name><Type>Button</Type><Options>size=2</Options></Widget><Widget><WidgetId>dws_next_primary</WidgetId><Name>Next</Name><Type>Button</Type><Options>size=2</Options></Widget></Row><PageId>setup_primary</PageId><Options/></Page></Panel></Extensions>';
+        PANEL_PRIMARY += `<Value><Key>USB</Key><Name>USB</Name></Value><Value><Key>Analog</Key><Name>Analog (All)</Name></Value></ValueSpace></Widget></Row><Row><Name/><Widget><WidgetId>widget_314</WidgetId><Name>Automatic Ducking allows third party microphones to be enabled for In Room Speaker Reinforcement. Only available for USB &amp; Analog inputs.</Name><Type>Text</Type><Options>size=4;fontSize=small;align=center</Options></Widget></Row><Row><Name>Automatic Microphone Ducking</Name><Widget><WidgetId>dws_setup_ducking</WidgetId><Name></Name><Type>Text</Type><Options>size=3;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_edit_ducking</WidgetId><Name>Edit</Name><Type>Button</Type><Options>size=1</Options></Widget></Row><Row><Name/><Widget><WidgetId>dws_back_primary</WidgetId><Name>Back</Name><Type>Button</Type><Options>size=2</Options></Widget><Widget><WidgetId>dws_next_primary</WidgetId><Name>Next</Name><Type>Button</Type><Options>size=2</Options></Widget></Row><PageId>setup_primary</PageId><Options/></Page></Panel></Extensions>`;
 
         drawPanel(PANEL_PRIMARY);
       }
@@ -366,7 +400,15 @@ function init()
       // PRIMARY PRESENTER MICROPHONE CHECK
       if(SETUP_VARIABLES['dws_setup_presenter_mic'] == undefined)
       {
-        xapi.Command.UserInterface.Message.Alert.Display({ Duration: '5', Title:"Missing Variables", Text: "Please select a Presenter Microphone option."});
+        xapi.Command.UserInterface.Message.Alert.Display({ Duration: '5', Title:"Missing Configuration", Text: "Please select a Presenter Microphone option."});
+      }
+      else if (SETUP_VARIABLES['dws_setup_ducking'] == undefined)
+      {
+        xapi.Command.UserInterface.Message.Alert.Display({ Duration: '5', Title:"Missing Configuration", Text: "Please select a default mode for microphone ducking."});
+      }
+      else if (SETUP_VARIABLES['dws_setup_ducking'] == 'On' && SETUP_VARIABLES['dws_setup_presenter_mic'] != 'USB' && SETUP_VARIABLES['dws_setup_presenter_mic'] != 'Analog')
+      {
+        xapi.Command.UserInterface.Message.Alert.Display({ Duration: '5', Title:"Invalid Configuration", Text: "Automatic ducking is only supported with USB and Analog presenter microphones."});
       }
       else
       {
@@ -457,7 +499,7 @@ function init()
     }
     else if( event.Type == 'released' && event.WidgetId == 'dws_back_node1' )
     {
-      PANEL_PRIMARY = "<Extensions><Version>1.11</Version><Panel><Order>2</Order><PanelId>dws_wizard</PanelId><Origin>local</Origin><Location>HomeScreen</Location><Icon>Custom</Icon><Name>Setup Wizard</Name><ActivityType>Custom</ActivityType><CustomIcon><Content>${WIZARD_ICON}</Content><Id>4f0568a41894116ebce904f8b1004077281643ea28cba96d903078210e434757</Id></CustomIcon><Page><Name>Select Presenter Microphone</Name><Row><Name/><Widget><WidgetId>widget_273</WidgetId><Name>Please select the Presenter Microphone for your workspace.</Name><Type>Text</Type><Options>size=4;fontSize=small;align=center</Options></Widget></Row><Row><Name>Available Microphones</Name><Widget><WidgetId>dws_setup_presenter_mic</WidgetId><Type>GroupButton</Type><Options>size=4;columns=2</Options><ValueSpace>";
+      PANEL_PRIMARY = `<Extensions><Version>1.11</Version><Panel><Order>2</Order><PanelId>dws_wizard</PanelId><Origin>local</Origin><Location>HomeScreen</Location><Icon>Custom</Icon><Name>Setup Wizard</Name><ActivityType>Custom</ActivityType><CustomIcon><Content>${WIZARD_ICON}</Content><Id>4f0568a41894116ebce904f8b1004077281643ea28cba96d903078210e434757</Id></CustomIcon><Page><Name>Select Presenter Microphone</Name><Row><Name/><Widget><WidgetId>widget_273</WidgetId><Name>Please select the Presenter Microphone in the primary workspace.</Name><Type>Text</Type><Options>size=4;fontSize=small;align=center</Options></Widget></Row><Row><Name>Available Microphones</Name><Widget><WidgetId>dws_setup_presenter_mic</WidgetId><Type>GroupButton</Type><Options>size=4;columns=2</Options><ValueSpace>`;
 
       // AUTOMATE THE CREATION OF OPTIONS BASED ON MICROPHONE COUNT
       let COUNTER = 0;
@@ -466,7 +508,7 @@ function init()
         COUNTER++;
       });
 
-      PANEL_PRIMARY += '<Value><Key>USB</Key><Name>USB</Name></Value><Value><Key>Analog</Key><Name>Analog (All)</Name></Value></ValueSpace></Widget></Row><Row><Name/><Widget><WidgetId>dws_back_primary</WidgetId><Name>Back</Name><Type>Button</Type><Options>size=2</Options></Widget><Widget><WidgetId>dws_next_primary</WidgetId><Name>Next</Name><Type>Button</Type><Options>size=2</Options></Widget></Row><PageId>setup_primary</PageId><Options/></Page></Panel></Extensions>';
+      PANEL_PRIMARY += `<Value><Key>USB</Key><Name>USB</Name></Value><Value><Key>Analog</Key><Name>Analog (All)</Name></Value></ValueSpace></Widget></Row><Row><Name/><Widget><WidgetId>widget_314</WidgetId><Name>Automatic Ducking allows third party microphones to be enabled for In Room Speaker Reinforcement. Only available for USB &amp; Analog inputs.</Name><Type>Text</Type><Options>size=4;fontSize=small;align=center</Options></Widget></Row><Row><Name>Automatic Microphone Ducking</Name><Widget><WidgetId>dws_setup_ducking</WidgetId><Name>${SETUP_VARIABLES['dws_setup_ducking']}</Name><Type>Text</Type><Options>size=3;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_edit_ducking</WidgetId><Name>Edit</Name><Type>Button</Type><Options>size=1</Options></Widget></Row><Row><Name/><Widget><WidgetId>dws_back_primary</WidgetId><Name>Back</Name><Type>Button</Type><Options>size=2</Options></Widget><Widget><WidgetId>dws_next_primary</WidgetId><Name>Next</Name><Type>Button</Type><Options>size=2</Options></Widget></Row><PageId>setup_primary</PageId><Options/></Page></Panel></Extensions>`;
 
       drawPanel(PANEL_PRIMARY);           
     }
@@ -533,7 +575,7 @@ function init()
           if (result)
           {
             // ALERT USER OF SETUP STARTING
-            xapi.Command.UserInterface.Message.Alert.Display({ Duration: '60', Title:"Installation Started", Text: "Please wait while the installation process completes."});
+            xapi.Command.UserInterface.Message.Alert.Display({ Duration: '45', Title:"Installation Started", Text: "Please wait while the installation process completes."});
 
             // CREATE CONFIG MACRO BODY
             const dataStr = `
@@ -551,7 +593,7 @@ Robert(Bobby) McGonigle Jr
 Chase Voisin
 William Mills
 
-Version: 0.9.5 (BETA)
+Version: 0.9.6 (BETA)
 
 Complete details for this macro are available on Github:
 https://cs.co/divisibleworkspaceblueprint
@@ -563,7 +605,7 @@ https://cs.co/divisibleworkspaceblueprint
 // ENABLE OR DISABLE ADDITIONAL "DEBUG" LEVEL CONSOLE OUTPUT
 // TRACKING DEBUG PROVIDES MICROPHONE ACTIVITY "DEBUG" DURING COMBINED CALLS
 // ACCEPTED VALUES: true, false
-const DEBUG = true; 
+const DEBUG = false; 
 const TRACKING_DEBUG = false;
 
 // ONLY CHANGE IF YOU ARE NOT USING THE DEFAULT U:P IN USB CONFIGURATION FILE
@@ -571,8 +613,12 @@ const SWITCH_USERNAME = 'dwsadmin';
 const SWITCH_PASSWORD = 'D!vi$ible1';
 
 // ENABLE OR DISABLE THE COMBINED ROOM BANNER ON DISPLAYS
-// ACCEPTED VALUES: 'true', 'false'
+// ACCEPTED VALUES: true, false
 const COMBINED_BANNER = true;
+
+// ENABLE OR DISABLE THE AUTOMATIC DUCKING OF ETHERNET MICS BASED ON USB / ANALOG INPUT
+// ACCEPTED VALUES: 'On', 'Off'
+const AUTO_DUCKING = ${JSON.stringify(SETUP_VARIABLES['dws_setup_ducking'], null, 2)};;
 
 //=========================================================================//
 //                     **** DO NOT EDIT BELOW HERE ****                    //
@@ -646,7 +692,8 @@ export default {
   PRIMARY_VLAN, 
   NODE1_VLAN,
   NODE2_VLAN,
-  PLATFORM
+  PLATFORM,
+  AUTO_DUCKING
 };`;
             // SAVE CONFIG MACRO
             xapi.Command.Macros.Macro.Save({ Name: 'DWS_Config', Overwrite: 'True' }, dataStr); 

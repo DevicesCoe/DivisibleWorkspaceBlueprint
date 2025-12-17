@@ -11,12 +11,14 @@ The solution leverages the following:
 - Cisco Table or Ceiling Microphone Pros (up to 8)
 - Cisco Room Vision PTZ / Cisco PTZ4K Cameras
 - Cisco Catalyst 9K Series Switches  
-- Custom Macros including [Audio Zone Manager Library](https://github.com/ctg-tme/audio-zone-manager-library-macro?tab=readme-ov-file)
+- Additional Macros including [Audio Zone Manager Library](https://github.com/ctg-tme/audio-zone-manager-library-macro?tab=readme-ov-file)
 - Certified HDMI Distrubution Amplifiers: [Certified Third Party Devices](https://help.webex.com/en-us/article/7sw4gab/Cisco-collaboration-devices-certification-program)
 
 | Minimum RoomOS Version | Webex Cloud | Webex Edge (Hybrid Cloud) | On-Premise | Microsoft Teams Room<br>On Cisco Devices |
 |:-----------------------|:------------|:--------------------------|:-----------|:-----------------------------------------|
-| 11.31              | ✅ Yes      | ✅ Yes                    | ✅ Yes     | ❌ Not Supported   | 
+| 11.31 | ✅ Yes      | ✅ Yes                    | ✅ Yes     | ❌ Not Supported   | 
+
+The Divisible Workspace Blueprint is compatible with Room OS 26!
 
 ### Please join this Webex messaging space for best effort and community level support: https://eurl.io/#nakTe_Vn3
 
@@ -36,13 +38,14 @@ The solution leverages the following:
 |---|---|
 | Primary/Primary Codec | References the codec/workspace that provides the main control for all Divisible state changes. |
 | Node /Node Codec | References the codec/workspace that will **not** have an active role in a combined state. |
+| AV Integrator Option Key | References the add on license for the Codec EQ that enables Audio Console and advanced xAPIs for audio. |
 | Audience Camera | Refers to the Quad Camera at the front of each room. |
 | Presenter Camera | Refers to the Speaker Tracking enabled PTZ camera in each room. |
 | Automation Mode | Refers to the automatic compositing/switching of the front of room audience cameras based on microphone activity. |
+| Presenter Reinforcement | Describes the use of amplified speakers to project a presenter's audio into the same room they are being captured from. | 
 
 | **File** | **Purpose** |
 |---|---|
-| Presenter Camera | Refers to the Presenter Tracking enabled PTZ camera in each room. |
 | DWS_AZM_Lib.js | The Audio Zone Manager Library macro. This library contains the logic needed for clean audio based events. |
 | DWS_Wizard.js | The initial setup wizard functionality loaded onto the Primary Codec. |
 | DWS_Setup.js | A background macro that handles the installation and base configuration. |
@@ -58,7 +61,7 @@ The solution leverages the following:
 
 This blueprint has been validated with following Codecs:
 - Codec Pro
-- Codec EQ
+- Codec EQ (AV Integrator license required on Primary)
 
 The following Cameras have been validated:
 - Cisco Quad Camera
@@ -138,11 +141,14 @@ Access the end user documentation here: [Admin Guide](https://github.com/Devices
 **Is this a Cisco TAC supported deployment?**
 - **No.** This repository is a custom blueprint and is not supported through Cisco Technical Assistance Center. Implementation, troubleshooting and support is the express responsibility of the end customer and/or AV Integrator.
 
+**Do I need the AV Integrator Option Key / License?**
+- Yes! You will require the AV Integrator Option Key to be purchased and installed on the **Primary** Codec EQ. It is not required on any node Codec EQs. This is **not** required for Codec Pro (as this functionality is already included).
+
 **How many Microphone Pros (Ceiling and Table) can I use in each room?**
 - Combined mode operation can support a maximum of 8 microphones. They can be split amongst either room during split operation in any variation.
 
 **Can I use Third Party IP Microphones instead of Cisco Ceiling or Table Mic Pro with this blueprint?**
-- No, this blueprint provides support for Cisco Pro Series Microphones only. Third party microphone support must leverage USB or Analog.
+- The blueprint provides support for **only** Cisco Pro Series Microphones as **audience** microphones. Third party audio support is limited to presenter use cases and must leverage USB or Analog.
 
 **How many divisible spaces can I combine with this blueprint?**
 - This blueprint is specifically designed to support two and three way divisible spaces only.
@@ -150,11 +156,15 @@ Access the end user documentation here: [Admin Guide](https://github.com/Devices
 **Is the blueprint compatible with "Cinematic Meeting" features such as Cross View or Extended Speaker Mode?**
 - TBD, the use of multi-camera cinematic features have not been validated with this blueprint. 
 
-**Does this blueprint support Voice Lift / Room re-enforcement scenarions?**
-- No, this blueprint does not provide for voice lift scenarios. However, the blueprint does give the user the ability to turn off "Audience" microphones which can assist in voice lift deployments.
+**Does this blueprint support Amplified Audio (in addition to the Quad Camera speakers)?
+- Yes! The use of amplified audio output from the codecs is supported via USB and Analog outputs.
+
+**Does the blueprint support Speaker Reinforcement scenarios?**
+- Speaker reinforcement (projecting the presenters voice over amplified speakers in the same room) is supported by leveraging automatic microphone ducking (lowering/raising the gain of the Cisco Ceiling Microphones when the presenter speaks into the third party USB or analog microphones) or manual toggling of presenter or audience microphones using in call controls.
+- Please review the demo recording: <URL TBD>
 
 **Where is the Partition Sensor?**
-- This blueprint does not leverage a partition sensor. The Combine/Split operation is driven manually by the end user.
+- This blueprint does not leverage a partition sensor. The Combine/Split operation is manually controlled by the end user.
 
 **Can you help me make this do "X"?**
-- Any additional capabilities would require you or your AV Integrator to make **and** support any required modifications to the provided Macros directly.
+- Any additional capabilities would require you or your AV Integrator to make **and** support any required modifications to the provided examples.

@@ -12,7 +12,7 @@ Robert(Bobby) McGonigle Jr
 Chase Voisin
 William Mills
 
-Version: 0.9.5 (BETA)
+Version: 0.9.6 (Beta)
 
 Complete details for this macro are available on Github:
 https://cs.co/divisibleworkspaceblueprint
@@ -120,13 +120,12 @@ function init() {
         //========================================//
         case 'EnableST':
           console.log('DWS: Enabling SpeakerTrack');
-          xapi.Command.Cameras.SpeakerTrack.Activate();
-          xapi.Command.Cameras.SpeakerTrack.Closeup.Activate();           
+          xapi.Command.Cameras.SpeakerTrack.Activate().then(xapi.Command.Cameras.SpeakerTrack.Closeup.Activate());              
           break;
 
         case 'DisableST':
           console.log('DWS: Deactivating SpeakerTrack');
-          xapi.Command.Cameras.SpeakerTrack.Deactivate();             
+          xapi.Command.Cameras.SpeakerTrack.Deactivate();
           break;        
       }
     } 
@@ -184,7 +183,7 @@ Robert(Bobby) McGonigle Jr
 Chase Voisin
 William Mills
 
-Version: 0.9.5 (BETA)
+Version: 0.9.6 (BETA)
 
 Complete details for this macro are available on Github:
 https://cs.co/divisibleworkspaceblueprint

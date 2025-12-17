@@ -12,7 +12,7 @@ Robert(Bobby) McGonigle Jr
 Chase Voisin
 William Mills
 
-Version: 0.9.5 (BETA)
+Version: 0.9.6 (Beta)
 
 Complete details for this macro are available on Github:
 https://cs.co/divisibleworkspaceblueprint
@@ -36,12 +36,12 @@ let DWS_INTERVAL = '';
 let DWS_AUTOMODE_STATE = DWS.AUTOMODE_DEFAULT;
 let DWS_CUR_STATE = SAVED_STATE.STATE;
 let DWS_DROP_AUDIENCE = 0;
-let DWS_CHANGE_DELAY = 0;
 let DWS_ADV_HIGH_PRI = DWS.MICS_HIGH_PRI;
 let DWS_ADV_HIGH_NODE1 = DWS.MICS_HIGH_NODE1;
 let DWS_ADV_HIGH_NODE2 = DWS.MICS_HIGH_NODE2;
 let DWS_ADV_PRI_DELAY = DWS.PRIMARY_DELAY;
 let DWS_ADV_AUTO_DEFAULT = DWS.AUTOMODE_DEFAULT;
+let DWS_ADV_DUCKING = DWS.AUTO_DUCKING;
 let DWS_PRESENTER_MIC_ID;
 let DWS_PRESENTER_CAM_ID;
 let DWS_COMBINE_NODE1 = 'off';
@@ -49,6 +49,9 @@ let DWS_COMBINE_NODE2 = 'off';
 let DWS_TEMP_MICS = [];
 let DWS_TEMP_NAVS = [];
 let DWS_NODE2_MICS = 0;
+let DWS_HOLD_TIME;
+let DWS_LAST_CAMERA;
+let DWS_DUCK_STATE = 'Unducked';
 
 let DWS_NODE1_MICS = DWS.NODE1_MICS.length;
 
@@ -148,8 +151,6 @@ function init() {
         // SHOW ROOM CONTROLS PANEL
         xapi.Command.UserInterface.Extensions.Panel.Update({ PanelId: 'dws_controls', Location: 'HomeScreen' })
           .catch(e => console.log('Error showing Room Controls panel: ' + e.message));
-
-
       }
       else
       {
@@ -291,9 +292,6 @@ function init() {
       // SET THE AUTOMODE TRIGGER TO ON
       DWS_AUTOMODE_STATE = 'On';
 
-      // START ZONE MONITORING IN AZM
-      AZM.Command.Zone.Monitor.Start();
-
       // SET LOCAL SPEAKERTRACK MODE
       xapi.Command.Cameras.SpeakerTrack.Activate();
       xapi.Command.Cameras.SpeakerTrack.Closeup.Activate();
@@ -321,9 +319,6 @@ function init() {
 
       // SET THE AUTOMODE TRIGGER TO OFF
       DWS_AUTOMODE_STATE = 'Off';
-
-      // STOP ZONE MONITORING IN AZM
-      AZM.Command.Zone.Monitor.Stop();
 
       // DISABLE PRESENTER TRACK
       xapi.Command.Cameras.PresenterTrack.Set({ Mode: 'Off' });
@@ -517,7 +512,7 @@ function init() {
           })
           break;
 
-        case 'dws_adv_edit_automode': // LISTEN FOR ADVANCED PANEL UNLOCK
+        case 'dws_adv_edit_automode': // LISTEN FOR AUTOMATION DEFAULT EDIT BUTTON
           if (DWS.DEBUG) {console.debug("DWS: Prompting for change in Automation default.")};
 
           // PROMPT THE USER FOR THE NEW DEFAULT
@@ -525,6 +520,19 @@ function init() {
             Title: `Default Automation Mode`,
             Text: 'Select your new default automation mode for combined state.',
             FeedbackId: 'changeAutomation',
+            "Option.1": "On",
+            "Option.2": "Off"
+          });
+          break;
+
+        case 'dws_adv_edit_ducking': // LISTEN FOR AUTO DUCKING EDIT BUTTON
+          if (DWS.DEBUG) {console.debug("DWS: Prompting for change in Automation default.")};
+
+          // PROMPT THE USER FOR THE NEW DEFAULT
+          xapi.Command.UserInterface.Message.Prompt.Display({
+            Title: `Default Ducking Mode`,
+            Text: 'Select the default mode for Automatic Microphone Ducking.',
+            FeedbackId: 'changeDucking',
             "Option.1": "On",
             "Option.2": "Off"
           });
@@ -925,6 +933,21 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
     // UPDATE ADV PANEL ELEMENT
     xapi.Command.UserInterface.Extensions.Widget.SetValue({ WidgetId: 'dws_adv_automode', Value: DWS_ADV_AUTO_DEFAULT });   
   }
+  // ADVANCED PANEL - AUTOMATION MODE TRIGGERS
+  else if (value.FeedbackId == 'changeDucking') 
+  {
+    if (value.OptionId == '1') // ENABLE AUTOMATION BY DEFAULT
+    {
+      DWS_ADV_DUCKING = 'On';
+    }    
+    else if (value.OptionId == '2') // DISABLE AUTOMATION BY DEFAULT
+    {
+      DWS_ADV_DUCKING = 'Off';
+    }
+
+    // UPDATE ADV PANEL ELEMENT
+    xapi.Command.UserInterface.Extensions.Widget.SetValue({ WidgetId: 'dws_adv_ducking', Value: DWS_ADV_DUCKING });   
+  }
 })
 
 //===========================//
@@ -1097,7 +1120,6 @@ async function setPrimaryDelay(newDelay)
     if (DWS.PLATFORM == 'Codec Pro')
     {
       await xapi.Config.Audio.Output.ARC[1].Delay.DelayMs.set(newDelay);
-      await xapi.Config.Audio.Output.HDMI[1].Delay.DelayMs.set(newDelay);
       await xapi.Config.Audio.Output.HDMI[2].Delay.DelayMs.set(newDelay);
       await xapi.Config.Audio.Output.HDMI[3].Delay.DelayMs.set(newDelay);
       await xapi.Config.Audio.Output.Line[1].Delay.DelayMs.set(newDelay);
@@ -1106,14 +1128,15 @@ async function setPrimaryDelay(newDelay)
       await xapi.Config.Audio.Output.Line[4].Delay.DelayMs.set(newDelay);
       await xapi.Config.Audio.Output.Line[5].Delay.DelayMs.set(newDelay);
       await xapi.Config.Audio.Output.Line[6].Delay.DelayMs.set(newDelay);
+      await xapi.Config.Audio.Output.USBInterface[1].Delay.DelayMs.set(newDelay);
     }
     else if (DWS.PLATFORM == 'Room Kit EQ')
     {
       await xapi.Config.Audio.Output.ARC[1].Delay.DelayMs.set(newDelay);
-      await xapi.Config.Audio.Output.HDMI[1].Delay.DelayMs.set(newDelay);
       await xapi.Config.Audio.Output.HDMI[2].Delay.DelayMs.set(newDelay);
       await xapi.Config.Audio.Output.HDMI[3].Delay.DelayMs.set(newDelay);
       await xapi.Config.Audio.Output.Line[1].Delay.DelayMs.set(newDelay);
+      await xapi.Config.Audio.Output.USBInterface[1].Delay.DelayMs.set(newDelay);
     }
 
     if (DWS.DEBUG) {console.debug('DWS: Primary output delay modified successfully.')};
@@ -1145,7 +1168,7 @@ Robert(Bobby) McGonigle Jr
 Chase Voisin
 William Mills
 
-Version: 0.9.5 (BETA)
+Version: 0.9.6 (BETA)
 
 Complete details for this macro are available on Github:
 https://cs.co/divisibleworkspaceblueprint
@@ -1154,19 +1177,23 @@ https://cs.co/divisibleworkspaceblueprint
 //                        **** ADMIN SETTINGS ****                         //
 //=========================================================================*/
 
-// ENABLE OR DISABLE THE COMBINED ROOM BANNER ON DISPLAYS
-// ACCEPTED VALUES: true, false
-const COMBINED_BANNER = ${DWS.COMBINED_BANNER};
-
 // ENABLE OR DISABLE ADDITIONAL "DEBUG" LEVEL CONSOLE OUTPUT
 // TRACKING DEBUG PROVIDES MICROPHONE ACTIVITY "DEBUG" DURING COMBINED CALLS
 // ACCEPTED VALUES: true, false
-const DEBUG = ${DWS.DEBUG};
+const DEBUG = ${DWS.DEBUG}; 
 const TRACKING_DEBUG = ${DWS.TRACKING_DEBUG};
 
 // ONLY CHANGE IF YOU ARE NOT USING THE DEFAULT U:P IN USB CONFIGURATION FILE
 const SWITCH_USERNAME = ${JSON.stringify(DWS.SWITCH_USERNAME, null, 2)};
 const SWITCH_PASSWORD = ${JSON.stringify(DWS.SWITCH_PASSWORD, null, 2)};
+
+// ENABLE OR DISABLE THE COMBINED ROOM BANNER ON DISPLAYS
+// ACCEPTED VALUES: true, false
+const COMBINED_BANNER = ${DWS.COMBINED_BANNER};
+
+// ENABLE OR DISABLE THE AUTOMATIC DUCKING OF ETHERNET MICS BASED ON USB / ANALOG INPUT
+// ACCEPTED VALUES: 'On', 'Off'
+const AUTO_DUCKING = ${JSON.stringify(DWS_ADV_DUCKING, null, 2)};
 
 //=========================================================================//
 //                     **** DO NOT EDIT BELOW HERE ****                    //
@@ -1236,7 +1263,8 @@ export default {
   PRIMARY_VLAN, 
   NODE1_VLAN,
   NODE2_VLAN,
-  PLATFORM
+  PLATFORM,
+  AUTO_DUCKING
 };`;
 
   xapi.Command.Macros.Macro.Save({ Name: 'DWS_Config', Overwrite: 'True' }, dataStr)
@@ -1268,7 +1296,7 @@ Robert(Bobby) McGonigle Jr
 Chase Voisin
 William Mills
 
-Version: 0.9.5 (BETA)
+Version: 0.9.6 (BETA)
 
 Complete details for this macro are available on Github:
 https://cs.co/divisibleworkspaceblueprint
@@ -1350,7 +1378,7 @@ function createPanels(panelState)
 
     case 'Unlocked':
       // UPDATE ADVANCED PANEL TO UNLOCKED STATE
-      DWS_PANEL = `<Extensions><Version>1.11</Version><Panel><Order>1</Order><PanelId>dws_advanced</PanelId><Origin>local</Origin><Location>ControlPanel</Location><Icon>Custom</Icon><Name>Adv. Room Settings</Name><ActivityType>Custom</ActivityType><CustomIcon><Content>${IMAGES.ADVANCED_ICON}</Content><Id>a1da32f04d333f289e8c827aafb8dd1d417923604f11c46e5b4d838f6859100d</Id></CustomIcon><Page><Name>Advanced Settings</Name><Row><Name>Default Camera Automation Mode</Name><Widget><WidgetId>dws_adv_automode</WidgetId><Name>${DWS.AUTOMODE_DEFAULT}</Name><Type>Text</Type><Options>size=3;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_adv_edit_automode</WidgetId><Name>Edit</Name><Type>Button</Type><Options>size=1</Options></Widget></Row><Row><Name>Primary Audio Output Delay (ms)</Name><Widget><WidgetId>widget_268</WidgetId><Name>Use this setting to sync the audio output of the primary codec with the node codecs.</Name><Type>Text</Type><Options>size=2;fontSize=small;align=center</Options></Widget><Widget><WidgetId>dws_adv_primary_delay</WidgetId><Type>Spinner</Type><Options>size=2;style=plusminus</Options></Widget></Row><Row><Name>Microphone "High" Thresholds</Name><Widget><WidgetId>widget_225</WidgetId><Name>Primary Audience Mics</Name><Type>Text</Type><Options>size=2;fontSize=small;align=center</Options></Widget><Widget><WidgetId>dws_adv_primary_high</WidgetId><Type>Spinner</Type><Options>size=2;style=plusminus</Options></Widget><Widget><WidgetId>widget_226</WidgetId><Name>Node 1 Audience Mics</Name><Type>Text</Type><Options>size=2;fontSize=small;align=center</Options></Widget><Widget><WidgetId>dws_adv_node1_high</WidgetId><Type>Spinner</Type><Options>size=2;style=plusminus</Options></Widget><Widget><WidgetId>widget_230</WidgetId><Name>Node 2 Audience Mics</Name><Type>Text</Type><Options>size=2;fontSize=small;align=center</Options></Widget><Widget><WidgetId>dws_adv_node2_high</WidgetId><Type>Spinner</Type><Options>size=2;style=plusminus</Options></Widget></Row><Row><Widget><WidgetId>dws_adv_save</WidgetId><Name>Apply Configuration</Name><Type>Button</Type><Options>size=2</Options></Widget></Row><PageId>dws_adv_unlocked</PageId><Options/></Page></Panel></Extensions>`;
+      DWS_PANEL = `<Extensions><Version>1.11</Version><Panel><Order>1</Order><PanelId>dws_advanced</PanelId><Origin>local</Origin><Location>ControlPanel</Location><Icon>Custom</Icon><Name>Adv. Room Settings</Name><ActivityType>Custom</ActivityType><CustomIcon><Content>${IMAGES.ADVANCED_ICON}</Content><Id>a1da32f04d333f289e8c827aafb8dd1d417923604f11c46e5b4d838f6859100d</Id></CustomIcon><Page><Name>Advanced Settings</Name><Row><Name>Default Camera Automation Mode</Name><Widget><WidgetId>dws_adv_automode</WidgetId><Name>${DWS.AUTOMODE_DEFAULT}</Name><Type>Text</Type><Options>size=3;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_adv_edit_automode</WidgetId><Name>Edit</Name><Type>Button</Type><Options>size=1</Options></Widget></Row><Row><Name>Microphone Auto Ducking</Name><Widget><WidgetId>dws_adv_ducking</WidgetId><Name>${DWS.AUTO_DUCKING}</Name><Type>Text</Type><Options>size=3;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_adv_edit_ducking</WidgetId><Name>Edit</Name><Type>Button</Type><Options>size=1</Options></Widget></Row><Row><Name>Primary Audio Output Delay (ms)</Name><Widget><WidgetId>widget_268</WidgetId><Name>Use this setting to sync the audio output of the primary codec with the node codecs.</Name><Type>Text</Type><Options>size=2;fontSize=small;align=center</Options></Widget><Widget><WidgetId>dws_adv_primary_delay</WidgetId><Type>Spinner</Type><Options>size=2;style=plusminus</Options></Widget></Row><Row><Name>Microphone "High" Thresholds</Name><Widget><WidgetId>widget_225</WidgetId><Name>Primary Audience Mics</Name><Type>Text</Type><Options>size=2;fontSize=small;align=center</Options></Widget><Widget><WidgetId>dws_adv_primary_high</WidgetId><Type>Spinner</Type><Options>size=2;style=plusminus</Options></Widget><Widget><WidgetId>widget_226</WidgetId><Name>Node 1 Audience Mics</Name><Type>Text</Type><Options>size=2;fontSize=small;align=center</Options></Widget><Widget><WidgetId>dws_adv_node1_high</WidgetId><Type>Spinner</Type><Options>size=2;style=plusminus</Options></Widget><Widget><WidgetId>widget_230</WidgetId><Name>Node 2 Audience Mics</Name><Type>Text</Type><Options>size=2;fontSize=small;align=center</Options></Widget><Widget><WidgetId>dws_adv_node2_high</WidgetId><Type>Spinner</Type><Options>size=2;style=plusminus</Options></Widget></Row><Row><Name/><Widget><WidgetId>dws_adv_save</WidgetId><Name>Apply Configuration</Name><Type>Button</Type><Options>size=2</Options></Widget></Row><PageId>dws_adv_unlocked</PageId><Options/></Page></Panel></Extensions>`;
 
       xapi.Command.UserInterface.Extensions.Panel.Save({ PanelId: 'dws_advanced' }, DWS_PANEL)
         .then(() => {
@@ -1360,6 +1388,7 @@ function createPanels(panelState)
            xapi.Command.UserInterface.Extensions.Widget.SetValue({ Value: DWS.MICS_HIGH_NODE1, WidgetId: 'dws_adv_node1_high' });
            xapi.Command.UserInterface.Extensions.Widget.SetValue({ Value: DWS.MICS_HIGH_NODE2, WidgetId: 'dws_adv_node2_high' });
            xapi.Command.UserInterface.Extensions.Widget.SetValue({ Value: DWS_ADV_AUTO_DEFAULT, WidgetId: 'dws_adv_automode' });
+           xapi.Command.UserInterface.Extensions.Widget.SetValue({ Value: DWS_ADV_DUCKING, WidgetId: 'dws_adv_ducking' });
         })
         .catch(e => console.log('Error saving panel: ' + e.message))
       break;
@@ -1395,15 +1424,15 @@ function createPanels(panelState)
       xapi.Command.UserInterface.Extensions.Panel.Save({ PanelId: 'dws_audience_enabled' }, DWS_PANEL)
         .catch(e => console.log('Error saving panel: ' + e.message));
 
-      DWS_PANEL = `<Extensions><Version>1.11</Version><Panel><Order>4</Order><PanelId>dws_audience_disabled</PanelId><Origin>local</Origin><Location>Hidden</Location><Icon>Custom</Icon><Name>Audience Mics: Disabled</Name><ActivityType>Custom</ActivityType><CustomIcon><Content>${IMAGES.AUDIENCE_DISABLED}</Content><Id>66aa2941913ca3a9d159d355ec5554ac6a7637ae4a91d4efbcf8068e3fe60120</Id></CustomIcon></Panel></Extensions>`;
+      DWS_PANEL = `<Extensions><Version>1.11</Version><Panel><Order>4</Order><PanelId>dws_audience_disabled</PanelId><Origin>local</Origin><Location>Hidden</Location><Icon>Custom</Icon><Name>Audience Mics: Disabled</Name><ActivityType>Custom</ActivityType><CustomIcon><Content>${IMAGES.AUDIENCE_DISABLED}</Content><Id>6216bc698e2abde23818a638f7cba1e6c861dea9bc173e064cedd4f191aaa0ad</Id></CustomIcon></Panel></Extensions>`;
       xapi.Command.UserInterface.Extensions.Panel.Save({ PanelId: 'dws_audience_disabled' }, DWS_PANEL)
         .catch(e => console.log('Error saving panel: ' + e.message));
 
-      DWS_PANEL = `<Extensions><Version>1.11</Version><Panel><Order>5</Order><PanelId>dws_wireless_enabled</PanelId><Origin>local</Origin><Location>CallControls</Location><Icon>Custom</Icon><Name>Wireless Mics: Enabled</Name><ActivityType>Custom</ActivityType><CustomIcon><Content>${IMAGES.WIRELESS_ENABLED}</Content><Id>d636672afa5735bc32d2df5d808831a1f5771df83bccd27dc01d36de89f30fb8</Id></CustomIcon></Panel></Extensions>`;
+      DWS_PANEL = `<Extensions><Version>1.11</Version><Panel><Order>5</Order><PanelId>dws_wireless_enabled</PanelId><Origin>local</Origin><Location>CallControls</Location><Icon>Custom</Icon><Name>Presenter Mics: Enabled</Name><ActivityType>Custom</ActivityType><CustomIcon><Content>${IMAGES.WIRELESS_ENABLED}</Content><Id>338d32e2efa45518d0e86b56f5f5e392a67ef42a38c6efe30ab132a0831328ad</Id></CustomIcon></Panel></Extensions>`;
       xapi.Command.UserInterface.Extensions.Panel.Save({ PanelId: 'dws_wireless_enabled' }, DWS_PANEL)
         .catch(e => console.log('Error saving panel: ' + e.message));
 
-      DWS_PANEL = `<Extensions><Version>1.11</Version><Panel><Order>6</Order><PanelId>dws_wireless_disabled</PanelId><Origin>local</Origin><Location>Hidden</Location><Icon>Custom</Icon><Name>Wireless Mics: Disabled</Name><ActivityType>Custom</ActivityType><CustomIcon><Content>${IMAGES.WIRELESS_DISABLED}</Content><Id>3bd426fa2ba3707cc2bba2a11591e9b841938b311af53293947afc60591c0bc0</Id></CustomIcon></Panel></Extensions>`;
+      DWS_PANEL = `<Extensions><Version>1.11</Version><Panel><Order>6</Order><PanelId>dws_wireless_disabled</PanelId><Origin>local</Origin><Location>Hidden</Location><Icon>Custom</Icon><Name>Presenter Mics: Disabled</Name><ActivityType>Custom</ActivityType><CustomIcon><Content>${IMAGES.WIRELESS_DISABLED}</Content><Id>8c2ae16b6f29220701e7b35af864e2780a0d11b7e7063599a5b015877a720479</Id></CustomIcon></Panel></Extensions>`;
       xapi.Command.UserInterface.Extensions.Panel.Save({ PanelId: 'dws_wireless_disabled' }, DWS_PANEL)
         .catch(e => console.log('Error saving panel: ' + e.message));
 
@@ -1933,6 +1962,34 @@ function buildAZMProfile(state)
               Layout: 'Equal'
             }
           }
+        },
+        {
+          Label: 'PRESENTER USB',
+          Independent_Threshold: {
+            High: 20,                           
+            Low: 10                              
+          },
+          Independent_Rate: 150,
+          MicrophoneAssignment: {
+            Type: 'USB',                   
+            Connectors: [{Id: 1}]
+          },
+          Assets: {
+          }
+        },
+        {
+          Label: 'PRESENTER ANALOG',
+          Independent_Threshold: {
+            High: 20,                           
+            Low: 10                              
+          },
+          Independent_Rate: 150,
+          MicrophoneAssignment: {
+            Type: 'Microphone',                   
+            Connectors: [{Id: 1}]
+          },
+          Assets: {
+          }
         }
       ]
     }
@@ -1984,6 +2041,34 @@ function buildAZMProfile(state)
               InputConnector: 2,
               Layout: 'Equal'
             }
+          }
+        },
+        {
+          Label: 'PRESENTER USB',
+          Independent_Threshold: {
+            High: 20,                           
+            Low: 10                              
+          },
+          Independent_Rate: 150,
+          MicrophoneAssignment: {
+            Type: 'USB',                   
+            Connectors: [{Id: 1}]
+          },
+          Assets: {
+          }
+        },
+        {
+          Label: 'PRESENTER ANALOG',
+          Independent_Threshold: {
+            High: 20,                           
+            Low: 10                              
+          },
+          Independent_Rate: 150,
+          MicrophoneAssignment: {
+            Type: 'Microphone',                   
+            Connectors: [{Id: 1}]
+          },
+          Assets: {
           }
         }
       ]
@@ -2037,6 +2122,34 @@ function buildAZMProfile(state)
               Layout: 'Equal'
             }
           }
+        },
+        {
+          Label: 'PRESENTER USB',
+          Independent_Threshold: {
+            High: 20,                           
+            Low: 10                              
+          },
+          Independent_Rate: 150,
+          MicrophoneAssignment: {
+            Type: 'USB',                   
+            Connectors: [{Id: 1}]
+          },
+          Assets: {
+          }
+        },
+        {
+          Label: 'PRESENTER ANALOG',
+          Independent_Threshold: {
+            High: 20,                           
+            Low: 10                              
+          },
+          Independent_Rate: 150,
+          MicrophoneAssignment: {
+            Type: 'Microphone',                   
+            Connectors: [{Id: 1}]
+          },
+          Assets: {
+          }
         }
       ]
     }
@@ -2079,140 +2192,267 @@ function startCallListener()
 
 async function handleAZMZoneEvents(event) 
 {
-  // CHECK DWS CAMERA MODE & ONLY SET THE CAMERA BASED ON AZM PROFILE IF IN "AUTOMATIC"
-  if (DWS_AUTOMODE_STATE == 'on' || DWS_AUTOMODE_STATE == 'On') 
+  // STORE CURRENT CAMERA / COMPOSITION
+  let DWS_CUR_CAMERA = await xapi.Status.Video.Input.MainVideoSource.get();
+
+  // STORE CURRENT TIME FOR HOLD OVERS
+  let DWS_CUR_TIME = Date.now();
+  if (DWS_HOLD_TIME == undefined)
   {
-    const IN_PRESENTER = await xapi.Status.Cameras.PresenterTrack.Status.get()
-    const ACTIVE_PRESENTER = await xapi.Status.Cameras.PresenterTrack.PresenterDetected.get();
+    DWS_HOLD_TIME = DWS_CUR_TIME + (2500);
+  }
 
-    if (DWS.TRACKING_DEBUG) {
-      console.debug ("DWS: In Presenter Mode?: "+IN_PRESENTER);
-      console.debug ("DWS: Active Presenter?: "+ACTIVE_PRESENTER);
-    }
-  
-    if (ACTIVE_PRESENTER == 'True' && IN_PRESENTER == 'Persistent')
+  // CHECK AUTOMATIC CEILING MIC DUCKING CONFIGURATION
+  if (DWS.AUTO_DUCKING == 'On')
+  {
+    if (event.Zone.State == 'High' && (event.Zone.Label == 'PRESENTER USB' || event.Zone.Label == 'PRESENTER ANALOG') && DWS_DUCK_STATE == 'Unducked')
     {
-      // SET COMPOSITION TO INCLUDE PRESENTER TRACK PTZ AS LARGE PIP
-      if (event.Zone.State == 'High' && DWS_CHANGE_DELAY == 0 && (event.Zone.Label == 'PRIMARY ROOM' || event.Zone.Label == 'NODE 1 ROOM' || event.Zone.Label == 'NODE 2 ROOM'))
+      if (DWS.DEBUG) {console.debug("DWS: Presenter audio detected. Ducking Audience Mics")}
+      
+      //DUCK MICROPHONES
+      for (let MIC_INPUT = 1; MIC_INPUT < 9; MIC_INPUT++)
       {
-        if (DWS.TRACKING_DEBUG) {console.debug ('DWS: Presenter Detected. Setting PIP with PTZ & ' + event.Zone.Label)};
-
-        await xapi.Command.Video.Input.SetMainVideoSource({
-          ConnectorId: [DWS_PRESENTER_CAM_ID, event.Assets.Camera.InputConnector],
-          Layout: 'PIP',
-          PIPPosition: 'Lowerright',
-          PIPSize: 'Large'
-        });  
-
-        if (event.Zone.Label == 'PRIMARY ROOM')
+        if (DWS.PLATFORM == 'Codec Pro')
         {
-          // SET LOCAL SPEAKERTRACK MODE
-          xapi.Command.Cameras.SpeakerTrack.Activate();
-          xapi.Command.Cameras.SpeakerTrack.Closeup.Activate();
+          xapi.Config.Audio.Input.Ethernet[MIC_INPUT].Channel[1].Level.set("0"); 
+          xapi.Config.Audio.Input.Ethernet[MIC_INPUT].Channel[2].Level.set("0");
+          xapi.Config.Audio.Input.Ethernet[MIC_INPUT].Channel[3].Level.set("0"); 
+          xapi.Config.Audio.Input.Ethernet[MIC_INPUT].Channel[4].Level.set("0");
         }
-        else if (event.Zone.Label == 'NODE 1 ROOM')
+        else
         {
-          // ACTIVATE REMOTE SPEAKERTRACK
-          sendMessage(DWS.NODE1_HOST, "EnableST");
+          try { xapi.Config.Audio.Input.Ethernet[MIC_INPUT].Channel[1].Gain.set("0") } catch {e => console.log("Error setting Gain:",e)} 
+          xapi.Config.Audio.Input.Ethernet[MIC_INPUT].Channel[2].Gain.set("0");
+          xapi.Config.Audio.Input.Ethernet[MIC_INPUT].Channel[3].Gain.set("0"); 
+          xapi.Config.Audio.Input.Ethernet[MIC_INPUT].Channel[4].Gain.set("0");
         }
-        else if (event.Zone.Label == 'NODE 2 ROOM')
-        {
-          // ACTIVATE REMOTE SPEAKERTRACK
-          sendMessage(DWS.NODE2_HOST, "EnableST");
-        }
-
-        // RESET THE DROP AUDIENCE COUNTER && DELAY TIMER
-        DWS_DROP_AUDIENCE = 0;
-        DWS_CHANGE_DELAY = 6;
       }
-      else if (DWS_DROP_AUDIENCE > 8) 
+      // SET CURRENT DUCK STATE
+      DWS_DUCK_STATE = 'Ducked';
+    }
+    else if (event.Zone.State == 'Low' && (event.Zone.Label == 'PRESENTER USB' || event.Zone.Label == 'PRESENTER ANALOG') && DWS_DUCK_STATE == 'Ducked')
+    {
+      if (DWS.DEBUG) {console.debug("DWS: Presenter audio not detected. Enabling Audience Mics")}
+
+      //UNDUCK MICROPHONES
+      for (let MIC_INPUT = 1; MIC_INPUT < 9; MIC_INPUT++)
       {
-        await xapi.Command.Video.Input.SetMainVideoSource({
+        if (DWS.PLATFORM == 'Codec Pro')
+        {
+          xapi.Config.Audio.Input.Ethernet[MIC_INPUT].Channel[1].Level.set("45"); 
+          xapi.Config.Audio.Input.Ethernet[MIC_INPUT].Channel[2].Level.set("45");
+          xapi.Config.Audio.Input.Ethernet[MIC_INPUT].Channel[3].Level.set("45"); 
+          xapi.Config.Audio.Input.Ethernet[MIC_INPUT].Channel[4].Level.set("45");
+        }
+        else
+        {
+          xapi.Config.Audio.Input.Ethernet[MIC_INPUT].Channel[1].Gain.set("45"); 
+          xapi.Config.Audio.Input.Ethernet[MIC_INPUT].Channel[2].Gain.set("45");
+          xapi.Config.Audio.Input.Ethernet[MIC_INPUT].Channel[3].Gain.set("45"); 
+          xapi.Config.Audio.Input.Ethernet[MIC_INPUT].Channel[4].Gain.set("45");
+        }
+      }
+      // SET CURRENT DUCK STATE
+      DWS_DUCK_STATE = 'Unducked';
+    }
+  }
+
+  // CHECK DWS CAMERA MODE & ONLY SET THE CAMERA BASED ON AZM PROFILE IF IN "AUTOMATIC"
+  if ((DWS_AUTOMODE_STATE == 'on' || DWS_AUTOMODE_STATE == 'On') && event.Zone.State == 'High') 
+  {
+    // CHECK IF 2.5 SECONDS HAVE PASSED BEFORE TRIGGERING VIDEO CHANGES
+    if ((DWS_CUR_TIME - DWS_HOLD_TIME) >= 2500)
+    {
+      // CHECK FOR ALREADY IN PRESENTER AND AUDIENCE PIP
+      if (DWS_CUR_CAMERA == 'Composed')
+      {
+        if (event.Zone.Label == 'PRESENTER USB' || event.Zone.Label == 'PRESENTER ANALOG')
+        {
+          // CHECK FOR ALREADY IN PRESENTER AND AUDIENCE PIP
+          if ((DWS_CUR_TIME - DWS_DROP_AUDIENCE) >= 6000)
+          {
+            if (DWS.TRACKING_DEBUG) {console.debug ('DWS: Audience time out reached. Showing only Presenter PTZ.')};
+
+            // DROP AUDIENCE & ACTIVATE PRESENTER MODE
+            xapi.Command.Cameras.PresenterTrack.Set({ Mode: 'Persistent' });
+            xapi.Command.Video.Input.SetMainVideoSource({
+              ConnectorId: DWS_PRESENTER_CAM_ID,
+              Layout: 'Equal'
+            });
+
+            // UPDATE HOLD TIMER TO NEW TIME STAMP
+            DWS_HOLD_TIME = Date.now();
+          }
+          else
+          {
+            if (DWS.TRACKING_DEBUG) {console.debug ('DWS: Presenter microphone triggered. Showing Presenter PTZ.')};
+
+            // ACTIVATE PRESENTER MODE
+            xapi.Command.Cameras.PresenterTrack.Set({ Mode: 'Persistent' });
+            xapi.Command.Video.Input.SetMainVideoSource({
+              ConnectorId: DWS_PRESENTER_CAM_ID,
+              Layout: 'Equal'
+            });
+
+            // UPDATE HOLD TIMER TO NEW TIME STAMP
+            DWS_HOLD_TIME = Date.now();
+          }
+        }
+        else if (event.Zone.Label == 'PRIMARY ROOM' || event.Zone.Label == 'NODE 1 ROOM' || event.Zone.Label == 'NODE 2 ROOM')
+        {
+          if (DWS_LAST_CAMERA != event.Assets.Camera.InputConnector)
+          {
+            // SET PRESENTER AND AUDIENCE PIP
+            if (DWS.TRACKING_DEBUG) {console.debug ('DWS: Setting PIP with PTZ & ' + event.Zone.Label)}
+
+            xapi.Command.Video.Input.SetMainVideoSource({
+              ConnectorId: [DWS_PRESENTER_CAM_ID, event.Assets.Camera.InputConnector],
+              Layout: 'PIP',
+              PIPPosition: 'Lowerright',
+              PIPSize: 'Large'
+            });  
+
+            // STORE LAST CAMERA 
+            DWS_LAST_CAMERA = event.Assets.Camera.InputConnector;
+
+            if (event.Zone.Label == 'PRIMARY ROOM')
+            {
+              // SET LOCAL SPEAKERTRACK MODE
+              xapi.Command.Cameras.SpeakerTrack.Activate().then(xapi.Command.Cameras.SpeakerTrack.Closeup.Activate());
+            }
+            else if (event.Zone.Label == 'NODE 1 ROOM')
+            {
+              // ACTIVATE REMOTE SPEAKERTRACK
+              sendMessage(DWS.NODE1_HOST, "EnableST");
+            }
+            else if (event.Zone.Label == 'NODE 2 ROOM')
+            {
+              // ACTIVATE REMOTE SPEAKERTRACK
+              sendMessage(DWS.NODE2_HOST, "EnableST");
+            }
+
+            // RESET THE DROP AUDIENCE TIME
+            DWS_DROP_AUDIENCE = DWS_CUR_TIME + (6000);
+
+            // UPDATE HOLD TIMER TO NEW TIME STAMP
+            DWS_HOLD_TIME = Date.now();
+          }
+        }
+      }
+      // TRIGGER FROM THE PRESENTER MICROPHONE WHEN NOT IN COMPOSED VIEW
+      else if (event.Zone.Label == 'PRESENTER USB' || event.Zone.Label == 'PRESENTER ANALOG')
+      {
+        if (DWS.TRACKING_DEBUG) {console.debug ('DWS: Presenter microphone triggered. Showing Presenter PTZ.')};
+
+        // ACTIVATE PRESENTER MODE
+        xapi.Command.Cameras.PresenterTrack.Set({ Mode: 'Persistent' });
+        xapi.Command.Video.Input.SetMainVideoSource({
           ConnectorId: DWS_PRESENTER_CAM_ID,
           Layout: 'Equal'
         });
 
-        // RESET THE DROP AUDIENCE COUNTER
-        DWS_DROP_AUDIENCE = 0;
-        DWS_CHANGE_DELAY = 4;
+        // UPDATE HOLD TIMER TO NEW TIME STAMP
+        DWS_HOLD_TIME = Date.now();
       }
-      else
+      else if ((DWS_CUR_CAMERA == DWS_PRESENTER_CAM_ID) && (event.Zone.Label == 'PRIMARY ROOM' || event.Zone.Label == 'NODE 1 ROOM' || event.Zone.Label == 'NODE 2 ROOM'))
       {
-        // INCREMENT THE DROP AUDIENCE COUNTER
-        DWS_DROP_AUDIENCE++;
-
-        // DECREMENT THE CHANGE TIMER
-        if (DWS_CHANGE_DELAY != 0)
+        if (DWS_LAST_CAMERA != event.Assets.Camera.InputConnector)
         {
-          DWS_CHANGE_DELAY--;
-        }
-        else
-        {
-          DWS_CHANGE_DELAY = 0;
-        }
+          // SET PRESENTER AND AUDIENCE PIP
+          if (DWS.TRACKING_DEBUG) {console.debug ('DWS: Setting PIP with PTZ & ' + event.Zone.Label)}
 
-        if (DWS.TRACKING_DEBUG) {console.debug("DWS: No activity change detected. Holding view: " + DWS_CHANGE_DELAY)};
-      }
-    }
-    else 
-    {
-      if (event.Zone.State == 'High' && DWS_CHANGE_DELAY == 0 && (event.Zone.Label == 'PRIMARY ROOM' || event.Zone.Label == 'NODE 1 ROOM' || event.Zone.Label == 'NODE 2 ROOM')) 
-      {
-        if (DWS.TRACKING_DEBUG) {console.debug ('DWS: Microphone activity detected. Switching to ' + event.Zone.Label)};
+          xapi.Command.Video.Input.SetMainVideoSource({
+            ConnectorId: [DWS_PRESENTER_CAM_ID, event.Assets.Camera.InputConnector],
+            Layout: 'PIP',
+            PIPPosition: 'Lowerright',
+            PIPSize: 'Large'
+          });  
 
-        await xapi.Command.Video.Input.SetMainVideoSource({
-          ConnectorId: event.Assets.Camera.InputConnector,
-          Layout: event.Assets.Camera.Layout
-        });
+          // STORE LAST CAMERA 
+          DWS_LAST_CAMERA = event.Assets.Camera.InputConnector;
 
-        if (event.Zone.Label == 'PRIMARY ROOM')
-        {
-          // SET LOCAL SPEAKERTRACK MODE
-          xapi.Command.Cameras.SpeakerTrack.Activate();
-          xapi.Command.Cameras.SpeakerTrack.Closeup.Activate();
-        }
-        else if (event.Zone.Label == 'NODE 1 ROOM')
-        {
-          // ACTIVATE REMOTE SPEAKERTRACK
-          sendMessage(DWS.NODE1_HOST, "EnableST");
-        }
-        else if (event.Zone.Label == 'NODE 2 ROOM')
-        {
-          // ACTIVATE REMOTE SPEAKERTRACK
-          sendMessage(DWS.NODE2_HOST, "EnableST");
-        }
+          if (event.Zone.Label == 'PRIMARY ROOM')
+          {
+            // SET LOCAL SPEAKERTRACK MODE
+            xapi.Command.Cameras.SpeakerTrack.Activate().then(xapi.Command.Cameras.SpeakerTrack.Closeup.Activate());
+          }
+          else if (event.Zone.Label == 'NODE 1 ROOM')
+          {
+            // ACTIVATE REMOTE SPEAKERTRACK
+            sendMessage(DWS.NODE1_HOST, "EnableST");
+          }
+          else if (event.Zone.Label == 'NODE 2 ROOM')
+          {
+            // ACTIVATE REMOTE SPEAKERTRACK
+            sendMessage(DWS.NODE2_HOST, "EnableST");
+          }
 
-        // RESET THE DELAY TIMER
-        DWS_CHANGE_DELAY = 6;
+          // RESET THE DROP AUDIENCE TIME
+          DWS_DROP_AUDIENCE = DWS_CUR_TIME + (6000);
+
+          // UPDATE HOLD TIMER TO NEW TIME STAMP
+          DWS_HOLD_TIME = Date.now();
+        }
       }
       else 
       {
-        // DECREMENT THE CHANGE TIMER
-        if (DWS_CHANGE_DELAY != 0)
+        // TRIGGER FOR AUDIENCE ONLY SWITCHING - NO PRESENTER DETECTED
+        if (event.Zone.Label == 'PRIMARY ROOM' || event.Zone.Label == 'NODE 1 ROOM' || event.Zone.Label == 'NODE 2 ROOM')
         {
-          DWS_CHANGE_DELAY--;
-        }
-        else
-        {
-          DWS_CHANGE_DELAY = 0;
-        }
+          if (DWS_CUR_CAMERA != event.Assets.Camera.InputConnector)
+          {
+            // SET CAMERA TO AUDIENCE BASED ON MICROPHONE
+            if (DWS.TRACKING_DEBUG) {console.debug ('DWS: Microphone activity detected. Switching to ' + event.Zone.Label)}
 
-        if (DWS.TRACKING_DEBUG) {console.debug("DWS: Maintaining existing composition: " + DWS_CHANGE_DELAY)};
+            xapi.Command.Video.Input.SetMainVideoSource({
+              ConnectorId: event.Assets.Camera.InputConnector,
+              Layout: event.Assets.Camera.Layout
+            });
+
+            if (event.Zone.Label == 'PRIMARY ROOM')
+            {
+              // SET LOCAL SPEAKERTRACK MODE
+              xapi.Command.Cameras.SpeakerTrack.Activate().then(xapi.Command.Cameras.SpeakerTrack.Closeup.Activate());            
+            }
+            else if (event.Zone.Label == 'NODE 1 ROOM')
+            {
+              // ACTIVATE REMOTE SPEAKERTRACK
+              sendMessage(DWS.NODE1_HOST, "EnableST");
+            }
+            else if (event.Zone.Label == 'NODE 2 ROOM')
+            {
+              // ACTIVATE REMOTE SPEAKERTRACK
+              sendMessage(DWS.NODE2_HOST, "EnableST");
+            }
+
+            // UPDATE HOLD TIMER TO NEW TIME STAMP
+            DWS_HOLD_TIME = Date.now();
+          }
+          else
+          {
+            // LOG SAME CAMERA BUT MAKE NO CHANGE
+            if (DWS.TRACKING_DEBUG) {console.debug ('DWS: Triggered current camera. No change to input.')}
+          }
+        }
       }
     }
-  } 
+    else
+    {
+      if (DWS.TRACKING_DEBUG) {console.debug("DWS: Within Hold Timer. Maintaining existing composition.")}
+    }
+  }
 }
 
 async function handleCallStatus(event) 
 {
   if (event > 0) 
   {
-    // START MONITORING ZONES AT CALL START
-    AZM.Command.Zone.Monitor.Start()
-
     if(DWS_CUR_STATE == 'Combined All' || DWS_CUR_STATE == 'Combined Node1' || DWS_CUR_STATE == 'Combined Node2')
     {
-      if (DWS.DEBUG) {console.debug("DWS: Call started. Adding in call controls.")};
+      if (DWS.DEBUG) {console.debug("DWS: Call started. Adding in call controls.")}
+
+      // START ZONE MONITORING IN AZM
+      AZM.Command.Zone.Monitor.Start();
 
       // DRAW IN CALL PANEL
       createPanels ("InCall");
@@ -2232,6 +2472,9 @@ async function handleCallStatus(event)
 
     // RESET VIEW TO PRIMARY ROOM QUAD TO CLEAR ANY COMPOSITION FROM PREVIOUS SELECTION
     xapi.Command.Video.Input.SetMainVideoSource({ ConnectorId: 1});
+
+    // TURN OFF PERSISTENT PRESENTER TRACK
+    xapi.Command.Cameras.PresenterTrack.Set({ Mode: 'Off' });
 
     // REMOVE IN CALL CONTROLS
     createPanels ("HideCall");
@@ -2280,4 +2523,4 @@ async function startAZM() {
 }
 
 // START THE MACRO
-init();
+init()

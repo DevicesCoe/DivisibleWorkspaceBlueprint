@@ -19,6 +19,10 @@ or implied.
  * Consulting Engineer(s)   Gerardo Chaves                    William Mills
  *                          Leader, Systems Engineering       Technical Solutions Specialist
  *                          Cisco Systems                     Cisco Systems
+ *
+ *                          Mark Lula
+ *                          Solutions Engineer
+ *                          Cisco Systems
  * 
  * Description:
  *   - Audio Zone Manager (AZM)
@@ -1052,7 +1056,7 @@ const automaticUpdates = {
           case 'monitor':
             await buildAZMNotifications();
             let msg = `AZM Update Available. Installed Version: v${version} || New Version v${manifest.version}. Go to the AZM Github to grab a copy.`
-            await updateAZMUpdateStatusUIExtension(msg, manifest.description);
+            await updateAZMUpdateStatusUIExtension(msg, manifest.description);            
             console.AZM.info(`View AZM Releases -> https://github.com/ctg-tme/audio-zone-manager-library-macro/releases`)
             console.AZM.info(`Download the Latest AZM Release -> ${releaseFileUrl.AZM_Lib}`)
             break;
@@ -1062,7 +1066,7 @@ const automaticUpdates = {
         }
         break;
       case 'Lower':
-        updateAZMUpdateStatusUIExtension(`Installed Version [v${version}] is greater than the one available on github [v${manifest.version}]`, `No Description Available (You might be running an unreleased version or a fork)`);
+        updateAZMUpdateStatusUIExtension(`Installed Version [v${version}] is greater than the one available on github [v${manifest.version}]`, `No Description Available (You might be running an unreleased version or a fork)`);        
         console.AZM.info(`View AZM Releases -> https://github.com/ctg-tme/audio-zone-manager-library-macro/releases`)
         console.AZM.info(`Download the Latest AZM Release -> ${releaseFileUrl.AZM_Lib}`)
         break;
@@ -1229,7 +1233,7 @@ function Process_BIN_Data(dataset) {
 async function discoverEthernetStreamNameBySerial(serial) {
   const peripherals = await xapi.Status.Peripherals.ConnectedDevice.get()
 
-  // LULA EDIT
+  // LULA EDITS FOR DWS BLUEPRINT
   const streamName = peripherals.find(item => item.Type === 'AudioMicrophone' && item.SerialNumber === serial);
 
   return streamName ? streamName.ID : null;
@@ -1557,7 +1561,7 @@ AZM.Command.Zone.Setup = async function (AudioZoneInfo) {
     if (!voiceDetectOSminimum) {
       console.AZM.warn({ Message: `Unable to start VoiceActivityDetection.`, Cause: 'Path Not Found', Action: 'Disabling VoiceActivityDetection', MinimumRoomOS: '11.16.1.X', xApiDoc: 'https://roomos.cisco.com/xapi/Status.Audio.Microphones.VoiceActivityDetector.Activity/' })
       allowVoiceActivityDetection = false;
-    } else {
+    } else {      
       console.AZM.info(`AudioZoneInfo.Settings.VoiceActivityDetection is [${voiceDetectOSminimum ? 'Enabled' : 'Disabled'}], setting xConfig Audio Microphones VoiceActivityDetector Mode to 'On'`)
       await xapi.Config.Audio.Microphones.VoiceActivityDetector.Mode.set('On');
     }
@@ -1615,18 +1619,53 @@ AZM.Command.Zone.Setup = async function (AudioZoneInfo) {
       console.AZM.SetupDebug(`AZM Update Checks scheduled for [${element}] at [${config_AutomaticUpdates_Schedule_Time}]`);
     })
   }
-
   console.AZM.info(`AZM Ready! Version: [${version}]`);
 };
 
 AZM.Command.Zone.Monitor.Start = async function (cause = undefined) {
   checkZoneSetup('Failed to Start Zone Monitor')
-  const inputConnectors = discover_Audio_Connector_Info();
-  for (let i = 0; i < inputConnectors.length; i++) {
-    try {
-      console.AZM.MonitorDebug(`Starting Audio Monitor on connector: Type: [${inputConnectors[i].Type}], Id: [${inputConnectors[i].Id}]`)
-      let typeFix = ''
-      switch (inputConnectors[i].Type.toLowerCase()) {
+
+  // LULA EDITS FOR DWS BLUEPRINT
+  if (AudioConfiguration.Settings?.GlobalSampleMode)
+  {
+    const inputConnectors = discover_Audio_Connector_Info();
+    for (let i = 0; i < inputConnectors.length; i++) {
+      try {
+        console.AZM.MonitorDebug(`Starting Audio Monitor on connector: Type: [${inputConnectors[i].Type}], Id: [${inputConnectors[i].Id}]`)
+        let typeFix = ''
+        switch (inputConnectors[i].Type.toLowerCase()) {
+          case 'ethernet': case 'aes67':
+            typeFix = 'Ethernet';
+            break;
+          case 'analog': case 'microphone':
+            typeFix = 'Microphone';
+            break;
+          case 'usb': case 'usbmicrophone':
+            typeFix = 'USBMicrophone'
+            break;
+          case 'externalvumeter': case 'externalgate':
+            typeFix = 'ignore';
+            break;
+          default:
+            break;
+        }
+        if (typeFix != 'ignore') {
+          await xapi.Command.Audio.VuMeter.Start({ ConnectorId: inputConnectors[i].Id, ConnectorType: typeFix, IntervalMs: AudioConfiguration.Settings.Sample.Rate_In_Ms, Source: 'AfterAEC' });
+        }
+      } catch (e) {
+        let err = {
+          Context: `Failed to start VuMeter on [${inputConnectors[i].Type}] ConnectorId [${inputConnectors[i].Id}]`,
+          ...e
+        }
+        throw new AZM_Error(err)
+      }
+    };
+  }
+  else{
+    for (let zone of AudioConfiguration.Zones)
+    {
+      let typeFix = '';
+      switch (zone.MicrophoneAssignment.Type.toLowerCase()) {
         case 'ethernet': case 'aes67':
           typeFix = 'Ethernet';
           break;
@@ -1642,17 +1681,25 @@ AZM.Command.Zone.Monitor.Start = async function (cause = undefined) {
         default:
           break;
       }
-      if (typeFix != 'ignore') {
-        await xapi.Command.Audio.VuMeter.Start({ ConnectorId: inputConnectors[i].Id, ConnectorType: typeFix, IntervalMs: AudioConfiguration.Settings.Sample.Rate_In_Ms, Source: 'AfterAEC' });
-      }
-    } catch (e) {
-      let err = {
-        Context: `Failed to start VuMeter on [${inputConnectors[i].Type}] ConnectorId [${inputConnectors[i].Id}]`,
-        ...e
-      }
-      throw new AZM_Error(err)
-    }
-  };
+
+      for(let connector of zone.MicrophoneAssignment.Connectors)
+      {
+        if (zone?.Independent_Rate)
+        {
+          console.debug ("AZM: Assigning unique rate",zone.Independent_Rate,"ms to Zone",zone.Label);
+          if (typeFix != 'ignore') {
+            await xapi.Command.Audio.VuMeter.Start({ ConnectorId: connector.Id, ConnectorType: typeFix, IntervalMs: zone.Independent_Rate, Source: 'AfterAEC' });
+          }        
+        }
+        else{
+          // Use Global Rates
+          await xapi.Command.Audio.VuMeter.Start({ ConnectorId: connector.Id, ConnectorType: typeFix, IntervalMs: AudioConfiguration.Settings.Sample.Rate_In_Ms, Source: 'AfterAEC' });
+
+          console.debug("AZM: Assigning global rate",AudioConfiguration.Settings.Sample.Rate_In_Ms,"ms to zone",zone.Label);
+        }
+      }      
+    }    
+  }
   console.AZM.log(`AZM Monitoring Started${cause ? `. Cause: [${cause}]` : ''}`);
 };
 
@@ -1716,7 +1763,7 @@ AZM.Event.TrackZones.on = function (callBack) {
               console.AZM.error(e)
             }
           }
-        })
+        })        
         console.AZM.info(`Subscription started for [xapi.Event.Audio.Input.Connectors.Ethernet]`)
 
         xapi.Status.Audio.Input.Connectors.Ethernet['*'].StreamName.on(async () => {
@@ -1724,7 +1771,7 @@ AZM.Event.TrackZones.on = function (callBack) {
             return;
           }
           await AZM.Command.Zone.Setup(AudioConfiguration);
-        });
+        });        
         console.AZM.info(`Subscription started for [xapi.Status.Audio.Input.Connectors.Ethernet['*'].StreamName]`)
         break;
       case 'microphone': case 'analog':
@@ -1737,7 +1784,7 @@ AZM.Event.TrackZones.on = function (callBack) {
               console.AZM.error(e)
             }
           }
-        })
+        })        
         console.AZM.info(`Subscription started for [xapi.Event.Audio.Input.Connectors.Microphone]`)
         break
       case 'usb':
@@ -1750,7 +1797,7 @@ AZM.Event.TrackZones.on = function (callBack) {
               console.AZM.error(e)
             }
           }
-        })
+        })        
         console.AZM.info(`Subscription started for [xapi.Event.Audio.Input.Connectors.USBMicrophone]`)
         break;
       case 'externalvumeter': case 'externalgate':
@@ -1767,12 +1814,12 @@ AZM.Event.TrackZones.on = function (callBack) {
   if (allowVoiceActivityDetection) {
     xapi.Status.Audio.Microphones.VoiceActivityDetector.Activity.on(voiceEvent => {
       AZM.Status.VoiceActivity = voiceEvent.toString().toLowerCase() == 'true' ? true : false;
-    });
-    console.AZM.info(`Subscription started for [xapi.Status.Audio.Microphones.VoiceActivityDetector.Activity]`);
+    });    
+  console.AZM.info(`Subscription started for [xapi.Status.Audio.Microphones.VoiceActivityDetector.Activity]`);
   }
 };
 
-console.AZM.info(`Audio Zone Manager Library (AZM_Lib) Documentation -> https://github.com/ctg-tme/audio-zone-manager-library-macro/tree/main`);
-console.AZM.info(`Audio Zone Manager Library (AZM_Lib) Releases -> https://github.com/ctg-tme/audio-zone-manager-library-macro/releases`);
+  console.AZM.info(`Audio Zone Manager Library (AZM_Lib) Documentation -> https://github.com/ctg-tme/audio-zone-manager-library-macro/tree/main`);
+  console.AZM.info(`Audio Zone Manager Library (AZM_Lib) Releases -> https://github.com/ctg-tme/audio-zone-manager-library-macro/releases`);
 
 export { AZM };
