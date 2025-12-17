@@ -156,7 +156,7 @@ Access the end user documentation here: [Admin Guide](https://github.com/Devices
 **Is the blueprint compatible with "Cinematic Meeting" features such as Cross View or Extended Speaker Mode?**
 - TBD, the use of multi-camera cinematic features have not been validated with this blueprint. 
 
-**Does this blueprint support Amplified Audio (in addition to the Quad Camera speakers)?
+**Does this blueprint support Amplified Audio (in addition to the Quad Camera speakers)?**
 - Yes! The use of amplified audio output from the codecs is supported via USB and Analog outputs.
 
 **Does the blueprint support Speaker Reinforcement scenarios?**
