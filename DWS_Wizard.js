@@ -12,10 +12,17 @@ Robert(Bobby) McGonigle Jr
 Chase Voisin
 William Mills
 
-Version: 0.9.6 (Beta)
-
 Complete details for this macro are available on Github:
 https://cs.co/divisibleworkspaceblueprint
+
+//=========================================================================//
+//                        **** ADMIN SETTINGS ****                         //
+//=========================================================================*/
+
+// ONLY CHANGE IF YOU ARE NOT USING THE DEFAULT U:P IN USB CONFIGURATION FILE
+let SETUP_VARIABLES = [];
+SETUP_VARIABLES['SWITCH_USERNAME'] = 'dwsadmin';
+SETUP_VARIABLES['SWITCH_PASSWORD']  = 'D!vi$ible1';
 
 //=========================================================================//
 //                     **** DO NOT EDIT BELOW HERE ****                    //
@@ -24,7 +31,6 @@ https://cs.co/divisibleworkspaceblueprint
 import xapi from 'xapi';
 
 let WIZARD_QUESTIONS = [];
-let SETUP_VARIABLES = [];
 let LOADED_MACROS = [];
 let THIS_PLATFORM;
 
@@ -35,9 +41,9 @@ function init()
   // CHECK PLATFORM COMPATIBILITY
   THIS_PLATFORM = xapi.Status.SystemUnit.ProductPlatform.get()
   .then (platform => {    
-    if(platform != 'Codec Pro' && platform != 'Room Kit EQ')
+    if(platform != 'Codec Pro' && platform != 'Codec Pro G2' && platform != 'Room Kit EQ')
     {    
-      xapi.Command.UserInterface.Message.Alert.Display({ Duration: '0', Title:"Unsupported Product Platform", Text: "The Divisible Workspace Blueprint is only supported on Codec Pro and Codec EQ."}); 
+      xapi.Command.UserInterface.Message.Alert.Display({ Duration: '0', Title:"Unsupported Product Platform", Text: "The Divisible Workspace Blueprint is only supported on Codec Pro, Pro G2 and Codec EQ."}); 
 
       console.error("DWS: Platform not compatible with Divisble Workspace Blueprint. Stopping installation.");
 
@@ -71,7 +77,7 @@ function init()
     {
       xapi.Command.UserInterface.Message.Alert.Display({ Duration: '0', Title:"Unsupported Room Type", Text: "The Divisible Workspace Blueprint is only supported using the Standard Room Type."}); 
 
-      console.error("DWS: Divisble Workspace Blueprint only operates in Standard Room Type. Stopping installation.");
+      console.error("DWS: Divisible Workspace Blueprint only operates in Standard Room Type. Stopping installation.");
 
       // TURN OFF MACRO
       try { xapi.Command.Macros.Macro.Deactivate({ Name: 'DWS_Wizard' }); } catch(error) { console.error('DWS: Error disabling Wizard Macro: ' + error.message); }
@@ -90,7 +96,7 @@ function init()
     {
       xapi.Command.UserInterface.Message.Alert.Display({ Duration: '0', Title:"No Microphones Detected", Text: "The Divisible Workspace Blueprint is requires Cisco Pro Series microphones."}); 
 
-      console.error("DWS: No Microphones Detected. Blueprint is requires Cisco Pro Series microphones. Stopping installation.");
+      console.error("DWS: No Microphones Detected. Blueprint requires Cisco Pro Series microphones. Stopping installation.");
 
       // TURN OFF MACRO
       try { xapi.Command.Macros.Macro.Deactivate({ Name: 'DWS_Wizard' }); } catch(error) { console.error('DWS: Error disabling Wizard Macro: ' + error.message); }
@@ -593,8 +599,6 @@ Robert(Bobby) McGonigle Jr
 Chase Voisin
 William Mills
 
-Version: 0.9.6 (BETA)
-
 Complete details for this macro are available on Github:
 https://cs.co/divisibleworkspaceblueprint
 
@@ -609,8 +613,8 @@ const DEBUG = false;
 const TRACKING_DEBUG = false;
 
 // ONLY CHANGE IF YOU ARE NOT USING THE DEFAULT U:P IN USB CONFIGURATION FILE
-const SWITCH_USERNAME = 'dwsadmin';
-const SWITCH_PASSWORD = 'D!vi$ible1';
+const SWITCH_USERNAME = ${SETUP_VARIABLES['SWITCH_USERNAME']};
+const SWITCH_PASSWORD = ${SETUP_VARIABLES['SWITCH_PASSWORD']};
 
 // ENABLE OR DISABLE THE COMBINED ROOM BANNER ON DISPLAYS
 // ACCEPTED VALUES: true, false
@@ -624,6 +628,7 @@ const AUTO_DUCKING = ${JSON.stringify(SETUP_VARIABLES['dws_setup_ducking'], null
 //                     **** DO NOT EDIT BELOW HERE ****                    //
 //=========================================================================*/
 
+const VERSION = 0.9.7;
 const NWAY = ${JSON.stringify(SETUP_VARIABLES['dws_setup_nway'], null, 2)};
 const SWITCH_TYPE = ${JSON.stringify(SETUP_VARIABLES['dws_setup_switchtype'], null, 2)};
 const MACRO_LOGIN = ${JSON.stringify(SETUP_VARIABLES['dws_setup_login'], null, 2)};
@@ -657,6 +662,7 @@ const MICS_HIGH_NODE2 = 30;
 const PRIMARY_DELAY = 0;
 
 export default {
+  VERSION,
   COMBINED_BANNER,
   DEBUG,
   TRACKING_DEBUG,
@@ -1043,5 +1049,73 @@ let PANEL_NODE2_DETAILS = `<Extensions><Version>1.11</Version><Panel><Order>1</O
 
 let PANEL_SETUP = `<Extensions><Version>1.11</Version><Panel><Order>1</Order><PanelId>dws_wizard_new</PanelId><Origin>local</Origin><Location>HomeScreen</Location><Icon>Custom</Icon><Name>Setup Wizard</Name><ActivityType>Custom</ActivityType><CustomIcon><Content>${WIZARD_ICON}</Content><Id>4f0568a41894116ebce904f8b1004077281643ea28cba96d903078210e434757</Id></CustomIcon><Page><Name>Final Step</Name><Row><Name>Adv. Settings Lock PIN:</Name><Widget><WidgetId>dws_setup_advpin</WidgetId><Name></Name><Type>Text</Type><Options>size=3;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_edit_advpin</WidgetId><Name>Edit</Name><Type>Button</Type><Options>size=1</Options></Widget></Row><Row></Row><Row><Name/><Widget><WidgetId>setup_text</WidgetId><Name>Click Begin Setup to finalize the installation of the Primary and Node codecs based on the details provided. </Name><Type>Text</Type><Options>size=4;fontSize=small;align=center</Options></Widget></Row><Row><Name/><Widget><WidgetId>dws_setup_begin</WidgetId><Name>Begin Setup</Name><Type>Button</Type><Options>size=4</Options></Widget></Row><Row></Row><Row><Name/><Widget><WidgetId>dws_back_setup</WidgetId><Name>Back</Name><Type>Button</Type><Options>size=2</Options></Widget><Widget><WidgetId>widget_310</WidgetId><Type>Spacer</Type><Options>size=2</Options></Widget></Row><PageId>setup_finish</PageId><Options>hideRowNames=0</Options></Page></Panel></Extensions>`;
 
-// START THE MACRO
-init();
+//===============================//
+//  C9K CONFIGURATION FUNCTIONS  //
+//===============================//
+function checkSwitch() 
+{
+  console.log ("DWS: Checking Switch Readiness.");
+
+  xapi.command('HttpClient Get', { 
+    Url: `https://169.254.1.254/restconf/data/Cisco-IOS-XE-native:native/`,
+    Header: [
+      'Accept: application/yang-data+json',
+      `Authorization: Basic ${btoa(`${SETUP_VARIABLES['SWITCH_USERNAME']}:${SETUP_VARIABLES['SWITCH_PASSWORD']}`)}`
+    ],
+    AllowInsecureHTTPS: true
+  })
+  .then(async (response) => {
+    const jsonResponse = JSON.parse(response.Body);
+    const native = jsonResponse['Cisco-IOS-XE-native:native'];
+    const hostname = native['hostname'];
+    const version = native['version'];
+    console.log('Switch detected running IOS-XE ' + version + ' with Hostname:', hostname);
+
+    // SWITCH SOFTWARE VERSION CHECK
+    if (version <= 17.14)
+    {
+      console.warn("DWS: Switch running outdated software. Please upgrade to 17.15 or newer.");
+      xapi.Command.UserInterface.Message.Alert.Display({ Duration: '0', Title:"Error: Incompatible Switch Software", Text: "Switch must be running IOSXE 17.15 or higher. Stopping Setup Wizard."});
+
+      // TURN OFF MACRO
+      try { xapi.Command.Macros.Macro.Deactivate({ Name: 'DWS_Wizard' }); } catch(error) { console.error('DWS: Error disabling Wizard Macro: ' + error.message); }
+      return;
+    }
+    else
+    {
+      await saveSwitch();
+    }
+  })
+  .catch(error => {
+    console.warn('DWS: Switch check failed. Retrying:', error.message);
+    xapi.Command.UserInterface.Message.Alert.Display({ Duration: '25', Title:"Error: Switch Unreachable", Text: "Please ensure switch has been configured and wired to match documentation in the Blueprint. Retrying in 30 seconds."});
+    setTimeout(() => {checkSwitch()}, 30000);
+  });
+}
+
+async function saveSwitch() 
+{
+  // SAVE SWITCH CONFIGURATION
+  xapi.command('HttpClient Post', { 
+    Url: 'https://169.254.1.254/restconf/operations/cisco-ia:save-config/', 
+    Header: [
+      'Content-Type: application/yang-data+json',
+      'Accept: application/yang-data+json',
+      `Authorization: Basic ${btoa(`${SETUP_VARIABLES['SWITCH_USERNAME']}:${SETUP_VARIABLES['SWITCH_PASSWORD']}`)}`
+    ],
+    AllowInsecureHTTPS: true
+  },'')
+  .then(response => {
+    console.log ('DWS: Default switch configuration saved to startup-config.');
+
+    // START THE WIZARD
+    setTimeout(() => { init(), 500});
+  })
+  .catch(error => {
+    console.warn('DWS: Unable to save switch configuration:', error.message);
+    xapi.Command.UserInterface.Message.Alert.Display({ Duration: '60', Title:"Error: Switch Configuration Not Saved", Text: "Check Macro Logs for more details."});
+  });
+}
+
+// CHECK FOR VALID SWITCH CONNECTION 
+checkSwitch();

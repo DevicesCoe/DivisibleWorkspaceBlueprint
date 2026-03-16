@@ -7,15 +7,14 @@ Important Considerations:
 - The Divisible Workspace Blueprint is provided **AS IS**, please reference the license included in this repository.
 
 The solution leverages the following: 
-- Cisco Codec EQs or Codec Pros
+- Cisco Codec EQ, Codec Pro, Codec Pro G2
 - Cisco Table or Ceiling Microphone Pros (up to 8)
 - Cisco Room Vision PTZ / Cisco PTZ4K Cameras
-- Cisco Catalyst 9K Series Switches  
-- Additional Macros including [Audio Zone Manager Library](https://github.com/ctg-tme/audio-zone-manager-library-macro?tab=readme-ov-file)
-- Certified HDMI Distrubution Amplifiers: [Certified Third Party Devices](https://help.webex.com/en-us/article/7sw4gab/Cisco-collaboration-devices-certification-program)
+- Cisco Catalyst 9K Series Switches (**Minimum Switch Software: IOS XE 17.15**)
+- Third Party HDMI Distribution Amplifiers
 
-| Minimum RoomOS Version | Webex Cloud | Webex Edge (Hybrid Cloud) | On-Premise | Microsoft Teams Room<br>On Cisco Devices |
-|:-----------------------|:------------|:--------------------------|:-----------|:-----------------------------------------|
+| Minimum RoomOS Version | Webex Cloud | Webex Edge (Hybrid Cloud) | On-Premise | Microsoft Teams Room |
+|:-----------------------|:------------|:--------------------------|:-----------|:---------------------|
 | 11.31 | ✅ Yes      | ✅ Yes                    | ✅ Yes     | ❌ Not Supported   | 
 
 The Divisible Workspace Blueprint is compatible with Room OS 26!
@@ -61,6 +60,7 @@ The Divisible Workspace Blueprint is compatible with Room OS 26!
 
 This blueprint has been validated with following Codecs:
 - Codec Pro
+- Codec Pro G2
 - Codec EQ (AV Integrator license required on Primary)
 
 The following Cameras have been validated:
@@ -81,6 +81,8 @@ The following models (SKUs) of switches have been validated:
 - C9200-24P-E
 - C9300-24P-E
 
+**Minimum Switch Software: IOS XE 17.15**
+
 ## Installation: [Top](#table-of-contents)
 
 ### Installation Guides
@@ -92,7 +94,6 @@ Cloud & Hybrid (Control Hub) registration **with network access** to GitHub: [Cl
 On-premise registration (CUCM or Expressway) **with network access** to GitHub: [Premise Install Guide](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/PremiseInstallationGuide.pdf)
 
 Any registration <ins>**without**</ins> network access to GitHub: [Network Restricted Install Guide](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/NetworkRestrictedInstallationGuide.pdf)
-
 
 ### Wire Diagrams
 These tables provides the supported combinations of codecs and number of secondary displays and their respective wiring diagram.
@@ -142,7 +143,7 @@ Access the end user documentation here: [Admin Guide](https://github.com/Devices
 - **No.** This repository is a custom blueprint and is not supported through Cisco Technical Assistance Center. Implementation, troubleshooting and support is the express responsibility of the end customer and/or AV Integrator.
 
 **Do I need the AV Integrator Option Key / License?**
-- Yes! You will require the AV Integrator Option Key to be purchased and installed on the **Primary** Codec EQ. It is not required on any node Codec EQs. This is **not** required for Codec Pro (as this functionality is already included).
+- Yes! You will require the AV Integrator Option Key to be purchased and installed on the **Primary** Codec EQ. It is not required on any node Codec EQs. This is **not** required for Codec Pro/Pro G2 (as this functionality is already included).
 
 **How many Microphone Pros (Ceiling and Table) can I use in each room?**
 - Combined mode operation can support a maximum of 8 microphones. They can be split amongst either room during split operation in any variation.
@@ -160,7 +161,7 @@ Access the end user documentation here: [Admin Guide](https://github.com/Devices
 - Yes! The use of amplified audio output from the codecs is supported via USB and Analog outputs.
 
 **Does the blueprint support Speaker Reinforcement scenarios?**
-- Speaker reinforcement (projecting the presenters voice over amplified speakers in the same room) is supported by leveraging automatic microphone ducking (lowering/raising the gain of the Cisco Ceiling Microphones when the presenter speaks into the third party USB or analog microphones) or manual toggling of presenter or audience microphones using in call controls.
+- Speaker reinforcement (projecting the presenters voice over amplified speakers in the same room) is supported by leveraging automatic microphone ducking (lowering/raising the gain of the Cisco Ceiling Microphones when the presenter speaks into the third party USB or analog microphones) or manual toggling of presenter or audience microphones using in call controls. Third Party audio systems are responsible for handling the in-room reinforcement.
 
 **Where is the Partition Sensor?**
 - This blueprint does not leverage a partition sensor. The Combine/Split operation is manually controlled by the end user.

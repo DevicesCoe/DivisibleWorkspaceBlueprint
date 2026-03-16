@@ -12,8 +12,6 @@ Robert(Bobby) McGonigle Jr
 Chase Voisin
 William Mills
 
-Version: 0.9.6 (Beta)
-
 Complete details for this macro are available on Github:
 https://cs.co/divisibleworkspaceblueprint
 
@@ -52,6 +50,9 @@ let DWS_NODE2_MICS = 0;
 let DWS_HOLD_TIME;
 let DWS_LAST_CAMERA;
 let DWS_DUCK_STATE = 'Unducked';
+let SWITCH_MODEL;
+let SWITCH_SERIAL;
+let SWITCH_SOFTWARE;
 
 let DWS_NODE1_MICS = DWS.NODE1_MICS.length;
 
@@ -195,6 +196,49 @@ function init() {
   }
 
   console.log ("DWS: Initialization complete.")
+
+  //=====================================//
+  //  EVENT LISTENER FOR STANDBY STATES  //
+  //=====================================//
+  xapi.Status.Standby.State.on(state => {
+    if (state == 'Halfwake')
+    {
+      // ACTIVATE REMOTE SLEEPMODE
+      sendMessage(DWS.NODE1_HOST, "Halfwake");
+      if (DWS.NWAY == 'Three Way')
+      {
+        sendMessage(DWS.NODE2_HOST, "Halfwake");
+      }
+    }
+    else if (state == 'EnteringStandby' || state == 'Standby')
+    {
+      // ACTIVATE REMOTE SLEEPMODE
+      sendMessage(DWS.NODE1_HOST, "Standby");
+      if (DWS.NWAY == 'Three Way')
+      {
+        sendMessage(DWS.NODE2_HOST, "Standby");
+      }
+    }
+    else if (state == 'Off')
+    {
+      // ACTIVATE REMOTE SLEEPMODE
+      sendMessage(DWS.NODE1_HOST, "Awake");
+      if (DWS.NWAY == 'Three Way')
+      {
+        sendMessage(DWS.NODE2_HOST, "Awake");
+      }
+    }
+  })
+
+  //======================================//
+  //  EVENT LISTENER FOR VOLUME MATCHING  //
+  //======================================//
+  xapi.Status.Audio.Volume.on(volume => {
+    if (DWS_CUR_STATE == 'Combined All' || DWS_CUR_STATE == 'Combined Node1' || DWS_CUR_STATE == 'Combined Node2')
+    {
+      sendMessage(DWS.NODE1_HOST,"Volume:"+volume);
+    }
+  })
 
   //=======================================//
   //  EVENT LISTENER FOR IN CALL CONTROLS  //
@@ -408,7 +452,7 @@ function init() {
         }
         else
         {
-          xapi.Command.UserInterface.Message.Alert.Display({ Duration: '15', Title:"Configuration Required", Text: "Presenter Track has not been configured. Please contact your administrator."});
+          xapi.Command.UserInterface.Message.Alert.Display({ PeripheralId: event.PeripheralId, Duration: '15', Title:"Configuration Required", Text: "Presenter Track has not been configured. Please contact your administrator."});
         }
       })
       .catch(error => {
@@ -432,7 +476,7 @@ function init() {
 
           if(DWS.NWAY == 'Three Way' && DWS_COMBINE_NODE1 == 'off' && DWS_COMBINE_NODE2 == 'off')
           {
-            xapi.Command.UserInterface.Message.Alert.Display({ Duration: '0', Title:"Selection Required", Text: "Please select one or more Workspace(s)."});
+            xapi.Command.UserInterface.Message.Alert.Display({ Duration: '0', PeripheralId: event.PeripheralId, Title:"Selection Required", Text: "Please select one or more Workspace(s)."});
             break;
           }
           else if(DWS.NWAY == 'Three Way' && DWS_COMBINE_NODE1 == 'on' && DWS_COMBINE_NODE2 == 'on')
@@ -441,7 +485,7 @@ function init() {
             if(checkActivity('All'))
             {
               // CONFIRM THE ACTION WITH THE END USER
-              xapi.Command.UserInterface.Message.Prompt.Display({ FeedbackId: 'confirmCombine', "Option.1": "Yes", "Option.2": "No", Text: 'This process takes approximately 2 minutes to complete. Do you want to proceed?', Title: 'Confirm Combine Room Request' })
+              xapi.Command.UserInterface.Message.Prompt.Display({ PeripheralId: event.PeripheralId, FeedbackId: 'confirmCombine', "Option.1": "Yes", "Option.2": "No", Text: 'This process takes approximately 2 minutes to complete. Do you want to proceed?', Title: 'Confirm Combine Room Request' })
             }
           }
           else if (DWS.NWAY == 'Three Way' && DWS_COMBINE_NODE1 == 'on' && DWS_COMBINE_NODE2 == 'off')
@@ -450,7 +494,7 @@ function init() {
             if(checkActivity('Node1'))
             {
               // CONFIRM THE ACTION WITH THE END USER
-              xapi.Command.UserInterface.Message.Prompt.Display({ FeedbackId: 'confirmCombine', "Option.1": "Yes", "Option.2": "No", Text: 'This process takes approximately 2 minutes to complete. Do you want to proceed?', Title: 'Confirm Combine Room Request' })
+              xapi.Command.UserInterface.Message.Prompt.Display({ PeripheralId: event.PeripheralId, FeedbackId: 'confirmCombine', "Option.1": "Yes", "Option.2": "No", Text: 'This process takes approximately 2 minutes to complete. Do you want to proceed?', Title: 'Confirm Combine Room Request' })
             }
           }
           else if (DWS.NWAY == 'Three Way' && DWS_COMBINE_NODE1 == 'off' && DWS_COMBINE_NODE2 == 'on')
@@ -459,7 +503,7 @@ function init() {
             if(checkActivity('Node2'))
             {
               // CONFIRM THE ACTION WITH THE END USER
-              xapi.Command.UserInterface.Message.Prompt.Display({ FeedbackId: 'confirmCombine', "Option.1": "Yes", "Option.2": "No", Text: 'This process takes approximately 2 minutes to complete. Do you want to proceed?', Title: 'Confirm Combine Room Request' })
+              xapi.Command.UserInterface.Message.Prompt.Display({ PeripheralId: event.PeripheralId, FeedbackId: 'confirmCombine', "Option.1": "Yes", "Option.2": "No", Text: 'This process takes approximately 2 minutes to complete. Do you want to proceed?', Title: 'Confirm Combine Room Request' })
             }
           }
           else
@@ -468,7 +512,7 @@ function init() {
             if(checkActivity('Node1'))
             {
               // CONFIRM THE ACTION WITH THE END USER
-              xapi.Command.UserInterface.Message.Prompt.Display({ FeedbackId: 'confirmCombine', "Option.1": "Yes", "Option.2": "No", Text: 'This process takes approximately 2 minutes to complete. Do you want to proceed?', Title: 'Confirm Combine Room Request' })
+              xapi.Command.UserInterface.Message.Prompt.Display({ PeripheralId: event.PeripheralId, FeedbackId: 'confirmCombine', "Option.1": "Yes", "Option.2": "No", Text: 'This process takes approximately 2 minutes to complete. Do you want to proceed?', Title: 'Confirm Combine Room Request' })
             }
 
             // DEFAULT NODE 1 ON FOR TWO WAY TRIGGERS
@@ -493,7 +537,7 @@ function init() {
           if (DWS.DEBUG) {console.debug("DWS: Split requested. Confirming with user before beginning.")};
 
           // CONFIRM THE ACTION WITH THE END USER
-          xapi.Command.UserInterface.Message.Prompt.Display({ FeedbackId: 'confirmSplit', "Option.1": "Yes", "Option.2": "No", Text: 'This process takes approximately 2 minutes to complete. Do you want to proceed?', Title: 'Confirm Split Room Request' })
+          xapi.Command.UserInterface.Message.Prompt.Display({ PeripheralId: event.PeripheralId, FeedbackId: 'confirmSplit', "Option.1": "Yes", "Option.2": "No", Text: 'This process takes approximately 2 minutes to complete. Do you want to proceed?', Title: 'Confirm Split Room Request' })
           break;
 
         //===================================//
@@ -505,6 +549,7 @@ function init() {
           // TRIGGER PIN CHALLENGE - IF SUCCESSFUL WILL TRIGGER BASED ON FEEDBACK REGISTER FOR FEEDBACKID.
           xapi.Command.UserInterface.Message.TextInput.Display({
             Title: `Unlock Advanced Settings`,
+            PeripheralId: event.PeripheralId,
             Text: 'Enter the Unlock PIN:',
             Placeholder: 'Enter the PIN set during installation.',
             InputType: 'PIN',
@@ -518,6 +563,7 @@ function init() {
           // PROMPT THE USER FOR THE NEW DEFAULT
           xapi.Command.UserInterface.Message.Prompt.Display({
             Title: `Default Automation Mode`,
+            PeripheralId: event.PeripheralId,
             Text: 'Select your new default automation mode for combined state.',
             FeedbackId: 'changeAutomation',
             "Option.1": "On",
@@ -531,6 +577,7 @@ function init() {
           // PROMPT THE USER FOR THE NEW DEFAULT
           xapi.Command.UserInterface.Message.Prompt.Display({
             Title: `Default Ducking Mode`,
+            PeripheralId: event.PeripheralId,
             Text: 'Select the default mode for Automatic Microphone Ducking.',
             FeedbackId: 'changeDucking',
             "Option.1": "On",
@@ -686,6 +733,13 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
         // UPDATE CURRENT STATE
         DWS_CUR_STATE = "Combined All";
 
+        // SET VOLUME ON NODES TO MATCH
+        xapi.Status.Audio.Volume.get()
+        .then(volume => {
+          sendMessage(DWS.NODE1_HOST,"Volume:"+volume);
+          sendMessage(DWS.NODE2_HOST,"Volume:"+volume);
+        })
+
         // UPDATE VLANS FOR ACCESSORIES
         setVLANs('Combined All');
 
@@ -707,6 +761,12 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
 
         // UPDATE CURRENT STATE
         DWS_CUR_STATE = "Combined Node1";
+
+        // SET VOLUME ON NODES TO MATCH
+        xapi.Status.Audio.Volume.get()
+        .then(volume => {
+          sendMessage(DWS.NODE1_HOST,"Volume:"+volume);
+        })        
 
         // UPDATE VLANS FOR ACCESSORIES
         setVLANs('Combined Node1');
@@ -730,6 +790,12 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
         // UPDATE CURRENT STATE
         DWS_CUR_STATE = "Combined Node2";
 
+        // SET VOLUME ON NODES TO MATCH
+        xapi.Status.Audio.Volume.get()
+        .then(volume => {
+          sendMessage(DWS.NODE2_HOST,"Volume:"+volume);
+        })
+
         // UPDATE VLANS FOR ACCESSORIES
         setVLANs('Combined Node2');
 
@@ -752,6 +818,12 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
 
       // UPDATE CURRENT STATE
       DWS_CUR_STATE = "Combined Node1";
+
+      // SET VOLUME ON NODES TO MATCH
+      xapi.Status.Audio.Volume.get()
+        .then(volume => {
+          sendMessage(DWS.NODE1_HOST,"Volume:"+volume);
+        })
 
       // UPDATE VLANS FOR ACCESSORIES
       setVLANs('Combined Node1');
@@ -891,6 +963,18 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
 
     // UPDATE CURRENT STATE
     DWS_CUR_STATE = "Split";
+
+    // RESET MICROPHONE MODES TO ENSURE ACTIVE STATE 
+    try
+    { 
+      for(let i = 1; i < 9; i++)
+      {
+        xapi.Config.Audio.Input.Ethernet[i].Mode.set("On");
+      }   
+    }
+    catch(error) {
+      console.error('DWS: Error Setting Microphone Mode: ' + error.message); 
+    }  
 
     // STOP AZM
     AZM.Command.Zone.Monitor.Stop();
@@ -1058,7 +1142,7 @@ function extractTagValue(xml, tag)
 //=================================//
 function registerLinkLocal() 
 {
-  const url = `https://169.254.1.254/restconf/data/Cisco-IOS-XE-device-hardware-oper:device-hardware-data/device-hardware/device-inventory/`;
+  const url = `https://169.254.1.254/restconf/data/Cisco-IOS-XE-device-hardware-oper:device-hardware-data`;
 
   xapi.Command.HttpClient.Get({ 
     Url: url, 
@@ -1069,22 +1153,20 @@ function registerLinkLocal()
     ],
     AllowInsecureHTTPS: true
   })
-  .then(response => {
+  .then(function(response) {
+    
     const jsonResponse = JSON.parse(response.Body);
-    const hostname = jsonResponse['Cisco-IOS-XE-device-hardware-oper:device-inventory'];
-    let result = [];
+    const switchDetails = jsonResponse['Cisco-IOS-XE-device-hardware-oper:device-hardware-data'];
 
-    for(var i in hostname)
-      for(var d in hostname[i])
-        result.push([hostname[i][d]])
-
-    let SWITCH_MODEL = result[3];
-    let SWITCH_SERIAL = result[4];
+    SWITCH_MODEL = switchDetails["device-hardware"]["device-inventory"][0]["part-number"];
+    SWITCH_SERIAL = switchDetails["device-hardware"]["device-inventory"][0]["serial-number"];
+    SWITCH_SOFTWARE = switchDetails["device-hardware"]["device-system-data"]["software-version"].match(/Version\s+(\d+\.\d+\.\d+)/);
 
     if (DWS.DEBUG) {console.debug("DWS: Link Local Switch Serial:", SWITCH_SERIAL)};
     if (DWS.DEBUG) {console.debug("DWS: Link Local Switch Model:", SWITCH_MODEL)};
+    if (DWS.DEBUG) {console.debug("DWS: Link Local Switch Software:", SWITCH_SOFTWARE[1])};
 
-    xapi.Command.Peripherals.Connect({ HardwareInfo: SWITCH_MODEL, ID: SWITCH_SERIAL, Name: SWITCH_MODEL, NetworkAddress: "169.254.1.254", SerialNumber: SWITCH_SERIAL, Type: 'ControlSystem' })
+    xapi.Command.Peripherals.Connect({ HardwareInfo: SWITCH_MODEL, ID: SWITCH_SERIAL, Name: SWITCH_MODEL, SoftwareInfo: SWITCH_SOFTWARE, NetworkAddress: "169.254.1.254", SerialNumber: SWITCH_SERIAL, Type: 'ControlSystem' })
     .then (() => {
       if (DWS.DEBUG) {console.debug('DWS: Link Local Switch registered to Control Hub.')};
 
@@ -1106,7 +1188,7 @@ function registerLinkLocal()
 
     // WAIT 5 MINUTES THEN RERUN THIS SAME FUNCTION
       setTimeout (() => { registerLinkLocal() }, 300000);
-  });
+  }); 
 }
 
 //====================================//
@@ -1168,8 +1250,6 @@ Robert(Bobby) McGonigle Jr
 Chase Voisin
 William Mills
 
-Version: 0.9.6 (BETA)
-
 Complete details for this macro are available on Github:
 https://cs.co/divisibleworkspaceblueprint
 
@@ -1199,6 +1279,7 @@ const AUTO_DUCKING = ${JSON.stringify(DWS_ADV_DUCKING, null, 2)};
 //                     **** DO NOT EDIT BELOW HERE ****                    //
 //=========================================================================*/
 
+const VERSION = 0.9.7;
 const NWAY = ${JSON.stringify(DWS.NWAY, null, 2)};
 const SWITCH_TYPE = ${JSON.stringify(DWS.SWITCH_TYPE, null, 2)};
 const MACRO_LOGIN = ${JSON.stringify(DWS.MACRO_LOGIN, null, 2)};
@@ -1230,6 +1311,7 @@ const MICS_HIGH_NODE2 = ${DWS_ADV_HIGH_NODE2};
 const PRIMARY_DELAY = ${DWS_ADV_PRI_DELAY};
 
 export default {
+  VERSION,
   COMBINED_BANNER,
   DEBUG,
   TRACKING_DEBUG,
@@ -1295,8 +1377,6 @@ Svein Terje Steffensen
 Robert(Bobby) McGonigle Jr
 Chase Voisin
 William Mills
-
-Version: 0.9.6 (BETA)
 
 Complete details for this macro are available on Github:
 https://cs.co/divisibleworkspaceblueprint
@@ -1548,9 +1628,9 @@ async function setVLANs(state) {
     {
       const payload = {
         "Cisco-IOS-XE-native:GigabitEthernet":[
-          {"name":"1/0/5","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
-          {"name":"1/0/6","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
-          {"name":"1/0/7","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}
+          {"name":"1/0/5","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
+          {"name":"1/0/6","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
+          {"name":"1/0/7","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}}
         ]
       };
       await submitRESTCONF(payload)
@@ -1562,9 +1642,9 @@ async function setVLANs(state) {
     {
       const payload = {
         "Cisco-IOS-XE-native:GigabitEthernet":[
-          {"name":"1/0/5","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}},
-          {"name":"1/0/6","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}},
-          {"name":"1/0/7","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}}
+          {"name":"1/0/5","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}}},
+          {"name":"1/0/6","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}}},
+          {"name":"1/0/7","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}}}
         ]
       };
       await submitRESTCONF(payload)
@@ -1582,12 +1662,12 @@ async function setVLANs(state) {
       {
         const payload = {
           "Cisco-IOS-XE-native:GigabitEthernet":[
-            {"name":"1/0/5","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
-            {"name":"1/0/6","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
-            {"name":"1/0/7","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
-            {"name":"1/0/9","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
-            {"name":"1/0/10","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
-            {"name":"1/0/11","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}
+            {"name":"1/0/5","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
+            {"name":"1/0/6","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
+            {"name":"1/0/7","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
+            {"name":"1/0/9","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
+            {"name":"1/0/10","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
+            {"name":"1/0/11","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}}
           ]
         };
         await submitRESTCONF(payload)
@@ -1600,9 +1680,9 @@ async function setVLANs(state) {
       {
         const payload = {
           "Cisco-IOS-XE-native:GigabitEthernet":[
-            {"name":"1/0/5","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
-            {"name":"1/0/6","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
-            {"name":"1/0/7","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
+            {"name":"1/0/5","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
+            {"name":"1/0/6","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
+            {"name":"1/0/7","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}}
           ]
         };
         await submitRESTCONF(payload)
@@ -1614,9 +1694,9 @@ async function setVLANs(state) {
       {
         const payload = {
           "Cisco-IOS-XE-native:GigabitEthernet":[
-            {"name":"1/0/9","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
-            {"name":"1/0/10","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
-            {"name":"1/0/11","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
+            {"name":"1/0/9","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
+            {"name":"1/0/10","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
+            {"name":"1/0/11","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}}
           ]
         };
         await submitRESTCONF(payload)
@@ -1628,12 +1708,12 @@ async function setVLANs(state) {
       {
         const payload = {
           "Cisco-IOS-XE-native:GigabitEthernet":[
-            {"name":"1/0/5","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}},
-            {"name":"1/0/6","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}},
-            {"name":"1/0/7","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}},
-            {"name":"1/0/9","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE2_VLAN}}}},
-            {"name":"1/0/10","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE2_VLAN}}}},
-            {"name":"1/0/11","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE2_VLAN}}}}
+            {"name":"1/0/5","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}}},
+            {"name":"1/0/6","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}}},
+            {"name":"1/0/7","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}}},
+            {"name":"1/0/9","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE2_VLAN}}}}},
+            {"name":"1/0/10","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE2_VLAN}}}}},
+            {"name":"1/0/11","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE2_VLAN}}}}}
           ]
         };
         await submitRESTCONF(payload)
@@ -1650,11 +1730,11 @@ async function setVLANs(state) {
       {
         const payload = {
           "Cisco-IOS-XE-native:GigabitEthernet":[
-            {"name":"1/0/7","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
-            {"name":"1/0/8","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
-            {"name":"1/0/9","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
-            {"name":"1/0/10","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
-            {"name":"1/0/11","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}
+            {"name":"1/0/7","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
+            {"name":"1/0/8","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
+            {"name":"1/0/9","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
+            {"name":"1/0/10","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
+            {"name":"1/0/11","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}}
           ]
         };
         await submitRESTCONF(payload)
@@ -1666,11 +1746,11 @@ async function setVLANs(state) {
       {
         const payload = {
           "Cisco-IOS-XE-native:GigabitEthernet":[
-            {"name":"1/0/7","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}},
-            {"name":"1/0/8","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}},
-            {"name":"1/0/9","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}},
-            {"name":"1/0/10","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}},
-            {"name":"1/0/11","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}}
+            {"name":"1/0/7","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}}},
+            {"name":"1/0/8","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}}},
+            {"name":"1/0/9","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}}},
+            {"name":"1/0/10","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}}},
+            {"name":"1/0/11","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}}}
           ]
         };
         await submitRESTCONF(payload)
@@ -1688,20 +1768,20 @@ async function setVLANs(state) {
       {
         const payload = {
           "Cisco-IOS-XE-native:GigabitEthernet":[
-            {"name":"1/0/9","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
-            {"name":"1/0/10","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
-            {"name":"1/0/11","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
-            {"name":"1/0/12","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
-            {"name":"1/0/13","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
-            {"name":"1/0/14","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
-            {"name":"1/0/15","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},            
-            {"name":"1/0/17","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
-            {"name":"1/0/18","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
-            {"name":"1/0/19","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
-            {"name":"1/0/20","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
-            {"name":"1/0/21","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
-            {"name":"1/0/22","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
-            {"name":"1/0/23","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}
+            {"name":"1/0/9","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
+            {"name":"1/0/10","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
+            {"name":"1/0/11","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
+            {"name":"1/0/12","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
+            {"name":"1/0/13","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
+            {"name":"1/0/14","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
+            {"name":"1/0/15","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},            
+            {"name":"1/0/17","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
+            {"name":"1/0/18","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
+            {"name":"1/0/19","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
+            {"name":"1/0/20","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
+            {"name":"1/0/21","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
+            {"name":"1/0/22","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
+            {"name":"1/0/23","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}}
           ]
         };
         await submitRESTCONF(payload)
@@ -1714,13 +1794,13 @@ async function setVLANs(state) {
       {
         const payload = {
           "Cisco-IOS-XE-native:GigabitEthernet":[
-            {"name":"1/0/9","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
-            {"name":"1/0/10","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
-            {"name":"1/0/11","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
-            {"name":"1/0/12","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
-            {"name":"1/0/13","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
-            {"name":"1/0/14","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
-            {"name":"1/0/15","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}
+            {"name":"1/0/9","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
+            {"name":"1/0/10","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
+            {"name":"1/0/11","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
+            {"name":"1/0/12","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
+            {"name":"1/0/13","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
+            {"name":"1/0/14","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
+            {"name":"1/0/15","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}}
           ]
         };
         await submitRESTCONF(payload)
@@ -1732,13 +1812,13 @@ async function setVLANs(state) {
       {
         const payload = {
           "Cisco-IOS-XE-native:GigabitEthernet":[
-            {"name":"1/0/17","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
-            {"name":"1/0/18","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
-            {"name":"1/0/19","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
-            {"name":"1/0/20","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
-            {"name":"1/0/21","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
-            {"name":"1/0/22","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
-            {"name":"1/0/23","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}
+            {"name":"1/0/17","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
+            {"name":"1/0/18","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
+            {"name":"1/0/19","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
+            {"name":"1/0/20","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
+            {"name":"1/0/21","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
+            {"name":"1/0/22","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
+            {"name":"1/0/23","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}}
           ]
         };
         await submitRESTCONF(payload)
@@ -1751,20 +1831,20 @@ async function setVLANs(state) {
       {
         const payload = {
           "Cisco-IOS-XE-native:GigabitEthernet":[
-            {"name":"1/0/9","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}},
-            {"name":"1/0/10","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}},
-            {"name":"1/0/11","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}},
-            {"name":"1/0/12","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}},
-            {"name":"1/0/13","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}},
-            {"name":"1/0/14","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}},
-            {"name":"1/0/15","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}},
-            {"name":"1/0/17","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE2_VLAN}}}},
-            {"name":"1/0/18","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE2_VLAN}}}},
-            {"name":"1/0/19","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE2_VLAN}}}},
-            {"name":"1/0/20","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE2_VLAN}}}},
-            {"name":"1/0/21","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE2_VLAN}}}},
-            {"name":"1/0/22","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE2_VLAN}}}},
-            {"name":"1/0/23","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE2_VLAN}}}}
+            {"name":"1/0/9","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}}},
+            {"name":"1/0/10","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}}},
+            {"name":"1/0/11","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}}},
+            {"name":"1/0/12","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}}},
+            {"name":"1/0/13","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}}},
+            {"name":"1/0/14","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}}},
+            {"name":"1/0/15","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}}},
+            {"name":"1/0/17","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE2_VLAN}}}}},
+            {"name":"1/0/18","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE2_VLAN}}}}},
+            {"name":"1/0/19","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE2_VLAN}}}}},
+            {"name":"1/0/20","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE2_VLAN}}}}},
+            {"name":"1/0/21","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE2_VLAN}}}}},
+            {"name":"1/0/22","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE2_VLAN}}}}},
+            {"name":"1/0/23","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE2_VLAN}}}}}
           ]
         };
         await submitRESTCONF(payload)
@@ -1781,17 +1861,17 @@ async function setVLANs(state) {
       {
         const payload = {
           "Cisco-IOS-XE-native:GigabitEthernet":[
-            {"name":"1/0/13","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
-            {"name":"1/0/14","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
-            {"name":"1/0/15","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
-            {"name":"1/0/16","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
-            {"name":"1/0/17","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
-            {"name":"1/0/18","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
-            {"name":"1/0/19","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
-            {"name":"1/0/20","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
-            {"name":"1/0/21","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
-            {"name":"1/0/22","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}},
-            {"name":"1/0/23","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}
+            {"name":"1/0/13","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
+            {"name":"1/0/14","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
+            {"name":"1/0/15","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
+            {"name":"1/0/16","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
+            {"name":"1/0/17","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
+            {"name":"1/0/18","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
+            {"name":"1/0/19","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
+            {"name":"1/0/20","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
+            {"name":"1/0/21","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
+            {"name":"1/0/22","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
+            {"name":"1/0/23","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}}
           ]
         };
         await submitRESTCONF(payload)
@@ -1803,17 +1883,17 @@ async function setVLANs(state) {
       {
         const payload = {
           "Cisco-IOS-XE-native:GigabitEthernet":[
-            {"name":"1/0/13","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}},
-            {"name":"1/0/14","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}},
-            {"name":"1/0/15","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}},
-            {"name":"1/0/16","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}},
-            {"name":"1/0/17","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}},
-            {"name":"1/0/18","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}},
-            {"name":"1/0/19","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}},
-            {"name":"1/0/20","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}},
-            {"name":"1/0/21","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}},
-            {"name":"1/0/22","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}},
-            {"name":"1/0/23","switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}}
+            {"name":"1/0/13","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}}},
+            {"name":"1/0/14","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}}},
+            {"name":"1/0/15","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}}},
+            {"name":"1/0/16","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}}},
+            {"name":"1/0/17","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}}},
+            {"name":"1/0/18","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}}},
+            {"name":"1/0/19","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}}},
+            {"name":"1/0/20","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}}},
+            {"name":"1/0/21","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}}},
+            {"name":"1/0/22","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}}},
+            {"name":"1/0/23","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}}}
           ]
         };
         await submitRESTCONF(payload)
@@ -2182,12 +2262,9 @@ function startAZMZoneListener()
 
 function startCallListener() 
 {
-  if (DWS_CUR_STATE == 'Combined All' || DWS_CUR_STATE == 'Combined Node1' || DWS_CUR_STATE == 'Combined Node2')
-  {
-    // LISTEN TO CALL STATUS
-    xapi.Status.SystemUnit.State.NumberOfActiveCalls.on(handleCallStatus)
-    startCallListener = () => void 0;
-  }
+  // LISTEN TO CALL STATUS
+  xapi.Status.SystemUnit.State.NumberOfActiveCalls.on(handleCallStatus)
+  startCallListener = () => void 0;
 }
 
 async function handleAZMZoneEvents(event) 
@@ -2214,17 +2291,17 @@ async function handleAZMZoneEvents(event)
       {
         if (DWS.PLATFORM == 'Codec Pro')
         {
-          xapi.Config.Audio.Input.Ethernet[MIC_INPUT].Channel[1].Level.set("0"); 
-          xapi.Config.Audio.Input.Ethernet[MIC_INPUT].Channel[2].Level.set("0");
-          xapi.Config.Audio.Input.Ethernet[MIC_INPUT].Channel[3].Level.set("0"); 
-          xapi.Config.Audio.Input.Ethernet[MIC_INPUT].Channel[4].Level.set("0");
+          try { xapi.Config.Audio.Input.Ethernet[MIC_INPUT].Channel[1].Level.set("0"); } catch {e => console.log("Error setting Gain:",e)}          
+          try { xapi.Config.Audio.Input.Ethernet[MIC_INPUT].Channel[2].Level.set("0"); } catch {e => console.log("Error setting Gain:",e)}           
+          try { xapi.Config.Audio.Input.Ethernet[MIC_INPUT].Channel[3].Level.set("0"); } catch {e => console.log("Error setting Gain:",e)}          
+          try { xapi.Config.Audio.Input.Ethernet[MIC_INPUT].Channel[4].Level.set("0"); } catch {e => console.log("Error setting Gain:",e)} 
         }
         else
         {
-          try { xapi.Config.Audio.Input.Ethernet[MIC_INPUT].Channel[1].Gain.set("0") } catch {e => console.log("Error setting Gain:",e)} 
-          xapi.Config.Audio.Input.Ethernet[MIC_INPUT].Channel[2].Gain.set("0");
-          xapi.Config.Audio.Input.Ethernet[MIC_INPUT].Channel[3].Gain.set("0"); 
-          xapi.Config.Audio.Input.Ethernet[MIC_INPUT].Channel[4].Gain.set("0");
+          try { xapi.Config.Audio.Input.Ethernet[MIC_INPUT].Channel[1].Gain.set("0"); } catch {e => console.log("Error setting Gain:",e)}          
+          try { xapi.Config.Audio.Input.Ethernet[MIC_INPUT].Channel[2].Gain.set("0"); } catch {e => console.log("Error setting Gain:",e)}           
+          try { xapi.Config.Audio.Input.Ethernet[MIC_INPUT].Channel[3].Gain.set("0"); } catch {e => console.log("Error setting Gain:",e)}          
+          try { xapi.Config.Audio.Input.Ethernet[MIC_INPUT].Channel[4].Gain.set("0"); } catch {e => console.log("Error setting Gain:",e)} 
         }
       }
       // SET CURRENT DUCK STATE
@@ -2239,17 +2316,17 @@ async function handleAZMZoneEvents(event)
       {
         if (DWS.PLATFORM == 'Codec Pro')
         {
-          xapi.Config.Audio.Input.Ethernet[MIC_INPUT].Channel[1].Level.set("45"); 
-          xapi.Config.Audio.Input.Ethernet[MIC_INPUT].Channel[2].Level.set("45");
-          xapi.Config.Audio.Input.Ethernet[MIC_INPUT].Channel[3].Level.set("45"); 
-          xapi.Config.Audio.Input.Ethernet[MIC_INPUT].Channel[4].Level.set("45");
+          try { xapi.Config.Audio.Input.Ethernet[MIC_INPUT].Channel[1].Level.set("45"); } catch {e => console.log("Error setting Gain:",e)}          
+          try { xapi.Config.Audio.Input.Ethernet[MIC_INPUT].Channel[2].Level.set("45"); } catch {e => console.log("Error setting Gain:",e)}           
+          try { xapi.Config.Audio.Input.Ethernet[MIC_INPUT].Channel[3].Level.set("45"); } catch {e => console.log("Error setting Gain:",e)}          
+          try { xapi.Config.Audio.Input.Ethernet[MIC_INPUT].Channel[4].Level.set("45"); } catch {e => console.log("Error setting Gain:",e)} 
         }
         else
         {
-          xapi.Config.Audio.Input.Ethernet[MIC_INPUT].Channel[1].Gain.set("45"); 
-          xapi.Config.Audio.Input.Ethernet[MIC_INPUT].Channel[2].Gain.set("45");
-          xapi.Config.Audio.Input.Ethernet[MIC_INPUT].Channel[3].Gain.set("45"); 
-          xapi.Config.Audio.Input.Ethernet[MIC_INPUT].Channel[4].Gain.set("45");
+          try { xapi.Config.Audio.Input.Ethernet[MIC_INPUT].Channel[1].Gain.set("45"); } catch {e => console.log("Error setting Gain:",e)}          
+          try { xapi.Config.Audio.Input.Ethernet[MIC_INPUT].Channel[2].Gain.set("45"); } catch {e => console.log("Error setting Gain:",e)}           
+          try { xapi.Config.Audio.Input.Ethernet[MIC_INPUT].Channel[3].Gain.set("45"); } catch {e => console.log("Error setting Gain:",e)}          
+          try { xapi.Config.Audio.Input.Ethernet[MIC_INPUT].Channel[4].Gain.set("45"); } catch {e => console.log("Error setting Gain:",e)} 
         }
       }
       // SET CURRENT DUCK STATE
@@ -2371,6 +2448,8 @@ async function handleAZMZoneEvents(event)
           // STORE LAST CAMERA 
           DWS_LAST_CAMERA = event.Assets.Camera.InputConnector;
 
+          DWS_CUR_CAMERA = 'Composed';
+
           if (event.Zone.Label == 'PRIMARY ROOM')
           {
             // SET LOCAL SPEAKERTRACK MODE
@@ -2445,73 +2524,86 @@ async function handleAZMZoneEvents(event)
 
 async function handleCallStatus(event) 
 {
-  if (event > 0) 
-  {
-    if(DWS_CUR_STATE == 'Combined All' || DWS_CUR_STATE == 'Combined Node1' || DWS_CUR_STATE == 'Combined Node2')
+  // CHECK FOR ACTIVE REMOTE ACCESS SESSION
+  xapi.Status.RemoteAccess.Session.get()
+  .then (raStatus => {
+    const callStatus = JSON.parse(raStatus);
+
+    if (callStatus.State != 'Active' && callStatus.State != 'AccessRequested')
     {
-      if (DWS.DEBUG) {console.debug("DWS: Call started. Adding in call controls.")}
-
-      // START ZONE MONITORING IN AZM
-      AZM.Command.Zone.Monitor.Start();
-
-      // DRAW IN CALL PANEL
-      createPanels ("InCall");
-
-      // HIDE ROOM CONTROLS PANEL
-      xapi.Command.UserInterface.Extensions.Panel.Update({ PanelId: 'dws_controls', Location: 'Hidden' })
-      .catch(e => console.log('Error hiding Room Controls panel: ' + e.message));
-
-      // REMOVE ONSCREEN BANNER
-      xapi.Command.Video.Graphics.Clear({ Target: 'LocalOutput' });
-    }
-  } 
-  else 
-  {
-    // STOP THE VU MONITORS WHEN CALL ENDS
-    AZM.Command.Zone.Monitor.Stop()
-
-    // RESET VIEW TO PRIMARY ROOM QUAD TO CLEAR ANY COMPOSITION FROM PREVIOUS SELECTION
-    xapi.Command.Video.Input.SetMainVideoSource({ ConnectorId: 1});
-
-    // TURN OFF PERSISTENT PRESENTER TRACK
-    xapi.Command.Cameras.PresenterTrack.Set({ Mode: 'Off' });
-
-    // REMOVE IN CALL CONTROLS
-    createPanels ("HideCall");
-
-    // SHOW ROOM CONTROLS PANEL
-    xapi.Command.UserInterface.Extensions.Panel.Update({ PanelId: 'dws_controls', Location: 'HomeScreen' })
-      .catch(e => console.log('Error showing Room Controls panel: ' + e.message));
-
-
-    if (DWS.COMBINED_BANNER)
-    {
-      if (DWS_CUR_STATE == 'Combined All')
+      // CHECK FOR NON-RA CALL INSTANCE
+      if (event > 0) 
       {
-        // SET ONSCREEN TEXT BANNER 
-        xapi.Command.Video.Graphics.Text.Display({ Duration: 0, Target: 'LocalOutput', Text: "Combined with: " + DWS.NODE1_ALIAS + ", " + DWS.NODE2_ALIAS});
-      }
-      else if (DWS_CUR_STATE == 'Combined Node1')
-      {
-        // SET ONSCREEN TEXT BANNER 
-        xapi.Command.Video.Graphics.Text.Display({ Duration: 0, Target: 'LocalOutput', Text: "Combined with: " + DWS.NODE1_ALIAS});
-      }
-      else if (DWS_CUR_STATE == 'Combined Node2')
-      {
-        // SET ONSCREEN TEXT BANNER 
-        xapi.Command.Video.Graphics.Text.Display({ Duration: 0, Target: 'LocalOutput', Text: "Combined with: " + DWS.NODE2_ALIAS});
-      }
-    }
+        if(DWS_CUR_STATE == 'Combined All' || DWS_CUR_STATE == 'Combined Node1' || DWS_CUR_STATE == 'Combined Node2')
+        {
+          if (DWS.DEBUG) {console.debug("DWS: Call started. Adding in call controls.")}
 
-    if(DWS_CUR_STATE == 'Combined All' || DWS_CUR_STATE == 'Combined Node1' || DWS_CUR_STATE == 'Combined Node2')
-    {
-      createPanels ("Combined");      
+          // START ZONE MONITORING IN AZM
+          AZM.Command.Zone.Monitor.Start();
+
+          // DRAW IN CALL PANEL
+          createPanels ("InCall");
+
+          // HIDE ROOM CONTROLS PANEL
+          xapi.Command.UserInterface.Extensions.Panel.Update({ PanelId: 'dws_controls', Location: 'Hidden' })
+          .catch(e => console.log('Error hiding Room Controls panel: ' + e.message));
+
+          // REMOVE ONSCREEN BANNER
+          xapi.Command.Video.Graphics.Clear({ Target: 'LocalOutput' });
+        }
+      } 
+      else 
+      {
+        // STOP THE VU MONITORS WHEN CALL ENDS
+        AZM.Command.Zone.Monitor.Stop()
+
+        // RESET VIEW TO PRIMARY ROOM QUAD TO CLEAR ANY COMPOSITION FROM PREVIOUS SELECTION
+        xapi.Command.Video.Input.SetMainVideoSource({ ConnectorId: 1});
+
+        // TURN OFF PERSISTENT PRESENTER TRACK
+        xapi.Command.Cameras.PresenterTrack.Set({ Mode: 'Off' });
+
+        // REMOVE IN CALL CONTROLS
+        createPanels ("HideCall");
+
+        // SHOW ROOM CONTROLS PANEL
+        xapi.Command.UserInterface.Extensions.Panel.Update({ PanelId: 'dws_controls', Location: 'HomeScreen' })
+          .catch(e => console.log('Error showing Room Controls panel: ' + e.message));
+
+        if (DWS.COMBINED_BANNER)
+        {
+          if (DWS_CUR_STATE == 'Combined All')
+          {
+            // SET ONSCREEN TEXT BANNER 
+            xapi.Command.Video.Graphics.Text.Display({ Duration: 0, Target: 'LocalOutput', Text: "Combined with: " + DWS.NODE1_ALIAS + ", " + DWS.NODE2_ALIAS});
+          }
+          else if (DWS_CUR_STATE == 'Combined Node1')
+          {
+            // SET ONSCREEN TEXT BANNER 
+            xapi.Command.Video.Graphics.Text.Display({ Duration: 0, Target: 'LocalOutput', Text: "Combined with: " + DWS.NODE1_ALIAS});
+          }
+          else if (DWS_CUR_STATE == 'Combined Node2')
+          {
+            // SET ONSCREEN TEXT BANNER 
+            xapi.Command.Video.Graphics.Text.Display({ Duration: 0, Target: 'LocalOutput', Text: "Combined with: " + DWS.NODE2_ALIAS});
+          }
+        }
+
+        if(DWS_CUR_STATE == 'Combined All' || DWS_CUR_STATE == 'Combined Node1' || DWS_CUR_STATE == 'Combined Node2')
+        {
+          createPanels ("Combined");      
+        }
+        else
+        {
+          createPanels ("Split");
+        }
+      }      
     }
     else
     {
-      createPanels ("Split");
+      if (DWS.DEBUG) {console.debug("DWS: Ignoring Remote Access triggered call.")};
     }
-  }
+  });  
 }
 
 async function startAZM() {

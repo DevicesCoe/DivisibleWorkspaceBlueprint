@@ -12,8 +12,6 @@ Robert(Bobby) McGonigle Jr
 Chase Voisin
 William Mills
 
-Version: 0.9.6 (Beta)
-
 Complete details for this macro are available on Github:
 https://cs.co/divisibleworkspaceblueprint
 
@@ -35,14 +33,18 @@ async function firstSetup()
   try { xapi.Config.Video.Output.Connector[1].HDCPPolicy.set("off"); } catch(error) { console.error('DWS: Error setting HDCP 1: ' + error.message); }
   try { xapi.Config.Video.Output.Connector[2].HDCPPolicy.set("off"); } catch(error) { console.error('DWS: Error setting HDCP 2: ' + error.message); }
 
+  // CODEC PRO OUTPUT CONFIGURATION
+  if (DWS.PLATFORM == 'Codec Pro')
+  {
+    try { xapi.Config.Video.Output.Connector[1].Resolution.set("1920_1080_60");} catch(error) { console.error('DWS: Error setting HDMI 1 resolution: ' + error.message); }
+    try { xapi.Config.Video.Output.Connector[2].Resolution.set("1920_1080_60");} catch(error) { console.error('DWS: Error setting HDMI 2 resolution: ' + error.message); }
+  }
+
   // SET SPEAKER TRACK MODE TO CLOSE UP AS DEFAULT  
   try { xapi.Config.Cameras.SpeakerTrack.DefaultBehavior.set('Closeup'); } catch(error) { console.error('DWS: Error setting ST Default: ' + error.message); }
 
   // ENABLE AUDIO CONSOLE / MANUAL AUDIO ROUTING
-  if(DWS.PLATFORM == 'Room Kit EQ')
-  {    
-    try { xapi.Config.Audio.Output.ConnectorSetup.set("Manual"); } catch(error) { console.error('DWS: Error setting ConnectorSetup: ' + error.message); }
-  }
+  try { xapi.Config.Audio.Output.ConnectorSetup.set("Manual"); } catch(error) { console.error('DWS: Error setting ConnectorSetup: ' + error.message); }
   
   console.log("DWS: Checking for Correct Inputs and Outputs.");
   if(DWS.NWAY == 'Two Way')
@@ -59,10 +61,11 @@ async function firstSetup()
       try { xapi.Config.Video.Input.Connector[1].CameraControl.Mode.set('On'); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }      
       try { xapi.Config.Video.Input.Connector[1].Visibility.set('Never'); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }      
       try { xapi.Config.Video.Input.Connector[1].PresentationSelection.set("Manual"); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }      
-      try { xapi.Config.Video.Input.Connector[2].Name.set('Secondary Audience'); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }      
+      try { xapi.Config.Video.Input.Connector[2].Name.set('Secondary Audience'); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }
+      try { xapi.Config.Video.Input.Connector[2].InputSourceType.set('camera'); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }      
       try { xapi.Config.Video.Input.Connector[2].CameraControl.Mode.set('Off'); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }      
       try { xapi.Config.Video.Input.Connector[2].Visibility.set('Never'); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }      
-      try { xapi.Config.Video.Input.Connector[2].PresentationSelection.set("Manual"); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }      
+      try { xapi.Config.Video.Input.Connector[2].PresentationSelection.set("Manual"); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }   
     }
     else
     {
@@ -86,11 +89,13 @@ async function firstSetup()
       try { xapi.Config.Video.Input.Connector[1].CameraControl.Mode.set('On'); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }      
       try { xapi.Config.Video.Input.Connector[1].Visibility.set('Never'); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }      
       try { xapi.Config.Video.Input.Connector[1].PresentationSelection.set("Manual"); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }      
-      try { xapi.Config.Video.Input.Connector[2].Name.set(DWS.NODE1_ALIAS + ' Audience'); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }      
+      try { xapi.Config.Video.Input.Connector[2].Name.set(DWS.NODE1_ALIAS + ' Audience'); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }
+      try { xapi.Config.Video.Input.Connector[2].InputSourceType.set('camera'); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }       
       try { xapi.Config.Video.Input.Connector[2].CameraControl.Mode.set('Off'); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }      
       try { xapi.Config.Video.Input.Connector[2].Visibility.set('Never'); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }      
       try { xapi.Config.Video.Input.Connector[2].PresentationSelection.set("Manual"); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }   
-      try { xapi.Config.Video.Input.Connector[3].Name.set(DWS.NODE2_ALIAS + ' Audience'); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }      
+      try { xapi.Config.Video.Input.Connector[3].Name.set(DWS.NODE2_ALIAS + ' Audience'); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }
+      try { xapi.Config.Video.Input.Connector[3].InputSourceType.set('camera'); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }         
       try { xapi.Config.Video.Input.Connector[3].CameraControl.Mode.set('Off'); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }      
       try { xapi.Config.Video.Input.Connector[3].Visibility.set('Never'); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }      
       try { xapi.Config.Video.Input.Connector[3].PresentationSelection.set("Manual"); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); } 
@@ -139,8 +144,6 @@ Robert(Bobby) McGonigle Jr
 Chase Voisin
 William Mills
 
-Version: 0.9.6 (BETA)
-
 Complete details for this macro are available on Github:
 https://cs.co/divisibleworkspaceblueprint
 
@@ -178,8 +181,6 @@ Svein Terje Steffensen
 Robert(Bobby) McGonigle Jr
 Chase Voisin
 William Mills
-
-Version: 0.9.6 (BETA)
 
 Complete details for this macro are available on Github:
 https://cs.co/divisibleworkspaceblueprint
@@ -273,8 +274,6 @@ Robert(Bobby) McGonigle Jr
 Chase Voisin
 William Mills
 
-Version: 0.9.6 (BETA)
-
 Complete details for this macro are available on Github:
 https://cs.co/divisibleworkspaceblueprint
 
@@ -282,6 +281,7 @@ https://cs.co/divisibleworkspaceblueprint
 //                     **** DO NOT EDIT BELOW HERE ****                    //
 //=========================================================================*/
 
+const VERSION = '${DWS.VERSION}';
 const STATE = '${state}';
 const SCREENS = '${DWS.NODE1_DISPLAYS}';            
 const NAV_CONTROL = '${DWS.NODE1_NAV_CONTROL}';
@@ -289,6 +289,7 @@ const NAV_SCHEDULER = '${DWS.NODE1_NAV_SCHEDULER}';
 const PLATFORM = '\${productPlatform}';
 
 export default {
+  VERSION,
   STATE,
   SCREENS, 
   NAV_CONTROL, 
@@ -330,8 +331,6 @@ Robert(Bobby) McGonigle Jr
 Chase Voisin
 William Mills
 
-Version: 0.9.6 (BETA)
-
 Complete details for this macro are available on Github:
 https://cs.co/divisibleworkspaceblueprint
 
@@ -424,8 +423,6 @@ Robert(Bobby) McGonigle Jr
 Chase Voisin
 William Mills
 
-Version: 0.9.6 (BETA)
-
 Complete details for this macro are available on Github:
 https://cs.co/divisibleworkspaceblueprint
 
@@ -433,6 +430,7 @@ https://cs.co/divisibleworkspaceblueprint
 //                     **** DO NOT EDIT BELOW HERE ****                    //
 //=========================================================================*/
 
+const VERSION = '${DWS.VERSION}';
 const STATE = '${state}';
 const SCREENS = '${DWS.NODE2_DISPLAYS}';            
 const NAV_CONTROL = '${DWS.NODE2_NAV_CONTROL}';
@@ -440,6 +438,7 @@ const NAV_SCHEDULER = '${DWS.NODE2_NAV_SCHEDULER}';
 const PLATFORM = '\${productPlatform}';
 
 export default {
+  VERSION,
   STATE,
   SCREENS, 
   NAV_CONTROL, 
@@ -483,56 +482,5 @@ function sendCommand(codec, command)
   });
 }
 
-//===============================//
-//  C9K CONFIGURATION FUNCTIONS  //
-//===============================//
-function checkSwitch() 
-{
-  console.log ("DWS: Checking Switch Readiness.");
-
-  xapi.command('HttpClient Get', { 
-    Url: `https://169.254.1.254/restconf/data/Cisco-IOS-XE-native:native/hostname`,
-    Header: [
-      'Accept: application/yang-data+json',
-      `Authorization: Basic ${btoa(`${DWS.SWITCH_USERNAME}:${DWS.SWITCH_PASSWORD}`)}`
-    ],
-    AllowInsecureHTTPS: true
-  })
-  .then(async (response) => {
-    const jsonResponse = JSON.parse(response.Body);
-    const hostname = jsonResponse['Cisco-IOS-XE-native:hostname'];
-    console.log('Switch detected! Hostname:', hostname);
-    await saveSwitch();
-  })
-  .catch(error => {
-    console.warn('DWS: Switch check failed. Retrying:', error.message);
-    xapi.Command.UserInterface.Message.Alert.Display({ Duration: '25', Title:"Error: Switch Unreachable", Text: "Please ensure switch has been configured and wired to match documentation in the Blueprint. Retrying in 30 seconds."});
-    setTimeout(() => {checkSwitch()}, 30000);
-  });
-}
-
-async function saveSwitch() 
-{
-  // SAVE SWITCH CONFIGURATION
-  xapi.command('HttpClient Post', { 
-    Url: 'https://169.254.1.254/restconf/operations/cisco-ia:save-config/', 
-    Header: [
-      'Content-Type: application/yang-data+json',
-      'Accept: application/yang-data+json',
-      `Authorization: Basic ${btoa(`${DWS.SWITCH_USERNAME}:${DWS.SWITCH_PASSWORD}`)}`
-    ],
-    AllowInsecureHTTPS: true
-  },'')
-  .then(response => {
-    console.log ('DWS: Default switch configuration saved to startup-config.');
-
-    setTimeout(() => { firstSetup(), 500});
-  })
-  .catch(error => {
-    console.warn('DWS: Unable to save switch configuration:', error.message);
-    xapi.Command.UserInterface.Message.Alert.Display({ Duration: '60', Title:"Error: Switch Configuration Not Saved", Text: "Check Macro Logs for more details."});
-  });
-}
-
-// DOUBLE CHECK INITIAL SWITCH CONFIGURATION THEN BEGIN SETUP
-checkSwitch();
+// BEGIN SETUP
+firstSetup();
