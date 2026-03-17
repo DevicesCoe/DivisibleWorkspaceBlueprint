@@ -628,7 +628,7 @@ const AUTO_DUCKING = ${JSON.stringify(SETUP_VARIABLES['dws_setup_ducking'], null
 //                     **** DO NOT EDIT BELOW HERE ****                    //
 //=========================================================================*/
 
-const VERSION = 0.9.7;
+const VERSION = "0.9.7";
 const NWAY = ${JSON.stringify(SETUP_VARIABLES['dws_setup_nway'], null, 2)};
 const SWITCH_TYPE = ${JSON.stringify(SETUP_VARIABLES['dws_setup_switchtype'], null, 2)};
 const MACRO_LOGIN = ${JSON.stringify(SETUP_VARIABLES['dws_setup_login'], null, 2)};
