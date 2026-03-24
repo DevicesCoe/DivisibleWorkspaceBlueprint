@@ -613,8 +613,8 @@ const DEBUG = false;
 const TRACKING_DEBUG = false;
 
 // ONLY CHANGE IF YOU ARE NOT USING THE DEFAULT U:P IN USB CONFIGURATION FILE
-const SWITCH_USERNAME = ${SETUP_VARIABLES['SWITCH_USERNAME']};
-const SWITCH_PASSWORD = ${SETUP_VARIABLES['SWITCH_PASSWORD']};
+const SWITCH_USERNAME = ${JSON.stringify(SETUP_VARIABLES['SWITCH_USERNAME'], null, 2)};
+const SWITCH_PASSWORD = ${JSON.stringify(SETUP_VARIABLES['SWITCH_PASSWORD'], null, 2)};
 
 // ENABLE OR DISABLE THE COMBINED ROOM BANNER ON DISPLAYS
 // ACCEPTED VALUES: true, false
@@ -628,7 +628,7 @@ const AUTO_DUCKING = ${JSON.stringify(SETUP_VARIABLES['dws_setup_ducking'], null
 //                     **** DO NOT EDIT BELOW HERE ****                    //
 //=========================================================================*/
 
-const VERSION = "0.9.7";
+const VERSION = '0.9.7';
 const NWAY = ${JSON.stringify(SETUP_VARIABLES['dws_setup_nway'], null, 2)};
 const SWITCH_TYPE = ${JSON.stringify(SETUP_VARIABLES['dws_setup_switchtype'], null, 2)};
 const MACRO_LOGIN = ${JSON.stringify(SETUP_VARIABLES['dws_setup_login'], null, 2)};
