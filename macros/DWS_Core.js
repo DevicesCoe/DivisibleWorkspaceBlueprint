@@ -2524,86 +2524,86 @@ async function handleAZMZoneEvents(event)
 
 async function handleCallStatus(event) 
 {
+  let isRASession = false;
+
   // CHECK FOR ACTIVE REMOTE ACCESS SESSION
-  xapi.Status.RemoteAccess.Session.get()
+  xapi.Status.RemoteAccess.get()
   .then (raStatus => {
     const callStatus = JSON.parse(raStatus);
-
-    if (callStatus.State != 'Active' && callStatus.State != 'AccessRequested')
+    if (callStatus?.Session && (callStatus.Session[0].State == 'Active'))
     {
-      // CHECK FOR NON-RA CALL INSTANCE
-      if (event > 0) 
-      {
-        if(DWS_CUR_STATE == 'Combined All' || DWS_CUR_STATE == 'Combined Node1' || DWS_CUR_STATE == 'Combined Node2')
-        {
-          if (DWS.DEBUG) {console.debug("DWS: Call started. Adding in call controls.")}
-
-          // START ZONE MONITORING IN AZM
-          AZM.Command.Zone.Monitor.Start();
-
-          // DRAW IN CALL PANEL
-          createPanels ("InCall");
-
-          // HIDE ROOM CONTROLS PANEL
-          xapi.Command.UserInterface.Extensions.Panel.Update({ PanelId: 'dws_controls', Location: 'Hidden' })
-          .catch(e => console.log('Error hiding Room Controls panel: ' + e.message));
-
-          // REMOVE ONSCREEN BANNER
-          xapi.Command.Video.Graphics.Clear({ Target: 'LocalOutput' });
-        }
-      } 
-      else 
-      {
-        // STOP THE VU MONITORS WHEN CALL ENDS
-        AZM.Command.Zone.Monitor.Stop()
-
-        // RESET VIEW TO PRIMARY ROOM QUAD TO CLEAR ANY COMPOSITION FROM PREVIOUS SELECTION
-        xapi.Command.Video.Input.SetMainVideoSource({ ConnectorId: 1});
-
-        // TURN OFF PERSISTENT PRESENTER TRACK
-        xapi.Command.Cameras.PresenterTrack.Set({ Mode: 'Off' });
-
-        // REMOVE IN CALL CONTROLS
-        createPanels ("HideCall");
-
-        // SHOW ROOM CONTROLS PANEL
-        xapi.Command.UserInterface.Extensions.Panel.Update({ PanelId: 'dws_controls', Location: 'HomeScreen' })
-          .catch(e => console.log('Error showing Room Controls panel: ' + e.message));
-
-        if (DWS.COMBINED_BANNER)
-        {
-          if (DWS_CUR_STATE == 'Combined All')
-          {
-            // SET ONSCREEN TEXT BANNER 
-            xapi.Command.Video.Graphics.Text.Display({ Duration: 0, Target: 'LocalOutput', Text: "Combined with: " + DWS.NODE1_ALIAS + ", " + DWS.NODE2_ALIAS});
-          }
-          else if (DWS_CUR_STATE == 'Combined Node1')
-          {
-            // SET ONSCREEN TEXT BANNER 
-            xapi.Command.Video.Graphics.Text.Display({ Duration: 0, Target: 'LocalOutput', Text: "Combined with: " + DWS.NODE1_ALIAS});
-          }
-          else if (DWS_CUR_STATE == 'Combined Node2')
-          {
-            // SET ONSCREEN TEXT BANNER 
-            xapi.Command.Video.Graphics.Text.Display({ Duration: 0, Target: 'LocalOutput', Text: "Combined with: " + DWS.NODE2_ALIAS});
-          }
-        }
-
-        if(DWS_CUR_STATE == 'Combined All' || DWS_CUR_STATE == 'Combined Node1' || DWS_CUR_STATE == 'Combined Node2')
-        {
-          createPanels ("Combined");      
-        }
-        else
-        {
-          createPanels ("Split");
-        }
-      }      
-    }
-    else
-    {
+      isRASession = true;      
       if (DWS.DEBUG) {console.debug("DWS: Ignoring Remote Access triggered call.")};
     }
-  });  
+
+    // CHECK FOR NON-RA CALL INSTANCE
+    if (event > 0 && isRASession != true) 
+    {
+      if(DWS_CUR_STATE == 'Combined All' || DWS_CUR_STATE == 'Combined Node1' || DWS_CUR_STATE == 'Combined Node2')
+      {
+        if (DWS.DEBUG) {console.debug("DWS: Call started. Adding in call controls.")}
+
+        // START ZONE MONITORING IN AZM
+        AZM.Command.Zone.Monitor.Start();
+
+        // DRAW IN CALL PANEL
+        createPanels ("InCall");
+
+        // HIDE ROOM CONTROLS PANEL
+        xapi.Command.UserInterface.Extensions.Panel.Update({ PanelId: 'dws_controls', Location: 'Hidden' })
+        .catch(e => console.log('Error hiding Room Controls panel: ' + e.message));
+
+        // REMOVE ONSCREEN BANNER
+        xapi.Command.Video.Graphics.Clear({ Target: 'LocalOutput' });
+      }
+    } 
+    else 
+    {
+      // STOP THE VU MONITORS WHEN CALL ENDS
+      AZM.Command.Zone.Monitor.Stop()
+
+      // RESET VIEW TO PRIMARY ROOM QUAD TO CLEAR ANY COMPOSITION FROM PREVIOUS SELECTION
+      xapi.Command.Video.Input.SetMainVideoSource({ ConnectorId: 1});
+
+      // TURN OFF PERSISTENT PRESENTER TRACK
+      xapi.Command.Cameras.PresenterTrack.Set({ Mode: 'Off' });
+
+      // REMOVE IN CALL CONTROLS
+      createPanels ("HideCall");
+
+      // SHOW ROOM CONTROLS PANEL
+      xapi.Command.UserInterface.Extensions.Panel.Update({ PanelId: 'dws_controls', Location: 'HomeScreen' })
+        .catch(e => console.log('Error showing Room Controls panel: ' + e.message));
+
+      if (DWS.COMBINED_BANNER)
+      {
+        if (DWS_CUR_STATE == 'Combined All')
+        {
+          // SET ONSCREEN TEXT BANNER 
+          xapi.Command.Video.Graphics.Text.Display({ Duration: 0, Target: 'LocalOutput', Text: "Combined with: " + DWS.NODE1_ALIAS + ", " + DWS.NODE2_ALIAS});
+        }
+        else if (DWS_CUR_STATE == 'Combined Node1')
+        {
+          // SET ONSCREEN TEXT BANNER 
+          xapi.Command.Video.Graphics.Text.Display({ Duration: 0, Target: 'LocalOutput', Text: "Combined with: " + DWS.NODE1_ALIAS});
+        }
+        else if (DWS_CUR_STATE == 'Combined Node2')
+        {
+          // SET ONSCREEN TEXT BANNER 
+          xapi.Command.Video.Graphics.Text.Display({ Duration: 0, Target: 'LocalOutput', Text: "Combined with: " + DWS.NODE2_ALIAS});
+        }
+      }
+
+      if(DWS_CUR_STATE == 'Combined All' || DWS_CUR_STATE == 'Combined Node1' || DWS_CUR_STATE == 'Combined Node2')
+      {
+        createPanels ("Combined");      
+      }
+      else
+      {
+        createPanels ("Split");
+      }
+    }
+  })   
 }
 
 async function startAZM() {
