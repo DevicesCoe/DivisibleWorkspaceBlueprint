@@ -207,7 +207,7 @@ function init() {
       {
         // ACTIVATE REMOTE SLEEPMODE
         sendMessage(DWS.NODE1_HOST, "Halfwake");
-        if (DWS.NWAY == 'Three Way')
+        if (DWS.NWAY == 'Three Way' && (DWS_CUR_STATE == 'Combined All' || DWS_CUR_STATE == 'Combined Node2'))
         {
           sendMessage(DWS.NODE2_HOST, "Halfwake");
         }
@@ -216,7 +216,7 @@ function init() {
       {
         // ACTIVATE REMOTE SLEEPMODE
         sendMessage(DWS.NODE1_HOST, "Standby");
-        if (DWS.NWAY == 'Three Way')
+        if (DWS.NWAY == 'Three Way' && (DWS_CUR_STATE == 'Combined All' || DWS_CUR_STATE == 'Combined Node2'))
         {
           sendMessage(DWS.NODE2_HOST, "Standby");
         }
@@ -225,7 +225,7 @@ function init() {
       {
         // ACTIVATE REMOTE SLEEPMODE
         sendMessage(DWS.NODE1_HOST, "Awake");
-        if (DWS.NWAY == 'Three Way')
+        if (DWS.NWAY == 'Three Way' && (DWS_CUR_STATE == 'Combined All' || DWS_CUR_STATE == 'Combined Node2'))
         {
           sendMessage(DWS.NODE2_HOST, "Awake");
         }
@@ -240,6 +240,10 @@ function init() {
     if (DWS_CUR_STATE == 'Combined All' || DWS_CUR_STATE == 'Combined Node1' || DWS_CUR_STATE == 'Combined Node2')
     {
       sendMessage(DWS.NODE1_HOST,"Volume:"+volume);
+      if (DWS.NWAY == 'Three Way' && (DWS_CUR_STATE == 'Combined All' || DWS_CUR_STATE == 'Combined Node2'))
+        {
+          sendMessage(DWS.NODE2_HOST,"Volume:"+volume);
+        }
     }
   })
 
