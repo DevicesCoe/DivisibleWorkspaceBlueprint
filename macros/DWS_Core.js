@@ -201,31 +201,34 @@ function init() {
   //  EVENT LISTENER FOR STANDBY STATES  //
   //=====================================//
   xapi.Status.Standby.State.on(state => {
-    if (state == 'Halfwake')
+    if (DWS_CUR_STATE == 'Combined All' || DWS_CUR_STATE == 'Combined Node1' || DWS_CUR_STATE == 'Combined Node2')
     {
-      // ACTIVATE REMOTE SLEEPMODE
-      sendMessage(DWS.NODE1_HOST, "Halfwake");
-      if (DWS.NWAY == 'Three Way')
+      if (state == 'Halfwake')
       {
-        sendMessage(DWS.NODE2_HOST, "Halfwake");
+        // ACTIVATE REMOTE SLEEPMODE
+        sendMessage(DWS.NODE1_HOST, "Halfwake");
+        if (DWS.NWAY == 'Three Way')
+        {
+          sendMessage(DWS.NODE2_HOST, "Halfwake");
+        }
       }
-    }
-    else if (state == 'EnteringStandby' || state == 'Standby')
-    {
-      // ACTIVATE REMOTE SLEEPMODE
-      sendMessage(DWS.NODE1_HOST, "Standby");
-      if (DWS.NWAY == 'Three Way')
+      else if (state == 'EnteringStandby' || state == 'Standby')
       {
-        sendMessage(DWS.NODE2_HOST, "Standby");
+        // ACTIVATE REMOTE SLEEPMODE
+        sendMessage(DWS.NODE1_HOST, "Standby");
+        if (DWS.NWAY == 'Three Way')
+        {
+          sendMessage(DWS.NODE2_HOST, "Standby");
+        }
       }
-    }
-    else if (state == 'Off')
-    {
-      // ACTIVATE REMOTE SLEEPMODE
-      sendMessage(DWS.NODE1_HOST, "Awake");
-      if (DWS.NWAY == 'Three Way')
+      else if (state == 'Off')
       {
-        sendMessage(DWS.NODE2_HOST, "Awake");
+        // ACTIVATE REMOTE SLEEPMODE
+        sendMessage(DWS.NODE1_HOST, "Awake");
+        if (DWS.NWAY == 'Three Way')
+        {
+          sendMessage(DWS.NODE2_HOST, "Awake");
+        }
       }
     }
   })
