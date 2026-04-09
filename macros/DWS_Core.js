@@ -523,7 +523,7 @@ function init() {
             }
 
             // DEFAULT NODE 1 ON FOR TWO WAY TRIGGERS
-            DWS_COMBINE_NODE1 == 'on';
+            DWS_COMBINE_NODE1 = 'on';
           }          
           break;
 
@@ -1412,6 +1412,10 @@ function createPanels(panelState)
   switch(panelState)
   {
     case 'Split':
+      // RESET COMBINE NODE TOGGLE TRACKING
+      DWS_COMBINE_NODE1 = 'off';
+      DWS_COMBINE_NODE2 = 'off';
+      
       // PERFORM NWAY CHECK TO DETERMINE ROOM CONTROLS PANEL
       if (DWS.NWAY == 'Three Way')
       {
