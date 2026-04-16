@@ -695,9 +695,6 @@ function init() {
 //   ADVANCED PANEL TRIGGER   //
 //============================//
 xapi.Event.UserInterface.Message.TextInput.Response.on(event => {
-
-  if (DWS.DEBUG) {console.debug("DWS: Unlock attempt. Entered PIN: " + event.Text)};
-
   if(event.FeedbackId == 'unlockSettings' && event.Text == DWS.UNLOCK_PIN)
   {
     if (DWS.DEBUG) {console.debug('DWS: PIN accepted. Displaying advanced panel.')};
@@ -706,7 +703,7 @@ xapi.Event.UserInterface.Message.TextInput.Response.on(event => {
   }
   else
   {
-    if (DWS.DEBUG) {console.warn("DWS: Entered PIN did not match configured PIN.")};
+    if (DWS.DEBUG) {console.warn("DWS: Unlocked attempted. Entered PIN did not match.")};
   }              
 })
 
