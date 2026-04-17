@@ -327,7 +327,7 @@ function setSecondaryConfig(state)
       try { xapi.Command.Video.Matrix.Reset({Output: "1"}) } catch(error) { console.error('DWS: Error Setting 1S Matrix: ' + error.message); }
       try { xapi.Command.Video.Matrix.Reset({Output: "3"}) } catch(error) { console.error('DWS: Error Setting 1S Matrix Confidence: ' + error.message); }
     }
-    else
+    else if (DWS_SEC.SCREENS == '2')
     {
       try { xapi.Command.Video.Matrix.Reset({Output: "1"}) } catch(error) { console.error('DWS: Error Setting 2S Matrix 1: ' + error.message); }
       try { xapi.Command.Video.Matrix.Reset({Output: "2"}) } catch(error) { console.error('DWS: Error Setting 2S Matrix 2: ' + error.message); }
