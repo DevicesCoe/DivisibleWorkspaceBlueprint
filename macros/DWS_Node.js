@@ -114,7 +114,11 @@ function init() {
         //========================================//
         case 'EnableST':
           console.log('DWS: Enabling SpeakerTrack');
-          xapi.Command.Cameras.SpeakerTrack.Activate().then(xapi.Command.Cameras.SpeakerTrack.Closeup.Activate());              
+          xapi.Command.Cameras.SpeakerTrack.Activate()
+          .then(() => {
+            xapi.Command.Cameras.SpeakerTrack.Closeup.Activate();
+            xapi.Command.Cameras.SpeakerTrack.BackgroundMode.Activate();
+          });              
           break;
 
         case 'DisableST':
@@ -245,29 +249,37 @@ function setSecondaryConfig(state)
   {
     try { xapi.Command.Conference.DoNotDisturb.Activate({ Timeout: "20000" }) } catch(error) { console.error('DWS: Error Setting DND: ' + error.message); }
     
-    if(DWS_SEC.SCREENS == 1)
+    if(DWS_SEC.SCREENS == '1')
     {
       try { xapi.Command.Video.Matrix.Assign({Mode: "Replace", Output: "1", SourceId: "2"}) } catch(error) { console.error('DWS: Error Setting 1S Matrix: ' + error.message); }
       try { xapi.Command.Video.Matrix.Assign({Mode: "Replace", Output: "3", SourceId: "2"}) } catch(error) { console.error('DWS: Error Setting 1S Matrix Confidence: ' + error.message); }
     }
-    else if(DWS_SEC.SCREENS == 2)
+    else if(DWS_SEC.SCREENS == '2')
     {
       try { xapi.Command.Video.Matrix.Assign({Mode: "Replace", Output: "1", SourceId: "2"}) } catch(error) { console.error('DWS: Error Setting 2S Matrix 1: ' + error.message); }
       try { xapi.Command.Video.Matrix.Assign({Mode: "Replace", Output: "2", SourceId: "3"}) } catch(error) { console.error('DWS: Error Setting 2S Matrix 2: ' + error.message); }
       try { xapi.Command.Video.Matrix.Assign({Mode: "Replace", Output: "3", SourceId: "3"}) } catch(error) { console.error('DWS: Error Setting 2S Matrix Confidence: ' + error.message); }
     }
+    else
+    {
+      console.error('DWS: Incorrect value set for screen count. Error setting Matrix.');
+    }
 
     // PREVENT ALL SCREEN SHARING WHEN COMBINED
-    if(DWS_SEC.SCREENS == 1)
+    if(DWS_SEC.SCREENS == '1')
     {
       // PREVENT SHARING ON REMAINING HDMI INPUTS            
       xapi.Config.Video.Input.Connector[3].PresentationSelection.set("Manual");
       xapi.Config.Video.Input.Connector[4].PresentationSelection.set("Manual");
     }
-    else if (DWS_SEC.SCREENS == 2)
+    else if (DWS_SEC.SCREENS == '2')
     {
       // PREVENT USBC CONTENT SHARING WHEN COMBINED
       xapi.Config.Video.Input.Connector[4].PresentationSelection.set("Manual");
+    }
+    else
+    {
+      console.error('DWS: Incorrect value set for screen count. Error setting PresentationSelection.');
     }
 
     // SET ALL CONFIGURATIONS
@@ -296,17 +308,21 @@ function setSecondaryConfig(state)
     }
 
     // ENABLE SHARING WHEN SPLIT
-    if(DWS_SEC.SCREENS == 1)
+    if(DWS_SEC.SCREENS == '1')
     {       
       xapi.Config.Video.Input.Connector[3].PresentationSelection.set("OnConnect");
       xapi.Config.Video.Input.Connector[4].PresentationSelection.set("OnConnect");
     }
-    else if (DWS_SEC.SCREENS == 2)
+    else if (DWS_SEC.SCREENS == '2')
     {
       xapi.Config.Video.Input.Connector[4].PresentationSelection.set("OnConnect");
     }
+    else
+    {
+      console.error('DWS: Incorrect value set for screen count. Error resetting Matrix.');
+    }
 
-    if(DWS_SEC.SCREENS == 1)
+    if(DWS_SEC.SCREENS == '1')
     {
       try { xapi.Command.Video.Matrix.Reset({Output: "1"}) } catch(error) { console.error('DWS: Error Setting 1S Matrix: ' + error.message); }
       try { xapi.Command.Video.Matrix.Reset({Output: "3"}) } catch(error) { console.error('DWS: Error Setting 1S Matrix Confidence: ' + error.message); }
@@ -316,6 +332,10 @@ function setSecondaryConfig(state)
       try { xapi.Command.Video.Matrix.Reset({Output: "1"}) } catch(error) { console.error('DWS: Error Setting 2S Matrix 1: ' + error.message); }
       try { xapi.Command.Video.Matrix.Reset({Output: "2"}) } catch(error) { console.error('DWS: Error Setting 2S Matrix 2: ' + error.message); }
       try { xapi.Command.Video.Matrix.Reset({Output: "3"}) } catch(error) { console.error('DWS: Error Setting 2S Matrix Confidence: ' + error.message); }
+    }
+    else
+    {
+      console.error('DWS: Incorrect value set for screen count. Error setting PresentationSelection.');
     }
 
     // SET ALL CONFIGURATIONS
