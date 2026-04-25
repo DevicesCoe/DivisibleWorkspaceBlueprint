@@ -206,7 +206,9 @@ function init() {
       if (state == 'Halfwake')
       {
         // ACTIVATE REMOTE SLEEPMODE
-        sendMessage(DWS.NODE1_HOST, "Halfwake");
+        if (DWS_CUR_STATE == 'Combined All' || DWS_CUR_STATE == 'Combined Node1') {
+          sendMessage(DWS.NODE1_HOST, "Halfwake");
+        }
         if (DWS.NWAY == 'Three Way' && (DWS_CUR_STATE == 'Combined All' || DWS_CUR_STATE == 'Combined Node2'))
         {
           sendMessage(DWS.NODE2_HOST, "Halfwake");
@@ -215,7 +217,9 @@ function init() {
       else if (state == 'EnteringStandby' || state == 'Standby')
       {
         // ACTIVATE REMOTE SLEEPMODE
-        sendMessage(DWS.NODE1_HOST, "Standby");
+        if (DWS_CUR_STATE == 'Combined All' || DWS_CUR_STATE == 'Combined Node1') {
+          sendMessage(DWS.NODE1_HOST, "Standby");
+        }
         if (DWS.NWAY == 'Three Way' && (DWS_CUR_STATE == 'Combined All' || DWS_CUR_STATE == 'Combined Node2'))
         {
           sendMessage(DWS.NODE2_HOST, "Standby");
@@ -224,7 +228,9 @@ function init() {
       else if (state == 'Off')
       {
         // ACTIVATE REMOTE SLEEPMODE
-        sendMessage(DWS.NODE1_HOST, "Awake");
+        if (DWS_CUR_STATE == 'Combined All' || DWS_CUR_STATE == 'Combined Node1') {
+          sendMessage(DWS.NODE1_HOST, "Awake");
+        }
         if (DWS.NWAY == 'Three Way' && (DWS_CUR_STATE == 'Combined All' || DWS_CUR_STATE == 'Combined Node2'))
         {
           sendMessage(DWS.NODE2_HOST, "Awake");
@@ -239,7 +245,9 @@ function init() {
   xapi.Status.Audio.Volume.on(volume => {
     if (DWS_CUR_STATE == 'Combined All' || DWS_CUR_STATE == 'Combined Node1' || DWS_CUR_STATE == 'Combined Node2')
     {
-      sendMessage(DWS.NODE1_HOST,"Volume:"+volume);
+      if (DWS_CUR_STATE == 'Combined All' || DWS_CUR_STATE == 'Combined Node1') {
+        sendMessage(DWS.NODE1_HOST,"Volume:"+volume);
+      }
       if (DWS.NWAY == 'Three Way' && (DWS_CUR_STATE == 'Combined All' || DWS_CUR_STATE == 'Combined Node2'))
         {
           sendMessage(DWS.NODE2_HOST,"Volume:"+volume);
@@ -351,8 +359,10 @@ function init() {
       xapi.Command.Cameras.PresenterTrack.Set({ Mode: 'Persistent' });
 
       // ACTIVATE REMOTE SPEAKERTRACK
-      sendMessage(DWS.NODE1_HOST, "EnableST");
-      if (DWS.NWAY == 'Three Way')
+      if (DWS_CUR_STATE == 'Combined All' || DWS_CUR_STATE == 'Combined Node1') {
+        sendMessage(DWS.NODE1_HOST, "EnableST");
+      }
+      if (DWS.NWAY == 'Three Way' && (DWS_CUR_STATE == 'Combined All' || DWS_CUR_STATE == 'Combined Node2'))
       {
         sendMessage(DWS.NODE2_HOST, "EnableST");
       }
@@ -378,8 +388,10 @@ function init() {
       xapi.Command.Cameras.SpeakerTrack.Deactivate();
 
       // DEACTIVE REMOTE SPEAKERTRACK
-      sendMessage(DWS.NODE1_HOST, "DisableST");
-      if (DWS.NWAY == 'Three Way')
+      if (DWS_CUR_STATE == 'Combined All' || DWS_CUR_STATE == 'Combined Node1') {
+        sendMessage(DWS.NODE1_HOST, "DisableST");
+      }
+      if (DWS.NWAY == 'Three Way' && (DWS_CUR_STATE == 'Combined All' || DWS_CUR_STATE == 'Combined Node2'))
       {
         sendMessage(DWS.NODE2_HOST, "DisableST");
       }
@@ -412,8 +424,10 @@ function init() {
       xapi.Command.Cameras.SpeakerTrack.Deactivate();
 
       // ACTIVATE REMOTE SPEAKERTRACK
-      sendMessage(DWS.NODE1_HOST, "DisableST");
-      if (DWS.NWAY == 'Three Way')
+      if (DWS_CUR_STATE == 'Combined All' || DWS_CUR_STATE == 'Combined Node1') {
+        sendMessage(DWS.NODE1_HOST, "DisableST");
+      }
+      if (DWS.NWAY == 'Three Way' && (DWS_CUR_STATE == 'Combined All' || DWS_CUR_STATE == 'Combined Node2'))
       {
         sendMessage(DWS.NODE2_HOST, "DisableST");
       }
@@ -451,8 +465,10 @@ function init() {
           xapi.Command.Cameras.SpeakerTrack.Deactivate();
 
           // DISABLE REMOTE SPEAKERTRACK
-          sendMessage(DWS.NODE1_HOST, "DisableST");
-          if (DWS.NWAY == 'Three Way')
+          if (DWS_CUR_STATE == 'Combined All' || DWS_CUR_STATE == 'Combined Node1') {
+            sendMessage(DWS.NODE1_HOST, "DisableST");
+          }
+          if (DWS.NWAY == 'Three Way' && (DWS_CUR_STATE == 'Combined All' || DWS_CUR_STATE == 'Combined Node2'))
           {
             sendMessage(DWS.NODE2_HOST, "DisableST");
           }
