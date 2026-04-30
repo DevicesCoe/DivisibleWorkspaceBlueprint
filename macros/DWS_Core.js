@@ -1938,6 +1938,62 @@ function buildAZMProfile(state)
     NODE2_ZONE.push({Serial: element, SubId: [1]})
   });
 
+  let PRESENTER_ZONE = [];
+
+  if (DWS.PRESENTER_MIC == 'USB')
+  {
+    PRESENTER_ZONE.push(
+    {
+      Label: 'PRESENTER USB',
+      Independent_Threshold: {
+        High: 20,                           
+        Low: 10                              
+      },
+      Independent_Rate: 200,
+      MicrophoneAssignment: {
+        Type: 'USB',                   
+        Connectors: [{Id: 1}]
+      },
+      Assets: {
+      }
+    });
+  }
+  else if (DWS.PRESENTER_MIC == 'Analog')
+  {
+    PRESENTER_ZONE.push(
+    {
+      Label: 'PRESENTER ANALOG',
+      Independent_Threshold: {
+        High: 20,                           
+        Low: 10                              
+      },
+      Independent_Rate: 200,
+      MicrophoneAssignment: {
+        Type: 'Microphone',                   
+        Connectors: [{Id: 1}]
+      },
+      Assets: {
+      }
+    });
+  }
+  else
+  {
+    PRESENTER_ZONE.push(
+    {
+      Label: 'PRESENTER ETHERNET',
+      Independent_Threshold: {
+        High: 30,                           
+        Low: 20                              
+      },
+      MicrophoneAssignment: {
+        Type: 'Ethernet',
+        Connectors: [DWS_PRESENTER_MIC_ID]
+      },
+      Assets: {
+      }
+    });
+  }
+
   let DWS_AZM_PROFILE = {};
 
   if (state == 'Combined All')
@@ -2006,34 +2062,7 @@ function buildAZMProfile(state)
             }
           }
         },
-        {
-          Label: 'PRESENTER USB',
-          Independent_Threshold: {
-            High: 20,                           
-            Low: 10                              
-          },
-          Independent_Rate: 150,
-          MicrophoneAssignment: {
-            Type: 'USB',                   
-            Connectors: [{Id: 1}]
-          },
-          Assets: {
-          }
-        },
-        {
-          Label: 'PRESENTER ANALOG',
-          Independent_Threshold: {
-            High: 20,                           
-            Low: 10                              
-          },
-          Independent_Rate: 150,
-          MicrophoneAssignment: {
-            Type: 'Microphone',                   
-            Connectors: [{Id: 1}]
-          },
-          Assets: {
-          }
-        }
+        ...PRESENTER_ZONE
       ]
     }
   }
@@ -2086,34 +2115,7 @@ function buildAZMProfile(state)
             }
           }
         },
-        {
-          Label: 'PRESENTER USB',
-          Independent_Threshold: {
-            High: 20,                           
-            Low: 10                              
-          },
-          Independent_Rate: 150,
-          MicrophoneAssignment: {
-            Type: 'USB',                   
-            Connectors: [{Id: 1}]
-          },
-          Assets: {
-          }
-        },
-        {
-          Label: 'PRESENTER ANALOG',
-          Independent_Threshold: {
-            High: 20,                           
-            Low: 10                              
-          },
-          Independent_Rate: 150,
-          MicrophoneAssignment: {
-            Type: 'Microphone',                   
-            Connectors: [{Id: 1}]
-          },
-          Assets: {
-          }
-        }
+        ...PRESENTER_ZONE
       ]
     }
   }
@@ -2166,34 +2168,7 @@ function buildAZMProfile(state)
             }
           }
         },
-        {
-          Label: 'PRESENTER USB',
-          Independent_Threshold: {
-            High: 20,                           
-            Low: 10                              
-          },
-          Independent_Rate: 150,
-          MicrophoneAssignment: {
-            Type: 'USB',                   
-            Connectors: [{Id: 1}]
-          },
-          Assets: {
-          }
-        },
-        {
-          Label: 'PRESENTER ANALOG',
-          Independent_Threshold: {
-            High: 20,                           
-            Low: 10                              
-          },
-          Independent_Rate: 150,
-          MicrophoneAssignment: {
-            Type: 'Microphone',                   
-            Connectors: [{Id: 1}]
-          },
-          Assets: {
-          }
-        }
+        ...PRESENTER_ZONE
       ]
     }
   }
