@@ -26,7 +26,8 @@ import DWS_SEC from './DWS_State';
 //  INITIALIZATION FUNCTION  //
 //===========================//
 
-function init() {
+function init() 
+{
   console.log ("DWS: Starting up as Node.");
 
   // SET SPEAKER TRACK MODE TO CLOSE UP AS DEFAULT  
@@ -66,12 +67,18 @@ function init() {
     console.log ('DWS: Combined State detected. Re-applying combined configuration.');
     setSecondaryState("Combined");    
     setSecondaryConfig("Combined");
+
+    // ENABLE BACKGROUND SPEAKER TRACKING
+    xapi.Command.Cameras.SpeakerTrack.BackgroundMode.Activate();
   }
   else
   {
     console.log ('DWS: Split State detected. Re-applying standard configuration.');
     setSecondaryState("Split");
     setSecondaryConfig("Split");
+
+    // DISABLE BACKGROUND SPEAKER TRACKING
+    xapi.Command.Cameras.SpeakerTrack.BackgroundMode.Deactivate();
   }
 
   xapi.event.on('Message Send Text', event => {
@@ -90,6 +97,9 @@ function init() {
           // UPDATE CONFIGURATION
           setSecondaryConfig("Combined");
 
+          // ENABLE BACKGROUND SPEAKER TRACKING
+          xapi.Command.Cameras.SpeakerTrack.BackgroundMode.Activate();
+
           // UPDATE STATE MACRO
           setSecondaryState("Combined");
 
@@ -104,27 +114,28 @@ function init() {
           // UPDATE CONFIGURATION
           setSecondaryConfig("Split");
 
+          // DISABLE BACKGROUND SPEAKER TRACKING
+          xapi.Command.Cameras.SpeakerTrack.BackgroundMode.Deactivate();
+
           // UPDATE STATE MACRO
           setSecondaryState("Split");
 
           break;
 
-        //========================================//
-        //      CAMERA POSITION PRESETS           //
-        //========================================//
-        case 'EnableST':
-          console.log('DWS: Enabling SpeakerTrack');
-          xapi.Command.Cameras.SpeakerTrack.Activate()
-          .then(() => {
-            xapi.Command.Cameras.SpeakerTrack.Closeup.Activate();
-            xapi.Command.Cameras.SpeakerTrack.BackgroundMode.Activate();
-          });              
+        //====================================//
+        //      CAMERA TRACKING STATES        //
+        //====================================//
+        case 'Closeup':
+          console.log('DWS: Setting Speaker Mode');
+          xapi.Command.Cameras.SpeakerTrack.Set( { Behavior: 'Closeup' });
+          xapi.Command.Cameras.SpeakerTrack.BackgroundMode.Activate();      
           break;
 
-        case 'DisableST':
-          console.log('DWS: Deactivating SpeakerTrack');
-          xapi.Command.Cameras.SpeakerTrack.Deactivate();
-          break;     
+        case 'Group':
+          console.log('DWS: Setting Group Mode');
+          xapi.Command.Cameras.SpeakerTrack.Set( { Behavior: 'BestOverview' });
+          xapi.Command.Cameras.SpeakerTrack.BackgroundMode.Activate();
+          break;       
 
         //==============================//
         //        STANDBY FUNCTIONS     //

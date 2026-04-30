@@ -314,15 +314,14 @@ function init() {
       // SET THE AUTOMODE TRIGGER TO ON
       DWS_AUTOMODE_STATE = 'On';
 
-      // SET LOCAL SPEAKERTRACK MODE
-      xapi.Command.Cameras.SpeakerTrack.Activate();
-      xapi.Command.Cameras.SpeakerTrack.Closeup.Activate();
+      // SET PRIMARY TO "CLOSEUP"
+      xapi.Command.Cameras.SpeakerTrack.Set({ Behavior: "Closeup" });
 
       // ENABLE PRESENTER TRACK
       xapi.Command.Cameras.PresenterTrack.Set({ Mode: 'Persistent' });
 
       // ACTIVATE REMOTE SPEAKERTRACK
-      sendToCombinedNodes("EnableST");
+      sendToCombinedNodes("Closeup");
     }
     else if (event.PanelId == 'dws_automation_enabled')
     {
@@ -341,11 +340,11 @@ function init() {
       // DISABLE PRESENTER TRACK
       xapi.Command.Cameras.PresenterTrack.Set({ Mode: 'Off' });
 
-      // DEACTIVE LOCAL SPEAKERTRACK
-      xapi.Command.Cameras.SpeakerTrack.Deactivate();
+      // SET PRIMARY TO "GROUP"
+      xapi.Command.Cameras.SpeakerTrack.Set({ Behavior: "BestOverview" });
 
       // DEACTIVE REMOTE SPEAKERTRACK
-      sendToCombinedNodes("DisableST");
+      sendToCombinedNodes("Group");
     }
     else if (event.PanelId == 'dws_fixed_sxs')
     {
@@ -371,11 +370,11 @@ function init() {
       // DISABLE AUTOMATION
       xapi.Command.Cameras.PresenterTrack.Set({Mode: "Off"});
 
-      // ACTIVATE LOCAL SPEAKERTRACK
-      xapi.Command.Cameras.SpeakerTrack.Deactivate();
+      // SET PRIMARY TO "GROUP"
+      xapi.Command.Cameras.SpeakerTrack.Set({ Behavior: "BestOverview" });
 
       // ACTIVATE REMOTE SPEAKERTRACK
-      sendToCombinedNodes("DisableST");
+      sendToCombinedNodes("Group");
     }
     else if (event.PanelId == 'dws_fixed_randp')
     {
@@ -406,11 +405,11 @@ function init() {
           // ENABLE PRESENTER TRACK
           xapi.Command.Cameras.PresenterTrack.Set({ Mode: 'Persistent' });
 
-          // DISABLE LOCAL SPEAKERTRACK
-          xapi.Command.Cameras.SpeakerTrack.Deactivate();
+          // SET PRIMARY TO "GROUP"
+          xapi.Command.Cameras.SpeakerTrack.Set({ Behavior: "BestOverview" });
 
           // DISABLE REMOTE SPEAKERTRACK
-          sendToCombinedNodes("DisableST");
+          sendToCombinedNodes("Group");
         }
         else
         {
@@ -2332,18 +2331,18 @@ async function handleAZMZoneEvents(event)
 
             if (event.Zone.Label == 'PRIMARY ROOM')
             {
-              // SET LOCAL SPEAKERTRACK MODE
-              xapi.Command.Cameras.SpeakerTrack.Activate().then(xapi.Command.Cameras.SpeakerTrack.Closeup.Activate());
+              // SET PRIMARY TO "CLOSEUP"
+              xapi.Command.Cameras.SpeakerTrack.Set({ Behavior: "Closeup" });
             }
             else if (event.Zone.Label == 'NODE 1 ROOM')
             {
               // ACTIVATE REMOTE SPEAKERTRACK
-              sendMessage(DWS.NODE1_HOST, "EnableST");
+              sendMessage(DWS.NODE1_HOST, "Closeup");
             }
             else if (event.Zone.Label == 'NODE 2 ROOM')
             {
               // ACTIVATE REMOTE SPEAKERTRACK
-              sendMessage(DWS.NODE2_HOST, "EnableST");
+              sendMessage(DWS.NODE2_HOST, "Closeup");
             }
 
             // RESET THE DROP AUDIENCE TIME
@@ -2390,18 +2389,18 @@ async function handleAZMZoneEvents(event)
 
           if (event.Zone.Label == 'PRIMARY ROOM')
           {
-            // SET LOCAL SPEAKERTRACK MODE
-            xapi.Command.Cameras.SpeakerTrack.Activate().then(xapi.Command.Cameras.SpeakerTrack.Closeup.Activate());
+            // SET PRIMARY TO "CLOSEUP"
+            xapi.Command.Cameras.SpeakerTrack.Set({ Behavior: "Closeup" });
           }
           else if (event.Zone.Label == 'NODE 1 ROOM')
           {
             // ACTIVATE REMOTE SPEAKERTRACK
-            sendMessage(DWS.NODE1_HOST, "EnableST");
+            sendMessage(DWS.NODE1_HOST, "Closeup");
           }
           else if (event.Zone.Label == 'NODE 2 ROOM')
           {
             // ACTIVATE REMOTE SPEAKERTRACK
-            sendMessage(DWS.NODE2_HOST, "EnableST");
+            sendMessage(DWS.NODE2_HOST, "Closeup");
           }
 
           // RESET THE DROP AUDIENCE TIME
@@ -2428,18 +2427,18 @@ async function handleAZMZoneEvents(event)
 
             if (event.Zone.Label == 'PRIMARY ROOM')
             {
-              // SET LOCAL SPEAKERTRACK MODE
-              xapi.Command.Cameras.SpeakerTrack.Activate().then(xapi.Command.Cameras.SpeakerTrack.Closeup.Activate());            
+              // SET PRIMARY TO "CLOSEUP"
+              xapi.Command.Cameras.SpeakerTrack.Set({ Behavior: "Closeup" });            
             }
             else if (event.Zone.Label == 'NODE 1 ROOM')
             {
               // ACTIVATE REMOTE SPEAKERTRACK
-              sendMessage(DWS.NODE1_HOST, "EnableST");
+              sendMessage(DWS.NODE1_HOST, "Closeup");
             }
             else if (event.Zone.Label == 'NODE 2 ROOM')
             {
               // ACTIVATE REMOTE SPEAKERTRACK
-              sendMessage(DWS.NODE2_HOST, "EnableST");
+              sendMessage(DWS.NODE2_HOST, "Closeup");
             }
 
             // UPDATE HOLD TIMER TO NEW TIME STAMP
