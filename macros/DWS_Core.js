@@ -695,7 +695,8 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
         xapi.Status.Audio.Volume.get()
         .then(volume => {
           sendMessage(DWS.NODE1_HOST,"Volume:"+volume);
-          sendMessage(DWS.NODE2_HOST,"Volume:"+volume);
+          // Wait 250ms securely before sending Node 2 to avoid exhausting the HttpClient connections
+          setTimeout(() => sendMessage(DWS.NODE2_HOST,"Volume:"+volume), 250);
         })
 
         // UPDATE VLANS FOR ACCESSORIES
