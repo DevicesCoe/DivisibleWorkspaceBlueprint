@@ -117,7 +117,7 @@ function init() {
       .then (response => {
         DWS_PRESENTER_MIC_ID = response.find(item => item.StreamName === presenterMic.ID).id;
 
-        if (DWS.DEBUG) {console.debug("DWS: Ethernet Presenter Microphone configured as ID: "+DWS_PRESENTER_MIC_ID)};
+        console.debug("DWS: Ethernet Presenter Microphone configured as ID: "+DWS_PRESENTER_MIC_ID)
       })
       .catch(error => {
         console.error("DWS: Issue determining ethernet microphone ID: ", error);
@@ -242,7 +242,7 @@ function init() {
     //==========================//
     if (event.PanelId == 'dws_audience_disabled')
     {
-      if (DWS.DEBUG) {console.debug("DWS: Audience mics enabled.")};
+      console.debug("DWS: Audience mics enabled.")
 
       // CHANGE BUTTON STATE      
       updatePanel({PanelId: "dws_audience_enabled", Location: "CallControls"});
@@ -259,7 +259,7 @@ function init() {
     }
     else if (event.PanelId == 'dws_audience_enabled')
     {
-      if (DWS.DEBUG) {console.debug("DWS: Audience mics disabled.")};
+      console.debug("DWS: Audience mics disabled.")
 
       // CHANGE BUTTON STATE
       updatePanel({PanelId: "dws_audience_disabled", Location: "CallControls"});
@@ -276,7 +276,7 @@ function init() {
     }
     else if (event.PanelId == 'dws_wireless_disabled')
     {
-      if (DWS.DEBUG) {console.debug("DWS: Wireless mics enabled.")};
+      console.debug("DWS: Wireless mics enabled.")
 
       // CHANGE BUTTON STATE
       updatePanel({PanelId: "dws_wireless_enabled", Location: "CallControls"});
@@ -294,7 +294,7 @@ function init() {
     }
     else if (event.PanelId == 'dws_wireless_enabled')
     {
-      if (DWS.DEBUG) {console.debug("DWS: Wireless mics disabled.")};
+      console.debug("DWS: Wireless mics disabled.")
 
       // CHANGE BUTTON STATE
       updatePanel({PanelId: "dws_wireless_disabled", Location: "CallControls"});
@@ -316,7 +316,7 @@ function init() {
     //============================//
     else if (event.PanelId == 'dws_automation_disabled')
     {
-      if (DWS.DEBUG) {console.debug("DWS: Automatic mode activated.")};
+      console.debug("DWS: Automatic mode activated.")
 
       // CHANGE BUTTON STATE
       updatePanel({PanelId: "dws_automation_enabled", Location: "CallControls"});
@@ -339,7 +339,7 @@ function init() {
     }
     else if (event.PanelId == 'dws_automation_enabled')
     {
-      if (DWS.DEBUG) {console.debug("DWS: Automatic mode deactivated.")};
+      console.debug("DWS: Automatic mode deactivated.")
 
       // CHANGE BUTTON STATE
       updatePanel({PanelId: "dws_automation_disabled", Location: "CallControls"});
@@ -362,7 +362,7 @@ function init() {
     }
     else if (event.PanelId == 'dws_fixed_sxs')
     {
-      if (DWS.DEBUG) {console.debug("DWS: Side by Side composition selected.")};
+      console.debug("DWS: Side by Side composition selected.")
 
       // SET VIDEO COMPOSITON
       if (DWS.NWAY == 'Two Way')
@@ -392,7 +392,7 @@ function init() {
     }
     else if (event.PanelId == 'dws_fixed_randp')
     {
-      if (DWS.DEBUG) {console.debug("DWS: Rooms and Presenter composition selected.")};    
+      console.debug("DWS: Rooms and Presenter composition selected.")  
 
       // CHECK FOR PRESENTER TRACK SETUP
       xapi.Status.Cameras.PresenterTrack.Availability.get()
@@ -447,7 +447,7 @@ function init() {
         //  COMBINE ACTION  //
         //==================//
         case 'dws_combine': // LISTEN FOR INITIAL COMBINE BUTTON PRESS
-          if (DWS.DEBUG) {console.debug("DWS: Combine requested. Confirming with user before beginning.")};
+          console.debug("DWS: Combine requested. Confirming with user before beginning.")
 
           if(DWS.NWAY == 'Three Way' && DWS_COMBINE_NODE1 == 'off' && DWS_COMBINE_NODE2 == 'off')
           {
@@ -497,19 +497,19 @@ function init() {
 
         case 'dws_combine_node1': 
           DWS_COMBINE_NODE1 = event.Value;
-          if (DWS.DEBUG) {console.debug("DWS: Toggling Node 1 for Combine: " + DWS_COMBINE_NODE1)};          
+          console.debug("DWS: Toggling Node 1 for Combine: " + DWS_COMBINE_NODE1)         
           break;
       
         case 'dws_combine_node2':
           DWS_COMBINE_NODE2 = event.Value;
-          if (DWS.DEBUG) {console.debug("DWS: Toggling Node 2 for Combine: " + DWS_COMBINE_NODE2)};          
+          console.debug("DWS: Toggling Node 2 for Combine: " + DWS_COMBINE_NODE2)          
           break;
 
         //==================//
         //   SPLIT ACTION   //
         //==================//
         case 'dws_split': // LISTEN FOR SPLIT BUTTON PRESS 
-          if (DWS.DEBUG) {console.debug("DWS: Split requested. Confirming with user before beginning.")};
+          console.debug("DWS: Split requested. Confirming with user before beginning.")
 
           // CONFIRM THE ACTION WITH THE END USER
           xapi.Command.UserInterface.Message.Prompt.Display({ PeripheralId: event.PeripheralId, FeedbackId: 'confirmSplit', "Option.1": "Yes", "Option.2": "No", Text: 'This process takes approximately 2 minutes to complete. Do you want to proceed?', Title: 'Confirm Split Room Request' })
@@ -519,7 +519,7 @@ function init() {
         //   ADVANCED SETTINGS PANEL EVENTS  //
         //===================================//
         case 'dws_unlock': // LISTEN FOR ADVANCED PANEL UNLOCK  
-          if (DWS.DEBUG) {console.debug("DWS: Advanced settings unlock requested.")};
+          console.debug("DWS: Advanced settings unlock requested.")
 
           // TRIGGER PIN CHALLENGE - IF SUCCESSFUL WILL TRIGGER BASED ON FEEDBACK REGISTER FOR FEEDBACKID.
           xapi.Command.UserInterface.Message.TextInput.Display({
@@ -533,7 +533,7 @@ function init() {
           break;
 
         case 'dws_adv_edit_automode': // LISTEN FOR AUTOMATION DEFAULT EDIT BUTTON
-          if (DWS.DEBUG) {console.debug("DWS: Prompting for change in Automation default.")};
+          console.debug("DWS: Prompting for change in Automation default.")
 
           // PROMPT THE USER FOR THE NEW DEFAULT
           xapi.Command.UserInterface.Message.Prompt.Display({
@@ -547,7 +547,7 @@ function init() {
           break;
 
         case 'dws_adv_edit_ducking': // LISTEN FOR AUTO DUCKING EDIT BUTTON
-          if (DWS.DEBUG) {console.debug("DWS: Prompting for change in Automation default.")};
+          console.debug("DWS: Prompting for change in Automation default.")
 
           // PROMPT THE USER FOR THE NEW DEFAULT
           xapi.Command.UserInterface.Message.Prompt.Display({
@@ -568,7 +568,7 @@ function init() {
 
             xapi.Command.UserInterface.Extensions.Widget.SetValue({ Value: DWS_ADV_PRI_DELAY, WidgetId: 'dws_adv_primary_delay' });          
 
-            if (DWS.DEBUG) {console.debug("DWS: Primary delay changed to: " + DWS_ADV_PRI_DELAY)};            
+            console.debug("DWS: Primary delay changed to: " + DWS_ADV_PRI_DELAY)            
           }
           else if (event.Value == 'decrement') 
           {
@@ -580,7 +580,7 @@ function init() {
 
             xapi.Command.UserInterface.Extensions.Widget.SetValue({ Value: DWS_ADV_PRI_DELAY, WidgetId: 'dws_adv_primary_delay' });
             
-            if (DWS.DEBUG) {console.debug("DWS: Primary delay changed to: " + DWS_ADV_PRI_DELAY)}; 
+            console.debug("DWS: Primary delay changed to: " + DWS_ADV_PRI_DELAY)
           }          
           break;
 
@@ -592,7 +592,7 @@ function init() {
 
             xapi.Command.UserInterface.Extensions.Widget.SetValue({ Value: DWS_ADV_HIGH_PRI, WidgetId: 'dws_adv_primary_high' });
 
-            if (DWS.DEBUG) {console.debug("DWS: Primary audience high trigger changed to: " + DWS_ADV_HIGH_PRI)};            
+            console.debug("DWS: Primary audience high trigger changed to: " + DWS_ADV_HIGH_PRI)           
           }
           else if (event.Value == 'decrement') 
           {
@@ -601,7 +601,7 @@ function init() {
 
             xapi.Command.UserInterface.Extensions.Widget.SetValue({ Value: DWS_ADV_HIGH_PRI, WidgetId: 'dws_adv_primary_high' });
             
-            if (DWS.DEBUG) {console.debug("DWS: Primary audience high trigger changed to: " + DWS_ADV_HIGH_PRI)}; 
+            console.debug("DWS: Primary audience high trigger changed to: " + DWS_ADV_HIGH_PRI)
           }          
           break;
 
@@ -613,7 +613,7 @@ function init() {
 
             xapi.Command.UserInterface.Extensions.Widget.SetValue({ Value: DWS_ADV_HIGH_NODE1, WidgetId: 'dws_adv_node1_high' });
 
-            if (DWS.DEBUG) {console.debug("DWS: Node 1 audience high trigger changed to: " + DWS_ADV_HIGH_NODE1)};            
+            console.debug("DWS: Node 1 audience high trigger changed to: " + DWS_ADV_HIGH_NODE1)            
           }
           else if (event.Value == 'decrement') 
           {
@@ -622,7 +622,7 @@ function init() {
 
             xapi.Command.UserInterface.Extensions.Widget.SetValue({ Value: DWS_ADV_HIGH_NODE1, WidgetId: 'dws_adv_node1_high' });
             
-            if (DWS.DEBUG) {console.debug("DWS: Node 1 audience high trigger changed to: " + DWS_ADV_HIGH_NODE1)}; 
+            console.debug("DWS: Node 1 audience high trigger changed to: " + DWS_ADV_HIGH_NODE1) 
           }          
           break;
 
@@ -634,7 +634,7 @@ function init() {
 
             xapi.Command.UserInterface.Extensions.Widget.SetValue({ Value: DWS_ADV_HIGH_NODE2, WidgetId: 'dws_adv_node2_high' });
 
-            if (DWS.DEBUG) {console.debug("DWS: Node 2 audience high trigger changed to: " + DWS_ADV_HIGH_NODE2)};            
+            console.debug("DWS: Node 2 audience high trigger changed to: " + DWS_ADV_HIGH_NODE2)           
           }
           else if (event.Value == 'decrement') 
           {
@@ -643,7 +643,7 @@ function init() {
 
             xapi.Command.UserInterface.Extensions.Widget.SetValue({ Value: DWS_ADV_HIGH_NODE2, WidgetId: 'dws_adv_node2_high' });
             
-            if (DWS.DEBUG) {console.debug("DWS: Node 2 audience high trigger changed to: " + DWS_ADV_HIGH_NODE2)}; 
+            console.debug("DWS: Node 2 audience high trigger changed to: " + DWS_ADV_HIGH_NODE2)
           }          
           break;
 
@@ -665,13 +665,13 @@ function init() {
 xapi.Event.UserInterface.Message.TextInput.Response.on(event => {
   if(event.FeedbackId == 'unlockSettings' && event.Text == DWS.UNLOCK_PIN)
   {
-    if (DWS.DEBUG) {console.debug('DWS: PIN accepted. Displaying advanced panel.')};
+    console.debug('DWS: PIN accepted. Displaying advanced panel.')
 
     createPanels("Unlocked");
   }
   else
   {
-    if (DWS.DEBUG) {console.warn("DWS: Unlocked attempted. Entered PIN did not match.")};
+    console.warn("DWS: Unlocked attempted. Entered PIN did not match.")
   }              
 })
 
@@ -683,7 +683,7 @@ xapi.Event.UserInterface.Extensions.Event.PageClosed
 .on(value => {
   if (value.PageId == 'dws_adv_unlocked')
   {
-    if (DWS.DEBUG) {console.debug("DWS: Advanced panel closed. Re-locking")};
+    console.debug("DWS: Advanced panel closed. Re-locking")
     
     createPanels("Locked");
   }
@@ -785,7 +785,7 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
     }
     else
     {
-      if (DWS.DEBUG) {console.debug("DWS: Combining Workspaces")};
+      console.debug("DWS: Combining Workspaces")
 
       // UPDATE CURRENT STATE
       DWS_CUR_STATE = "Combined Node1";
@@ -837,27 +837,27 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
         {
           if (device.ID === DWS.NODE1_NAV_CONTROL) 
           {
-            if (DWS.DEBUG) {console.debug("DWS: Discovered Navigator: " + device.SerialNumber + " / " + device.ID)};
+            console.debug("DWS: Discovered Navigator: " + device.SerialNumber + " / " + device.ID)
             // PAIR FOUND NAV AFTER 1500 MS  DELAY
             setTimeout(() => {pairSecondaryNav(device.ID, 'InsideRoom', 'Controller')}, 1500);
             FOUND_NAVS = DWS_TEMP_NAVS.push(device.SerialNumber);
           }
           if (device.ID === DWS.NODE1_NAV_SCHEDULER) 
           {
-            if (DWS.DEBUG) {console.debug("DWS: Discovered Navigator: " + device.SerialNumber + " / " + device.ID)};
+            console.debug("DWS: Discovered Navigator: " + device.SerialNumber + " / " + device.ID)
             // PAIR FOUND NAV AFTER 1500 MS DELAY
             setTimeout(() => {pairSecondaryNav(device.ID, 'OutsideRoom', 'RoomScheduler')}, 1500);
           }
           if (device.ID === DWS.NODE2_NAV_CONTROL) 
           {
-            if (DWS.DEBUG) {console.debug("DWS: Discovered Navigator: " + device.SerialNumber + " / " + device.ID)};
+            console.debug("DWS: Discovered Navigator: " + device.SerialNumber + " / " + device.ID)
             // PAIR FOUND NAV AFTER 1500 MS  DELAY
             setTimeout(() => {pairSecondaryNav(device.ID, 'InsideRoom', 'Controller')}, 1500);
             FOUND_NAVS = DWS_TEMP_NAVS.push(device.SerialNumber);
           }
           if (device.ID === DWS.NODE2_NAV_SCHEDULER) 
           {
-            if (DWS.DEBUG) {console.debug("DWS: Discovered Navigator: " + device.SerialNumber + " / " + device.ID)};
+            console.debug("DWS: Discovered Navigator: " + device.SerialNumber + " / " + device.ID)
             // PAIR FOUND NAV AFTER 1500 MS DELAY
             setTimeout(() => {pairSecondaryNav(device.ID, 'OutsideRoom', 'RoomScheduler')}, 1500);
             FOUND_NAVS = DWS_TEMP_NAVS.push(device.SerialNumber);
@@ -869,7 +869,7 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
         {      
           if (DWS.NODE1_MICS.includes(device.SerialNumber) || DWS.NODE2_MICS.includes(device.SerialNumber)) 
           {
-            if (DWS.DEBUG) {console.debug("DWS: Discovered Microphone: " + device.SerialNumber)};
+            console.debug("DWS: Discovered Microphone: " + device.SerialNumber)
 
             // STORE FOUND MIC TEMP ARRAY IN NOT ALREADY THERE
             if (!(DWS_TEMP_MICS.includes(device.SerialNumber))) 
@@ -884,7 +884,7 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
         {
           if (FOUND_NAVS == (DWS_NODE1_NAVS + DWS_NODE2_NAVS) && FOUND_MICS == (DWS_NODE1_MICS + DWS_NODE2_MICS))
           {
-            setTimeout(() => { if (DWS.DEBUG) {console.debug("DWS: All Node Peripherals Migrated.")};}, 2000);
+            setTimeout(() => { console.debug("DWS: All Node Peripherals Migrated.") }, 2000);
 
             // UPDATE TIMER TO SET 100% COMPLETION ON STATUS BAR
             DWS_TIMER = 170000;
@@ -897,7 +897,7 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
         {
           if (FOUND_NAVS == DWS_NODE1_NAVS && FOUND_MICS == DWS_NODE1_MICS)
           {
-            setTimeout(() => { if (DWS.DEBUG) {console.debug("DWS: All Node Peripherals Migrated.")};}, 2000);
+            setTimeout(() => { console.debug("DWS: All Node Peripherals Migrated.") }, 2000);
 
             // UPDATE TIMER TO SET 100% COMPLETION ON STATUS BAR
             DWS_TIMER = 170000;
@@ -910,7 +910,7 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
         {
           if (FOUND_NAVS == DWS_NODE2_NAVS && FOUND_MICS == DWS_NODE2_MICS)
           {
-            setTimeout(() => { if (DWS.DEBUG) {console.debug("DWS: All Node Peripherals Migrated.")};}, 2000);
+            setTimeout(() => { console.debug("DWS: All Node Peripherals Migrated.") }, 2000);
 
             // UPDATE TIMER TO SET 100% COMPLETION ON STATUS BAR
             DWS_TIMER = 170000;
@@ -924,7 +924,7 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
   }
   else if (value.OptionId == '1' && value.FeedbackId == 'confirmSplit') 
   { 
-    if (DWS.DEBUG) {console.debug("DWS: Split action confirmed. Splitting rooms.")}
+    console.debug("DWS: Split action confirmed. Splitting rooms.")
 
     // CLOSE THE DWS CONTROL PANEL
     xapi.Command.UserInterface.Extensions.Panel.Close({ Target: 'Controller' });
@@ -1026,12 +1026,12 @@ async function checkActivity(selectedNodes)
 
     if (READY_NODE1 && READY_NODE2) 
     {
-      if (DWS.DEBUG) {console.debug("DWS: Activity check passed. Nodes ready to combine.")}
+      console.debug("DWS: Activity check passed. Nodes ready to combine.")
       return true;
     } 
     else 
     {
-      if (DWS.DEBUG) {console.warn("DWS: Activity check failed. Nodes codecs are in active use.")}
+      console.warn("DWS: Activity check failed. Nodes codecs are in active use.")
         
       // ALERT USER TO CODECS BEING IN USE AND STOP
       xapi.Command.UserInterface.Message.Alert.Display({ Duration: '15', Title:"Selected Workspace(s) in Use", Text: "One of the workspaces selected is currently in use.<br>Combine request cancelled."});
@@ -1045,12 +1045,12 @@ async function checkActivity(selectedNodes)
 
     if (READY_NODE1) 
     {
-      if (DWS.DEBUG) {console.debug("DWS: Activity check passed. Nodes ready to combine.")}
+      console.debug("DWS: Activity check passed. Nodes ready to combine.")
       return true;
     } 
     else 
     {
-      if (DWS.DEBUG) {console.warn("DWS: Activity check failed. Nodes codecs are in active use.")}
+      console.warn("DWS: Activity check failed. Nodes codecs are in active use.")
         
       // ALERT USER TO CODECS BEING IN USE AND STOP
       xapi.Command.UserInterface.Message.Alert.Display({ Duration: '15', Title:"Selected Workspace(s) in Use", Text: "One of the workspaces selected is currently in use.<br>Combine request cancelled."});
@@ -1064,12 +1064,12 @@ async function checkActivity(selectedNodes)
 
     if (READY_NODE2) 
     {
-      if (DWS.DEBUG) {console.debug("DWS: Activity check passed. Nodes ready to combine.")}
+      console.debug("DWS: Activity check passed. Nodes ready to combine.")
       return true;
     } 
     else 
     {      
-      if (DWS.DEBUG) {console.warn("DWS: Activity check failed. Nodes codecs are in active use.")}
+      console.warn("DWS: Activity check failed. Nodes codecs are in active use.")
 
       // ALERT USER TO CODECS BEING IN USE AND STOP
       xapi.Command.UserInterface.Message.Alert.Display({ Duration: '15', Title:"Selected Workspace(s) in Use", Text: "One of the workspaces selected is currently in use.<br>Combine request cancelled."});
@@ -1133,13 +1133,13 @@ function registerLinkLocal()
     SWITCH_SERIAL = switchDetails["device-hardware"]["device-inventory"][0]["serial-number"];
     SWITCH_SOFTWARE = switchDetails["device-hardware"]["device-system-data"]["software-version"].match(/Version\s+(\d+\.\d+\.\d+)/);
 
-    if (DWS.DEBUG) {console.debug("DWS: Link Local Switch Serial:", SWITCH_SERIAL)};
-    if (DWS.DEBUG) {console.debug("DWS: Link Local Switch Model:", SWITCH_MODEL)};
-    if (DWS.DEBUG) {console.debug("DWS: Link Local Switch Software:", SWITCH_SOFTWARE[1])};
+    console.debug("DWS: Link Local Switch Serial:", SWITCH_SERIAL)
+    console.debug("DWS: Link Local Switch Model:", SWITCH_MODEL)
+    console.debug("DWS: Link Local Switch Software:", SWITCH_SOFTWARE[1])
 
     xapi.Command.Peripherals.Connect({ HardwareInfo: SWITCH_MODEL, ID: SWITCH_SERIAL, Name: SWITCH_MODEL, SoftwareInfo: SWITCH_SOFTWARE, NetworkAddress: "169.254.1.254", SerialNumber: SWITCH_SERIAL, Type: 'ControlSystem' })
     .then (() => {
-      if (DWS.DEBUG) {console.debug('DWS: Link Local Switch registered to Control Hub.')};
+      console.debug('DWS: Link Local Switch registered to Control Hub.')
 
       // SET REPORTING HEART BEAT TO 5.5 MINUTES
       xapi.Command.Peripherals.HeartBeat( { ID: SWITCH_SERIAL, Timeout: 330 });
@@ -1192,7 +1192,7 @@ async function setPrimaryDelay(newDelay)
       await xapi.Config.Audio.Output.USBInterface[1].Delay.DelayMs.set(newDelay);
     }
 
-    if (DWS.DEBUG) {console.debug('DWS: Primary output delay modified successfully.')};
+    console.debug('DWS: Primary output delay modified successfully.')
   }
   catch (error)
   {
@@ -1231,7 +1231,6 @@ https://cs.co/divisibleworkspaceblueprint
 // ENABLE OR DISABLE ADDITIONAL "DEBUG" LEVEL CONSOLE OUTPUT
 // TRACKING DEBUG PROVIDES MICROPHONE ACTIVITY "DEBUG" DURING COMBINED CALLS
 // ACCEPTED VALUES: true, false
-const DEBUG = ${DWS.DEBUG}; 
 const TRACKING_DEBUG = ${DWS.TRACKING_DEBUG};
 
 // ONLY CHANGE IF YOU ARE NOT USING THE DEFAULT U:P IN USB CONFIGURATION FILE
@@ -1284,7 +1283,6 @@ const PRIMARY_DELAY = ${DWS_ADV_PRI_DELAY};
 export default {
   VERSION,
   COMBINED_BANNER,
-  DEBUG,
   TRACKING_DEBUG,
   NWAY,
   SWITCH_USERNAME,
@@ -1323,7 +1321,7 @@ export default {
   xapi.Command.Macros.Macro.Save({ Name: 'DWS_Config', Overwrite: 'True' }, dataStr)
     .then (response => {
       xapi.Command.UserInterface.Message.Alert.Display({ Duration: '5', Title:"Saved Succesfully", Text: "Configuration changes have been saved."});
-      if (DWS.DEBUG) {console.debug('DWS: Configuration updated successfully.')}
+      console.debug('DWS: Configuration updated successfully.')
     })
     .catch(error => { console.error("DWS: Unable to save updated configuration."), error})
 } 
@@ -1570,11 +1568,11 @@ async function triggerMessage(codec, payload) {
   Params.Header = ['Authorization: Basic ' + DWS.MACRO_LOGIN, 'Content-Type: application/json']; // CONVERT TO BASE64 ENCODED
 
   // ENABLE THIS LINE TO SEE THE COMMANDS BEING SENT TO FAR END
-  if (DWS.DEBUG) {console.debug('DWS: Sending:', `${payload}`)}
+  console.debug('DWS: Sending:', `${payload}`)
 
   xapi.Command.HttpClient.Post(Params, payload)
   .then(() => {
-    if (DWS.DEBUG) {console.debug(`DWS: Command sent to ${codec} successfully`)}
+    console.debug(`DWS: Command sent to ${codec} successfully`)
   })
   .catch((error) => {
     console.error(`DWS: Error sending command:`, error);
@@ -1582,7 +1580,7 @@ async function triggerMessage(codec, payload) {
     // WAIT 1000ms THEN RETRY WITH SAME PAYLOAD
     setTimeout(() => { 
       triggerMessage(codec, payload); 
-      if (DWS.DEBUG) {console.debug('DWS: HTTP session limit. Resending Command:', `${payload}`)}
+      console.debug('DWS: HTTP session limit. Resending Command:', `${payload}`)
     }, 1000 );
   });
 }
@@ -1696,7 +1694,7 @@ async function submitRESTCONF(payload) {
 
     if (response.StatusCode == "204") 
     {
-        if (DWS.DEBUG) {console.debug (`DWS: VLAN changed successfully.`)}
+        console.debug (`DWS: VLAN changed successfully.`)
     } 
     else 
     {
@@ -1715,12 +1713,12 @@ async function submitRESTCONF(payload) {
 //===============================//
 function pairSecondaryNav(panelId, location, mode) 
 {
-  if (DWS.DEBUG) {console.debug (`DWS: Attempting to configure Secondary Touch Panel: ${panelId}`)}
+  console.debug (`DWS: Attempting to configure Secondary Touch Panel: ${panelId}`)
 
   // Command to set the panel to control mode
   xapi.Command.Peripherals.TouchPanel.Configure({ ID: panelId, Location: location, Mode: mode})
   .then(() => {
-    if (DWS.DEBUG) {console.debug (`DWS: Secondary Room Touch Panel ${panelId} configured successfully`)}
+    console.debug (`DWS: Secondary Room Touch Panel ${panelId} configured successfully`)
   })
   .catch((error) => {
     console.error(`DWS: Failed to pair Touch Panel ${panelId} to Primary`, error);
@@ -2029,7 +2027,7 @@ async function handleAZMZoneEvents(event)
   {
     if (event.Zone.State == 'High' && (event.Zone.Label == 'PRESENTER USB' || event.Zone.Label == 'PRESENTER ANALOG') && DWS_DUCK_STATE == 'Unducked')
     {
-      if (DWS.DEBUG) {console.debug("DWS: Presenter audio detected. Ducking Audience Mics")}
+      console.debug("DWS: Presenter audio detected. Ducking Audience Mics")
       
       //DUCK MICROPHONES
       for (let MIC_INPUT = 1; MIC_INPUT < 9; MIC_INPUT++)
@@ -2054,7 +2052,7 @@ async function handleAZMZoneEvents(event)
     }
     else if (event.Zone.State == 'Low' && (event.Zone.Label == 'PRESENTER USB' || event.Zone.Label == 'PRESENTER ANALOG') && DWS_DUCK_STATE == 'Ducked')
     {
-      if (DWS.DEBUG) {console.debug("DWS: Presenter audio not detected. Enabling Audience Mics")}
+      console.debug("DWS: Presenter audio not detected. Enabling Audience Mics")
 
       //UNDUCK MICROPHONES
       for (let MIC_INPUT = 1; MIC_INPUT < 9; MIC_INPUT++)
@@ -2281,7 +2279,7 @@ async function handleCallStatus(event)
     if (callStatus?.Session && (callStatus.Session[0].State == 'Active'))
     {
       isRASession = true;      
-      if (DWS.DEBUG) {console.debug("DWS: Ignoring Remote Access triggered call.")};
+      console.debug("DWS: Ignoring Remote Access triggered call.")
     }
 
     // CHECK FOR NON-RA CALL INSTANCE
@@ -2289,7 +2287,7 @@ async function handleCallStatus(event)
     {
       if(DWS_CUR_STATE == 'Combined All' || DWS_CUR_STATE == 'Combined Node1' || DWS_CUR_STATE == 'Combined Node2')
       {
-        if (DWS.DEBUG) {console.debug("DWS: Call started. Adding in call controls.")}
+        console.debug("DWS: Call started. Adding in call controls.")
 
         // ACTIVATE REMOTE SPEAKERTRACK
         sendToCombinedNodes("Closeup");
