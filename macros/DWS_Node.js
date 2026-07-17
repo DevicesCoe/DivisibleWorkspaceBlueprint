@@ -67,18 +67,12 @@ function init()
     console.log ('DWS: Combined State detected. Re-applying combined configuration.');
     setSecondaryState("Combined");    
     setSecondaryConfig("Combined");
-
-    // ENABLE BACKGROUND SPEAKER TRACKING
-    xapi.Command.Cameras.SpeakerTrack.BackgroundMode.Activate();
   }
   else
   {
     console.log ('DWS: Split State detected. Re-applying standard configuration.');
     setSecondaryState("Split");
     setSecondaryConfig("Split");
-
-    // DISABLE BACKGROUND SPEAKER TRACKING
-    xapi.Command.Cameras.SpeakerTrack.BackgroundMode.Deactivate();
   }
 
   xapi.event.on('Message Send Text', event => {
@@ -126,32 +120,37 @@ function init()
         //      CAMERA TRACKING STATES        //
         //====================================//
         case 'Closeup':
-          console.log('DWS: Setting Speaker Mode');
+          console.debug('DWS: Setting Speaker Mode');
           xapi.Command.Cameras.SpeakerTrack.Set( { Behavior: 'Closeup' });
           xapi.Command.Cameras.SpeakerTrack.BackgroundMode.Activate();      
           break;
 
         case 'Group':
-          console.log('DWS: Setting Group Mode');
+          console.debug('DWS: Setting Group Mode');
           xapi.Command.Cameras.SpeakerTrack.Set( { Behavior: 'BestOverview' });
           xapi.Command.Cameras.SpeakerTrack.BackgroundMode.Activate();
-          break;       
+          break; 
+
+        case 'EndCall':
+          console.debug('DWS: Disabling Background Mode');
+          xapi.Command.Standby.Deactivate();
+          break;      
 
         //==============================//
         //        STANDBY FUNCTIONS     //
         //==============================//
         case 'Halfwake':
-          console.log('DWS: Primary triggering halfwake.');
+          console.debug('DWS: Primary triggering halfwake.');
           xapi.Command.Standby.Halfwake();          
           break;  
 
         case 'Standby':
-          console.log('DWS: Primary triggering standby.');
+          console.debug('DWS: Primary triggering standby.');
           xapi.Command.Standby.Activate();          
           break; 
 
         case 'Awake':
-          console.log('DWS: Primary triggering Awake.');
+          console.debug('DWS: Primary triggering Awake.');
           xapi.Command.Standby.Deactivate();         
           break;
 
@@ -159,7 +158,7 @@ function init()
         //        VOLUME FUNCTIONS     //
         //=============================//
         case 'Volume':
-          console.log('DWS: Matching volume to primary:'+decodeCommand[1]);
+          console.debug('DWS: Matching volume to primary:'+decodeCommand[1]);
           xapi.Command.Audio.Volume.Set({ Level: decodeCommand[1] });
           break;
 
@@ -177,21 +176,21 @@ function init()
     {
       if (device.ID === DWS_SEC.NAV_CONTROL) 
       {
-        console.log("DWS: Re-discovered Room Navigator: " + device.SerialNumber + " / " + device.ID);
+        console.debug("DWS: Re-discovered Room Navigator: " + device.SerialNumber + " / " + device.ID);
         // PAIR CONTROL NAVIGATOR AFTER 1500ms Delay
         setTimeout(() => { 
           xapi.Command.Peripherals.TouchPanel.Configure({ ID: DWS_SEC.NAV_CONTROL, Location: "InsideRoom", Mode: "Controller"})
-            .then(() => { console.log("DWS: Paired Control Navigator succesfully.") } )
+            .then(() => { console.debug("DWS: Paired Control Navigator succesfully.") } )
           }, 1500);
       }
       if (device.ID === DWS_SEC.NAV_SCHEDULER) 
       {
-        console.log("DWS: Re-discovered Room Navigator: " + device.SerialNumber + " / " + device.ID);
+        console.debug("DWS: Re-discovered Room Navigator: " + device.SerialNumber + " / " + device.ID);
         
         // PAIR CONTROL NAVIGATOR AFTER 1500ms Delay
         setTimeout(() => { 
           xapi.Command.Peripherals.TouchPanel.Configure({ ID: DWS_SEC.NAV_SCHEDULER, Location: "OutsideRoom", Mode: "RoomScheduler"})
-            .then(() => { console.log("DWS: Paired Scheduler Navigator succesfully.") } )
+            .then(() => { console.debug("DWS: Paired Scheduler Navigator succesfully.") } )
           }, 1500);
       }
     }
@@ -305,18 +304,6 @@ function setSecondaryConfig(state)
   else
   {
     try { xapi.Command.Conference.DoNotDisturb.Deactivate() } catch(error) { console.error('DWS: Error Setting DND: ' + error.message); }
-
-    // RESET MICROPHONE MODES TO ENSURE ACTIVE STATE
-    try
-    { 
-      for(let i = 1; i < 9; i++)
-      {
-        xapi.Config.Audio.Input.Ethernet[i].Mode.set("On");
-      }   
-    }
-    catch(error) {
-      console.error('DWS: Error Setting Microphone Mode: ' + error.message); 
-    }
 
     // ENABLE SHARING WHEN SPLIT
     if(DWS_SEC.SCREENS == '1')
