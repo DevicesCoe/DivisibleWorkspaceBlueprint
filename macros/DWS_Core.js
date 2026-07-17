@@ -2004,9 +2004,6 @@ function startCallListener()
 
 async function handleAZMZoneEvents(event) 
 {
-  // STORE CURRENT CAMERA / COMPOSITION
-  let DWS_CUR_CAMERA = await xapi.Status.Video.Input.MainVideoSource.get();
-
   // STORE CURRENT TIME FOR HOLD OVERS
   let DWS_CUR_TIME = Date.now();
   if (DWS_HOLD_TIME == undefined)
@@ -2075,6 +2072,9 @@ async function handleAZMZoneEvents(event)
     // CHECK IF 2.5 SECONDS HAVE PASSED BEFORE TRIGGERING VIDEO CHANGES
     if ((DWS_CUR_TIME - DWS_HOLD_TIME) >= 2500)
     {
+      // STORE CURRENT CAMERA / COMPOSITION
+      let DWS_CUR_CAMERA = await xapi.Status.Video.Input.MainVideoSource.get();
+
       // CHECK FOR ALREADY IN PRESENTER AND AUDIENCE PIP
       if (DWS_CUR_CAMERA == 'Composed')
       {
