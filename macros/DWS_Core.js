@@ -49,6 +49,9 @@ let DWS_TEMP_NAVS = [];
 let DWS_NODE2_MICS = 0;
 let DWS_HOLD_TIME;
 let DWS_LAST_CAMERA;
+let DWS_AZM_STARTUP_TIMER;
+let DWS_AZM_MIC_CHECK_INTERVAL;
+let DWS_MIGRATION_DEVICE_LISTENER;
 let DWS_DUCK_STATE = 'Unducked';
 let SWITCH_MODEL;
 let SWITCH_SERIAL;
@@ -58,7 +61,7 @@ let DWS_NODE1_MICS = DWS.NODE1_MICS.length;
 
 if (DWS.NWAY == 'Three Way')
 {
-  let DWS_NODE2_MICS = DWS.NODE2_MICS.length;
+  DWS_NODE2_MICS = DWS.NODE2_MICS.length;
 }
 
 let DWS_NODE1_NAVS = 1;
@@ -695,7 +698,8 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
         xapi.Status.Audio.Volume.get()
         .then(volume => {
           sendMessage(DWS.NODE1_HOST,"Volume:"+volume);
-          sendMessage(DWS.NODE2_HOST,"Volume:"+volume);
+          // Wait 250ms securely before sending Node 2 to avoid exhausting the HttpClient connections
+          setTimeout(() => sendMessage(DWS.NODE2_HOST,"Volume:"+volume), 250);
         })
 
         // UPDATE VLANS FOR ACCESSORIES
@@ -705,7 +709,7 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
         setPrimaryState('Combined All');
 
         // INITIALIZE AZM WITH A 165 DELAY
-        setTimeout(() => {startAZM()}, 165000);
+        DWS_AZM_STARTUP_TIMER = setTimeout(() => {initiateAZMStartup(DWS_NODE1_MICS + DWS_NODE2_MICS)}, 165000);
 
         if (DWS.COMBINED_BANNER)
         {
@@ -733,7 +737,7 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
         setPrimaryState('Combined Node1');
 
         // INITIALIZE AZM WITH A 165 DELAY
-        setTimeout(() => {startAZM()}, 165000);
+        DWS_AZM_STARTUP_TIMER = setTimeout(() => {initiateAZMStartup(DWS_NODE1_MICS)}, 165000);
 
         if (DWS.COMBINED_BANNER)
         {
@@ -761,7 +765,7 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
         setPrimaryState('Combined Node2');
 
         // INITIALIZE AZM WITH A 165 DELAY
-        setTimeout(() => {startAZM()}, 165000);
+        DWS_AZM_STARTUP_TIMER = setTimeout(() => {initiateAZMStartup(DWS_NODE2_MICS)}, 165000);
 
         if (DWS.COMBINED_BANNER)
         {
@@ -790,7 +794,7 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
       setPrimaryState('Combined Node1');
 
       // INITIALIZE AZM WITH A 165 DELAY
-      setTimeout(() => {startAZM()}, 165000);
+      DWS_AZM_STARTUP_TIMER = setTimeout(() => {initiateAZMStartup(DWS_NODE1_MICS)}, 165000);
 
       if (DWS.COMBINED_BANNER)
       {
@@ -815,7 +819,7 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
     let FOUND_MICS = 0;
 
     // MONITOR FOR MIGRATED DEVICES AND CONFIGURE ACCORDING TO USER SETTINGS
-    const REG_DEVICES = xapi.Status.Peripherals.ConnectedDevice
+    DWS_MIGRATION_DEVICE_LISTENER = xapi.Status.Peripherals.ConnectedDevice
     .on(device => {
       if (device.Status === 'Connected') 
       {
@@ -877,7 +881,12 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
             DWS_TIMER = 170000;
 
             // STOP LISTENING FOR DEVICE REGISTRATION EVENTS
-            setTimeout(() => {REG_DEVICES()}, 5000);
+            setTimeout(() => {
+              if (DWS_MIGRATION_DEVICE_LISTENER) {
+                DWS_MIGRATION_DEVICE_LISTENER();
+                DWS_MIGRATION_DEVICE_LISTENER = null;
+              }
+            }, 5000);
           }
         }           
         else if (DWS_CUR_STATE == 'Combined Node1')
@@ -890,7 +899,12 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
             DWS_TIMER = 170000;
 
             // STOP LISTENING FOR DEVICE REGISTRATION EVENTS
-            setTimeout(() => {REG_DEVICES()}, 5000);
+            setTimeout(() => {
+              if (DWS_MIGRATION_DEVICE_LISTENER) {
+                DWS_MIGRATION_DEVICE_LISTENER();
+                DWS_MIGRATION_DEVICE_LISTENER = null;
+              }
+            }, 5000);
           }
         } 
         else if (DWS_CUR_STATE == 'Combined Node2')
@@ -903,7 +917,12 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
             DWS_TIMER = 170000;
 
             // STOP LISTENING FOR DEVICE REGISTRATION EVENTS
-            setTimeout(() => {REG_DEVICES()}, 5000);
+            setTimeout(() => {
+              if (DWS_MIGRATION_DEVICE_LISTENER) {
+                DWS_MIGRATION_DEVICE_LISTENER();
+                DWS_MIGRATION_DEVICE_LISTENER = null;
+              }
+            }, 5000);
           }
         }        
       }      
@@ -942,6 +961,18 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
 
     // UPDATE SAVED STATE IN CASE OF MACRO RESET / REBOOT
     setPrimaryState("Split");  
+
+    // CANCEL ANY PENDING AZM STARTUP TIMERS AND LISTENERS FROM A COMBINE EVENT 
+    clearTimeout(DWS_AZM_STARTUP_TIMER); 
+    clearInterval(DWS_AZM_MIC_CHECK_INTERVAL); 
+    if (DWS_MIGRATION_DEVICE_LISTENER) { 
+      DWS_MIGRATION_DEVICE_LISTENER(); 
+      DWS_MIGRATION_DEVICE_LISTENER = null; 
+    }   
+    
+    // WIPE TEMPORARY ARRAYS TO ENSURE FRESH STATE ON NEXT COMBINE 
+    DWS_TEMP_MICS = []; 
+    DWS_TEMP_NAVS = [];
 
     // CONFIGURE DELAY FOR AUDIO OUTPUTS
     setPrimaryDelay(0);
@@ -1717,23 +1748,31 @@ function pairSecondaryNav(panelId, location, mode)
 //===========================//
 //  AZM SUPPORTED FUNCTIONS  //
 //===========================//
-function buildAZMProfile(state) 
+function buildAZMProfile(state, availableMics) 
 {
   let PRIMARY_ZONE = [];
   let NODE1_ZONE = [];
   let NODE2_ZONE = [];
 
   DWS.PRIMARY_MICS.forEach(element => { 
-    PRIMARY_ZONE.push({Serial: element, SubId: [1]})
+    if (!availableMics || availableMics.includes(element)) {
+      PRIMARY_ZONE.push({Serial: element, SubId: [1]})
+    }
   });
 
   DWS.NODE1_MICS.forEach(element => { 
-    NODE1_ZONE.push({Serial: element, SubId: [1]})
+    if (!availableMics || availableMics.includes(element)) {
+      NODE1_ZONE.push({Serial: element, SubId: [1]})
+    }
   });
 
-  DWS.NODE2_MICS.forEach(element => { 
-    NODE2_ZONE.push({Serial: element, SubId: [1]})
-  });
+  if (DWS.NODE2_MICS) {
+    DWS.NODE2_MICS.forEach(element => { 
+      if (!availableMics || availableMics.includes(element)) {
+        NODE2_ZONE.push({Serial: element, SubId: [1]})
+      }
+    });
+  }
 
   let PRESENTER_ZONE = [];
 
@@ -1807,61 +1846,37 @@ function buildAZMProfile(state)
         },
         VoiceActivityDetection: 'On' 
       },
-      Zones: [
-        {
-          Label: 'PRIMARY ROOM',
-          Independent_Threshold: {
-            High: DWS.MICS_HIGH_PRI,                           
-            Low: 20                              
-          },
-          MicrophoneAssignment: {
-            Type: 'Ethernet',
-            Connectors: [...PRIMARY_ZONE]
-          },
-          Assets: {                             
-            Camera: {
-              InputConnector: 1,
-              Layout: 'Equal'
-            }
-          }
-        },
-        {
-          Label: 'NODE 1 ROOM',
-          Independent_Threshold: {
-            High: DWS.MICS_HIGH_NODE1,                           
-            Low: 20                              
-          },
-          MicrophoneAssignment: {
-            Type: 'Ethernet',                   
-            Connectors: [ ...NODE1_ZONE]
-          },
-          Assets: {                             
-            Camera: {
-              InputConnector: 2,
-              Layout: 'Equal'
-            }
-          }
-        },
-        {
-          Label: 'NODE 2 ROOM',
-          Independent_Threshold: {
-            High: DWS.MICS_HIGH_NODE2,                           
-            Low: 20                              
-          },
-          MicrophoneAssignment: {
-            Type: 'Ethernet',                   
-            Connectors: [ ...NODE2_ZONE]
-          },
-          Assets: {                             
-            Camera: {
-              InputConnector: 3,
-              Layout: 'Equal'
-            }
-          }
-        },
-        ...PRESENTER_ZONE
-      ]
+      Zones: []
     }
+
+    if (PRIMARY_ZONE.length > 0) {
+      DWS_AZM_PROFILE.Zones.push({
+        Label: 'PRIMARY ROOM',
+        Independent_Threshold: { High: DWS.MICS_HIGH_PRI, Low: 20 },
+        MicrophoneAssignment: { Type: 'Ethernet', Connectors: [...PRIMARY_ZONE] },
+        Assets: { Camera: { InputConnector: 1, Layout: 'Equal' } }
+      });
+    }
+
+    if (NODE1_ZONE.length > 0) {
+      DWS_AZM_PROFILE.Zones.push({
+        Label: 'NODE 1 ROOM',
+        Independent_Threshold: { High: DWS.MICS_HIGH_NODE1, Low: 20 },
+        MicrophoneAssignment: { Type: 'Ethernet', Connectors: [...NODE1_ZONE] },
+        Assets: { Camera: { InputConnector: 2, Layout: 'Equal' } }
+      });
+    }
+
+    if (NODE2_ZONE.length > 0) {
+      DWS_AZM_PROFILE.Zones.push({
+        Label: 'NODE 2 ROOM',
+        Independent_Threshold: { High: DWS.MICS_HIGH_NODE2, Low: 20 },
+        MicrophoneAssignment: { Type: 'Ethernet', Connectors: [...NODE2_ZONE] },
+        Assets: { Camera: { InputConnector: 3, Layout: 'Equal' } }
+      });
+    }
+
+    DWS_AZM_PROFILE.Zones.push(...PRESENTER_ZONE);
   }
   else if (state == 'Combined Node1')
   {
@@ -1877,44 +1892,28 @@ function buildAZMProfile(state)
         },
         VoiceActivityDetection: 'On' 
       },
-      Zones: [
-        {
-          Label: 'PRIMARY ROOM',
-          Independent_Threshold: {
-            High: DWS.MICS_HIGH_PRI,                           
-            Low: 20                              
-          },
-          MicrophoneAssignment: {
-            Type: 'Ethernet',
-            Connectors: [...PRIMARY_ZONE]
-          },
-          Assets: {                             
-            Camera: {
-              InputConnector: 1,
-              Layout: 'Equal'
-            }
-          }
-        },
-        {
-          Label: 'NODE 1 ROOM',
-          Independent_Threshold: {
-            High: DWS.MICS_HIGH_NODE1,                           
-            Low: 20                              
-          },
-          MicrophoneAssignment: {
-            Type: 'Ethernet',                   
-            Connectors: [ ...NODE1_ZONE]
-          },
-          Assets: {                             
-            Camera: {
-              InputConnector: 2,
-              Layout: 'Equal'
-            }
-          }
-        },
-        ...PRESENTER_ZONE
-      ]
+      Zones: []
     }
+
+    if (PRIMARY_ZONE.length > 0) {
+      DWS_AZM_PROFILE.Zones.push({
+        Label: 'PRIMARY ROOM',
+        Independent_Threshold: { High: DWS.MICS_HIGH_PRI, Low: 20 },
+        MicrophoneAssignment: { Type: 'Ethernet', Connectors: [...PRIMARY_ZONE] },
+        Assets: { Camera: { InputConnector: 1, Layout: 'Equal' } }
+      });
+    }
+
+    if (NODE1_ZONE.length > 0) {
+      DWS_AZM_PROFILE.Zones.push({
+        Label: 'NODE 1 ROOM',
+        Independent_Threshold: { High: DWS.MICS_HIGH_NODE1, Low: 20 },
+        MicrophoneAssignment: { Type: 'Ethernet', Connectors: [...NODE1_ZONE] },
+        Assets: { Camera: { InputConnector: 2, Layout: 'Equal' } }
+      });
+    }
+
+    DWS_AZM_PROFILE.Zones.push(...PRESENTER_ZONE);
   }
   else if (state == 'Combined Node2')
   {
@@ -1930,44 +1929,28 @@ function buildAZMProfile(state)
         },
         VoiceActivityDetection: 'On' 
       },
-      Zones: [
-        {
-          Label: 'PRIMARY ROOM',
-          Independent_Threshold: {
-            High: DWS.MICS_HIGH_PRI,                           
-            Low: 20                              
-          },
-          MicrophoneAssignment: {
-            Type: 'Ethernet',
-            Connectors: [...PRIMARY_ZONE]
-          },
-          Assets: {                             
-            Camera: {
-              InputConnector: 1,
-              Layout: 'Equal'
-            }
-          }
-        },
-        {
-          Label: 'NODE 2 ROOM',
-          Independent_Threshold: {
-            High: DWS.MICS_HIGH_NODE2,                           
-            Low: 20                              
-          },
-          MicrophoneAssignment: {
-            Type: 'Ethernet',                   
-            Connectors: [ ...NODE2_ZONE]
-          },
-          Assets: {                             
-            Camera: {
-              InputConnector: 3,
-              Layout: 'Equal'
-            }
-          }
-        },
-        ...PRESENTER_ZONE
-      ]
+      Zones: []
     }
+
+    if (PRIMARY_ZONE.length > 0) {
+      DWS_AZM_PROFILE.Zones.push({
+        Label: 'PRIMARY ROOM',
+        Independent_Threshold: { High: DWS.MICS_HIGH_PRI, Low: 20 },
+        MicrophoneAssignment: { Type: 'Ethernet', Connectors: [...PRIMARY_ZONE] },
+        Assets: { Camera: { InputConnector: 1, Layout: 'Equal' } }
+      });
+    }
+
+    if (NODE2_ZONE.length > 0) {
+      DWS_AZM_PROFILE.Zones.push({
+        Label: 'NODE 2 ROOM',
+        Independent_Threshold: { High: DWS.MICS_HIGH_NODE2, Low: 20 },
+        MicrophoneAssignment: { Type: 'Ethernet', Connectors: [...NODE2_ZONE] },
+        Assets: { Camera: { InputConnector: 3, Layout: 'Equal' } }
+      });
+    }
+
+    DWS_AZM_PROFILE.Zones.push(...PRESENTER_ZONE);
   }
   else
   {
@@ -2341,12 +2324,107 @@ async function handleCallStatus(event)
   })   
 }
 
+function countConnectedMigratingMics() {
+  if (DWS_CUR_STATE == 'Combined All') {
+    return DWS_TEMP_MICS.filter(serial => DWS.NODE1_MICS.includes(serial) || DWS.NODE2_MICS.includes(serial)).length;
+  } else if (DWS_CUR_STATE == 'Combined Node1') {
+    return DWS_TEMP_MICS.filter(serial => DWS.NODE1_MICS.includes(serial)).length;
+  } else if (DWS_CUR_STATE == 'Combined Node2') {
+    return DWS_TEMP_MICS.filter(serial => DWS.NODE2_MICS.includes(serial)).length;
+  }
+  return 0;
+}
+
+function logMissingMics() {
+  xapi.Status.Peripherals.ConnectedDevice.get()
+    .then(devices => {
+      let connectedSerials = devices.filter(d => d.Type === 'AudioMicrophone').map(d => d.SerialNumber);
+      let missing = [];
+      
+      if (DWS.PRIMARY_MICS) {
+        DWS.PRIMARY_MICS.forEach(mic => {
+          if (!connectedSerials.includes(mic)) missing.push(`[Primary Room: ${mic}]`);
+        });
+      }
+
+      if (DWS_CUR_STATE === 'Combined All' || DWS_CUR_STATE === 'Combined Node1') {
+        if (DWS.NODE1_MICS) {
+          DWS.NODE1_MICS.forEach(mic => {
+            if (!connectedSerials.includes(mic)) missing.push(`[Node 1 Room: ${mic}]`);
+          });
+        }
+      }
+
+      if (DWS_CUR_STATE === 'Combined All' || DWS_CUR_STATE === 'Combined Node2') {
+        if (DWS.NODE2_MICS) {
+          DWS.NODE2_MICS.forEach(mic => {
+            if (!connectedSerials.includes(mic)) missing.push(`[Node 2 Room: ${mic}]`);
+          });
+        }
+      }
+
+      if (missing.length > 0) {
+        console.log('Partial AZM: Missing mics: ' + missing.join(', '));
+      }
+    })
+    .catch(err => console.error("DWS: Failed to fetch connected mics for logging", err));
+}
+
+function initiateAZMStartup(expectedMigratingMics) {
+  if (countConnectedMigratingMics() >= expectedMigratingMics) {
+    if (DWS.DEBUG) console.debug("DWS: All expected mics found, starting AZM.");    
+    if (DWS_MIGRATION_DEVICE_LISTENER) {
+      DWS_MIGRATION_DEVICE_LISTENER();
+      DWS_MIGRATION_DEVICE_LISTENER = null;
+    }    
+    startAZM();
+  }
+  else {
+    if (DWS.DEBUG) console.warn("DWS: Microphones missing. Triggering 120s grace period listener.");
+    
+    const passiveListener = xapi.Status.Peripherals.ConnectedDevice.on(device => {
+      if (device.Status === 'Connected' && device.Type === 'AudioMicrophone') {
+        setTimeout(() => {
+          if (countConnectedMigratingMics() >= expectedMigratingMics) {
+            if (DWS.DEBUG) console.debug("DWS: Missing microphones joined during grace period. Starting full AZM.");
+            clearTimeout(DWS_AZM_MIC_CHECK_INTERVAL);
+            passiveListener();
+            if (DWS_MIGRATION_DEVICE_LISTENER) {
+              DWS_MIGRATION_DEVICE_LISTENER();
+              DWS_MIGRATION_DEVICE_LISTENER = null;
+            }
+            startAZM();
+          }
+        }, 100); // 100ms offset ensures the primary migration listener pushes to DWS_TEMP_MICS first
+      }
+    });
+
+    DWS_AZM_MIC_CHECK_INTERVAL = setTimeout(() => {
+      if (DWS.DEBUG) console.warn("DWS: AZM grace period expired. Starting partial AZM.");
+      logMissingMics();
+      passiveListener();
+      if (DWS_MIGRATION_DEVICE_LISTENER) {
+        DWS_MIGRATION_DEVICE_LISTENER();
+        DWS_MIGRATION_DEVICE_LISTENER = null;
+      }
+      startAZM();
+    }, 120000);
+  }
+}
+
 async function startAZM() {
-  let configurationProfile = buildAZMProfile(DWS_CUR_STATE);
-  await AZM.Command.Zone.Setup(configurationProfile);
-  startAZMZoneListener();
-  startCallListener();
-  await AZM.Command.Zone.Monitor.Stop();
+  try {
+    let devices = await xapi.Status.Peripherals.ConnectedDevice.get();
+    let connectedMics = devices.filter(d => d.Type === 'AudioMicrophone').map(d => d.SerialNumber);
+    
+    let configurationProfile = buildAZMProfile(DWS_CUR_STATE, connectedMics);
+    await AZM.Command.Zone.Setup(configurationProfile);
+    startAZMZoneListener();
+    startCallListener();
+    await AZM.Command.Zone.Monitor.Stop();
+  } catch (error) {
+    console.error("DWS: Failed to start AZM Zone monitoring", error);
+  }
 }
 
 function sendToCombinedNodes(message) {
