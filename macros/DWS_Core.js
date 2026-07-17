@@ -275,7 +275,7 @@ function init() {
       }
       if (DWS.PRESENTER_ANALOG == "on")
       {
-        xapi.Config.Audio.Input.Microphone[1].set("On");
+        xapi.Config.Audio.Input.Microphone[1].Mode.set("On");
       }
     }
     else if (event.PanelId == 'dws_wireless_enabled')
@@ -293,7 +293,7 @@ function init() {
       }
       if (DWS.PRESENTER_ANALOG == "on")
       {
-        xapi.Config.Audio.Input.Microphone[1].set("Off");
+        xapi.Config.Audio.Input.Microphone[1].Mode.set("Off");
       }
     }
 
@@ -2278,6 +2278,9 @@ async function handleCallStatus(event)
       {
         if (DWS.DEBUG) {console.debug("DWS: Call started. Adding in call controls.")}
 
+        // ACTIVATE REMOTE SPEAKERTRACK
+        sendToCombinedNodes("Closeup");
+
         // START ZONE MONITORING IN AZM
         AZM.Command.Zone.Monitor.Start();
 
@@ -2294,6 +2297,21 @@ async function handleCallStatus(event)
     } 
     else 
     {
+      // DEACTIVATE REMOTE SPEAKERTRACK
+      sendToCombinedNodes("EndCall");
+
+      // RESET MICROPHONE MODES TO ENSURE ACTIVE STATE
+      try
+      { 
+        for(let i = 1; i < 9; i++)
+        {
+          xapi.Config.Audio.Input.Ethernet[i].Mode.set("On");
+        }   
+      }
+      catch(error) {
+        console.error('DWS: Error Setting Microphone Mode: ' + error.message); 
+      }
+
       // STOP THE VU MONITORS WHEN CALL ENDS
       AZM.Command.Zone.Monitor.Stop()
 
