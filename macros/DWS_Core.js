@@ -1583,288 +1583,86 @@ async function sendMessage(codec, message) {
 //========================================//
 //  VLAN CHANGING OVER RESTCONF FUNCTION  //
 //========================================//
-async function setVLANs(state) {  
-  // CHECK SWITCH TYPE THEN SET BASED ON STATE
-  if (DWS.SWITCH_TYPE == 'C9K-8P') {
-    if (state == 'Combined Node1') 
-    {
-      const payload = {
-        "Cisco-IOS-XE-native:GigabitEthernet":[
-          {"name":"1/0/5","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
-          {"name":"1/0/6","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
-          {"name":"1/0/7","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}}
-        ]
-      };
-      await submitRESTCONF(payload)
 
-      // SET SECONDARY STATE FOR COMBINE OPERATION AFTER LAST VLAN CHANGE
-      sendMessage(DWS.NODE1_HOST,"Combine");
-    }
-    else 
-    {
-      const payload = {
-        "Cisco-IOS-XE-native:GigabitEthernet":[
-          {"name":"1/0/5","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}}},
-          {"name":"1/0/6","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}}},
-          {"name":"1/0/7","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}}}
-        ]
-      };
-      await submitRESTCONF(payload)
-      
-      // SET SECONDARY STATE FOR SPLIT OPERATION      
-      sendMessage(DWS.NODE1_HOST,"Split"); 
-    }    
-  }
-  else if (DWS.SWITCH_TYPE == 'C9K-12P') 
+// SWITCHPORT "VLAN SWAP" PORTS, DEFINED PER SWITCH TYPE
+// ONLY NODE1 & NODE2 GROUPS GET USED WITH A 3-ROOM DEPLOYMENT
+// ONLY TWO_WAY GETS USED WITH A 2-ROOM DEPLOYMENT (C9K-8P IS ALWAYS TREATED AS 2-ROOM)
+const DWS_SWITCH_PORTS = {
+  __proto__: null,
+  'C9K-8P':  { TWO_WAY: [5, 6, 7] },
+  'C9K-12P': { TWO_WAY: [7, 8, 9, 10, 11], 
+               NODE1: [5, 6, 7], 
+               NODE2: [9, 10, 11] },
+  'C9K-24P': { TWO_WAY: [13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23],
+               NODE1: [9, 10, 11, 12, 13, 14, 15], 
+               NODE2: [17, 18, 19, 20, 21, 22, 23] }
+};
+
+// BUILD THE RESTCONF PAYLOAD FROM ONE OR MORE [PORT LIST, VLAN] GROUPS
+function buildVlanPayload(portGroups)
+{
+  const interfaces = [];
+
+  portGroups.forEach(([ports, vlan]) => {
+    ports.forEach(port => {
+      interfaces.push({"name":`1/0/${port}`,"switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":vlan}}}}});
+    });
+  });
+
+  return { "Cisco-IOS-XE-native:GigabitEthernet": interfaces };
+}
+
+// MOVE NODE SWITCHPORTS TO THE PRIMARY VLAN (COMBINE) OR BACK TO THEIR HOME VLANS (SPLIT),
+// THEN NOTIFY EACH AFFECTED NODE OF ITS NEW COMBINE / SPLIT STATE
+async function setVLANs(state)
+{
+  const PORTS = DWS_SWITCH_PORTS[DWS.SWITCH_TYPE];
+
+  if (PORTS == undefined) { return; }
+
+  let portGroups;
+  let nodeMessages;
+  // 3-ROOM METHODS
+  if (DWS.NWAY == 'Three Way' && DWS.SWITCH_TYPE != 'C9K-8P')
   {
-    // THREE WAY METHODS
-    if (DWS.NWAY == 'Three Way')
+    switch (state)
     {
-      if (state == 'Combined All')
-      {
-        const payload = {
-          "Cisco-IOS-XE-native:GigabitEthernet":[
-            {"name":"1/0/5","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
-            {"name":"1/0/6","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
-            {"name":"1/0/7","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
-            {"name":"1/0/9","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
-            {"name":"1/0/10","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
-            {"name":"1/0/11","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}}
-          ]
-        };
-        await submitRESTCONF(payload)
+      case 'Combined All':
+        portGroups = [[PORTS.NODE1, DWS.PRIMARY_VLAN], [PORTS.NODE2, DWS.PRIMARY_VLAN]];
+        nodeMessages = [[DWS.NODE1_HOST, "Combine"], [DWS.NODE2_HOST, "Combine"]];
+        break;
 
-        // SET SECONDARY STATE FOR COMBINE OPERATION AFTER LAST VLAN CHANGE
-        sendMessage(DWS.NODE1_HOST,"Combine");
-        sendMessage(DWS.NODE2_HOST,"Combine");
-      }
-      else if (state == 'Combined Node1')
-      {
-        const payload = {
-          "Cisco-IOS-XE-native:GigabitEthernet":[
-            {"name":"1/0/5","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
-            {"name":"1/0/6","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
-            {"name":"1/0/7","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}}
-          ]
-        };
-        await submitRESTCONF(payload)
+      case 'Combined Node1':
+        portGroups = [[PORTS.NODE1, DWS.PRIMARY_VLAN]];
+        nodeMessages = [[DWS.NODE1_HOST, "Combine"]];
+        break;
 
-        // SET SECONDARY STATE FOR COMBINE OPERATION AFTER LAST VLAN CHANGE
-        sendMessage(DWS.NODE1_HOST,"Combine");
-      } 
-      else if (state == 'Combined Node2')
-      {
-        const payload = {
-          "Cisco-IOS-XE-native:GigabitEthernet":[
-            {"name":"1/0/9","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
-            {"name":"1/0/10","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
-            {"name":"1/0/11","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}}
-          ]
-        };
-        await submitRESTCONF(payload)
+      case 'Combined Node2':
+        portGroups = [[PORTS.NODE2, DWS.PRIMARY_VLAN]];
+        nodeMessages = [[DWS.NODE2_HOST, "Combine"]];
+        break;
 
-        // SET SECONDARY STATE FOR COMBINE OPERATION AFTER LAST VLAN CHANGE
-        sendMessage(DWS.NODE2_HOST,"Combine");
-      }
-      else // SPLIT
-      {
-        const payload = {
-          "Cisco-IOS-XE-native:GigabitEthernet":[
-            {"name":"1/0/5","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}}},
-            {"name":"1/0/6","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}}},
-            {"name":"1/0/7","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}}},
-            {"name":"1/0/9","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE2_VLAN}}}}},
-            {"name":"1/0/10","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE2_VLAN}}}}},
-            {"name":"1/0/11","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE2_VLAN}}}}}
-          ]
-        };
-        await submitRESTCONF(payload)
-        
-        // SET SECONDARY STATE FOR SPLIT OPERATION      
-        sendMessage(DWS.NODE1_HOST,"Split"); 
-        sendMessage(DWS.NODE2_HOST,"Split"); 
-      }
+      default: // SPLIT
+        portGroups = [[PORTS.NODE1, DWS.NODE1_VLAN], [PORTS.NODE2, DWS.NODE2_VLAN]];
+        nodeMessages = [[DWS.NODE1_HOST, "Split"], [DWS.NODE2_HOST, "Split"]];
     }
-    // TWO WAY METHODS
-    else 
-    {
-      if (state == 'Combined Node1')
-      {
-        const payload = {
-          "Cisco-IOS-XE-native:GigabitEthernet":[
-            {"name":"1/0/7","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
-            {"name":"1/0/8","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
-            {"name":"1/0/9","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
-            {"name":"1/0/10","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
-            {"name":"1/0/11","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}}
-          ]
-        };
-        await submitRESTCONF(payload)
-
-        // SET SECONDARY STATE FOR COMBINE OPERATION AFTER LAST VLAN CHANGE
-        sendMessage(DWS.NODE1_HOST,"Combine");
-      }
-      else // SPLIT
-      {
-        const payload = {
-          "Cisco-IOS-XE-native:GigabitEthernet":[
-            {"name":"1/0/7","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}}},
-            {"name":"1/0/8","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}}},
-            {"name":"1/0/9","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}}},
-            {"name":"1/0/10","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}}},
-            {"name":"1/0/11","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}}}
-          ]
-        };
-        await submitRESTCONF(payload)
-        
-        // SET SECONDARY STATE FOR SPLIT OPERATION      
-        sendMessage(DWS.NODE1_HOST,"Split"); 
-      }
-    }   
   }
-  else if (DWS.SWITCH_TYPE == 'C9K-24P') 
+  // 2-ROOM METHODS
+  else if (state == 'Combined Node1')
   {
-    if (DWS.NWAY == 'Three Way')
-    {
-      if (state == 'Combined All') 
-      {
-        const payload = {
-          "Cisco-IOS-XE-native:GigabitEthernet":[
-            {"name":"1/0/9","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
-            {"name":"1/0/10","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
-            {"name":"1/0/11","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
-            {"name":"1/0/12","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
-            {"name":"1/0/13","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
-            {"name":"1/0/14","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
-            {"name":"1/0/15","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},            
-            {"name":"1/0/17","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
-            {"name":"1/0/18","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
-            {"name":"1/0/19","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
-            {"name":"1/0/20","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
-            {"name":"1/0/21","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
-            {"name":"1/0/22","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
-            {"name":"1/0/23","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}}
-          ]
-        };
-        await submitRESTCONF(payload)
+    portGroups = [[PORTS.TWO_WAY, DWS.PRIMARY_VLAN]];
+    nodeMessages = [[DWS.NODE1_HOST, "Combine"]];
+  }
+  else // SPLIT
+  {
+    portGroups = [[PORTS.TWO_WAY, DWS.NODE1_VLAN]];
+    nodeMessages = [[DWS.NODE1_HOST, "Split"]];
+  }
 
-        // SET SECONDARY STATE FOR COMBINE OPERATION AFTER LAST VLAN CHANGE
-        sendMessage(DWS.NODE1_HOST,"Combine");
-        sendMessage(DWS.NODE2_HOST,"Combine");
-      }
-      else if (state == 'Combined Node1') 
-      {
-        const payload = {
-          "Cisco-IOS-XE-native:GigabitEthernet":[
-            {"name":"1/0/9","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
-            {"name":"1/0/10","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
-            {"name":"1/0/11","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
-            {"name":"1/0/12","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
-            {"name":"1/0/13","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
-            {"name":"1/0/14","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
-            {"name":"1/0/15","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}}
-          ]
-        };
-        await submitRESTCONF(payload)
+  await submitRESTCONF(buildVlanPayload(portGroups));
 
-        // SET SECONDARY STATE FOR COMBINE OPERATION AFTER LAST VLAN CHANGE
-        sendMessage(DWS.NODE1_HOST,"Combine");
-      }
-      else if (state == 'Combined Node2') 
-      {
-        const payload = {
-          "Cisco-IOS-XE-native:GigabitEthernet":[
-            {"name":"1/0/17","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
-            {"name":"1/0/18","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
-            {"name":"1/0/19","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
-            {"name":"1/0/20","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
-            {"name":"1/0/21","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
-            {"name":"1/0/22","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
-            {"name":"1/0/23","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}}
-          ]
-        };
-        await submitRESTCONF(payload)
-
-        // SET SECONDARY STATE FOR COMBINE OPERATION AFTER LAST VLAN CHANGE
-        sendMessage(DWS.NODE2_HOST,"Combine");
-      }
-      // SPLIT THREE WAY
-      else 
-      {
-        const payload = {
-          "Cisco-IOS-XE-native:GigabitEthernet":[
-            {"name":"1/0/9","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}}},
-            {"name":"1/0/10","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}}},
-            {"name":"1/0/11","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}}},
-            {"name":"1/0/12","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}}},
-            {"name":"1/0/13","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}}},
-            {"name":"1/0/14","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}}},
-            {"name":"1/0/15","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}}},
-            {"name":"1/0/17","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE2_VLAN}}}}},
-            {"name":"1/0/18","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE2_VLAN}}}}},
-            {"name":"1/0/19","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE2_VLAN}}}}},
-            {"name":"1/0/20","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE2_VLAN}}}}},
-            {"name":"1/0/21","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE2_VLAN}}}}},
-            {"name":"1/0/22","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE2_VLAN}}}}},
-            {"name":"1/0/23","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE2_VLAN}}}}}
-          ]
-        };
-        await submitRESTCONF(payload)
-        
-        // SET SECONDARY STATE FOR SPLIT OPERATION      
-        sendMessage(DWS.NODE1_HOST,"Split");   
-        sendMessage(DWS.NODE2_HOST,"Split");
-      }  
-    }
-    // TWO WAY METHODS
-    else
-    {
-      if (state == 'Combined Node1') 
-      {
-        const payload = {
-          "Cisco-IOS-XE-native:GigabitEthernet":[
-            {"name":"1/0/13","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
-            {"name":"1/0/14","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
-            {"name":"1/0/15","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
-            {"name":"1/0/16","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
-            {"name":"1/0/17","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
-            {"name":"1/0/18","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
-            {"name":"1/0/19","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
-            {"name":"1/0/20","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
-            {"name":"1/0/21","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
-            {"name":"1/0/22","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}},
-            {"name":"1/0/23","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.PRIMARY_VLAN}}}}}
-          ]
-        };
-        await submitRESTCONF(payload)
-
-        // SET SECONDARY STATE FOR COMBINE OPERATION AFTER LAST VLAN CHANGE
-        sendMessage(DWS.NODE1_HOST,"Combine");
-      }
-      else 
-      {
-        const payload = {
-          "Cisco-IOS-XE-native:GigabitEthernet":[
-            {"name":"1/0/13","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}}},
-            {"name":"1/0/14","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}}},
-            {"name":"1/0/15","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}}},
-            {"name":"1/0/16","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}}},
-            {"name":"1/0/17","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}}},
-            {"name":"1/0/18","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}}},
-            {"name":"1/0/19","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}}},
-            {"name":"1/0/20","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}}},
-            {"name":"1/0/21","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}}},
-            {"name":"1/0/22","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}}},
-            {"name":"1/0/23","switchport-config":{"switchport":{"Cisco-IOS-XE-switch:access":{"vlan":{"vlan":DWS.NODE1_VLAN}}}}}
-          ]
-        };
-        await submitRESTCONF(payload)
-        
-        // SET SECONDARY STATE FOR SPLIT OPERATION      
-        sendMessage(DWS.NODE1_HOST,"Split");   
-      }  
-    } 
-  }    
+  // SET SECONDARY STATE FOR COMBINE / SPLIT OPERATION AFTER LAST VLAN CHANGE
+  nodeMessages.forEach(([host, message]) => sendMessage(host, message));
 }
 
 async function submitRESTCONF(payload) {
