@@ -214,8 +214,22 @@ function init() {
   //======================================//
   //  EVENT LISTENER FOR VOLUME MATCHING  //
   //======================================//
+  let volumeTimer;
+  let newVolume;
+
   xapi.Status.Audio.Volume.on(volume => {
-    sendToCombinedNodes("Volume:"+volume);
+    newVolume = volume;
+
+    // RESET TIMER ON CHANGE
+    if (volumeTimer) {
+      clearTimeout(volumeTimer);
+    }
+
+    // 1 SECOND HOLD OFF
+    volumeTimer = setTimeout(() => {
+      sendToCombinedNodes("Volume:" + newVolume);
+      volumeTimer = null;
+    }, 1000); 
   })
 
   //=======================================//
@@ -694,8 +708,7 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
         // SET VOLUME ON NODES TO MATCH
         xapi.Status.Audio.Volume.get()
         .then(volume => {
-          sendMessage(DWS.NODE1_HOST,"Volume:"+volume);
-          sendMessage(DWS.NODE2_HOST,"Volume:"+volume);
+          sendToCombinedNodes("Volume:"+volume);
         })
 
         // UPDATE VLANS FOR ACCESSORIES
@@ -723,7 +736,7 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
         // SET VOLUME ON NODES TO MATCH
         xapi.Status.Audio.Volume.get()
         .then(volume => {
-          sendMessage(DWS.NODE1_HOST,"Volume:"+volume);
+          sendToCombinedNodes("Volume:"+volume);
         })        
 
         // UPDATE VLANS FOR ACCESSORIES
@@ -751,7 +764,7 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
         // SET VOLUME ON NODES TO MATCH
         xapi.Status.Audio.Volume.get()
         .then(volume => {
-          sendMessage(DWS.NODE2_HOST,"Volume:"+volume);
+          sendToCombinedNodes("Volume:"+volume);
         })
 
         // UPDATE VLANS FOR ACCESSORIES
@@ -780,7 +793,7 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
       // SET VOLUME ON NODES TO MATCH
       xapi.Status.Audio.Volume.get()
         .then(volume => {
-          sendMessage(DWS.NODE1_HOST,"Volume:"+volume);
+          sendToCombinedNodes("Volume:"+volume);
         })
 
       // UPDATE VLANS FOR ACCESSORIES
