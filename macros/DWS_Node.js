@@ -133,7 +133,7 @@ function init()
 
         case 'EndCall':
           console.debug('DWS: Disabling Background Mode');
-          xapi.Command.Standby.Deactivate();
+          xapi.Command.Cameras.SpeakerTrack.BackgroundMode.Deactivate();
           break;      
 
         //==============================//
