@@ -293,7 +293,8 @@ function setSecondaryConfig(state)
     }
 
     // SET ALL CONFIGURATIONS
-    try { xapi.Config.Peripherals.Profile.TouchPanels.set("0") } catch(error) { console.error('DWS: Error Setting Panels: ' + error.message); } 
+    try { xapi.Config.Peripherals.Profile.TouchPanels.set("0") } catch(error) { console.error('DWS: Error Setting Panels: ' + error.message); }
+    try { xapi.Config.Peripherals.Profile.Cameras.set("0") } catch(error) { console.error('DWS: Error Setting Cameras: ' + error.message); }  
     try { xapi.Config.Standby.Control.set("Off") } catch(error) { console.error('DWS: Error Setting Standby Control: ' + error.message); } 
     try { xapi.Config.Standby.Halfwake.Mode.set("Manual") } catch(error) { console.error('DWS: Error Setting Halfwake: ' + error.message); } 
     try { xapi.Config.Audio.Input.HDMI[2].Mode.set("On") } catch(error) { console.error('DWS: Error Setting HDMI Audio Mode: ' + error.message); } 
@@ -338,6 +339,7 @@ function setSecondaryConfig(state)
 
     // SET ALL CONFIGURATIONS
     try { xapi.Config.Peripherals.Profile.TouchPanels.set("Minimum1") } catch(error) { console.error('DWS: Error Setting Panels: ' + error.message); }
+    try { xapi.Config.Peripherals.Profile.Cameras.set("Minimum1") } catch(error) { console.error('DWS: Error Setting Cameras: ' + error.message); } 
     try { xapi.Config.Standby.Control.set("On") } catch(error) { console.error('DWS: Error Setting Standby Control: ' + error.message); }
     try { xapi.Config.Standby.Halfwake.Mode.set("Auto") } catch(error) { console.error('DWS: Error Setting Halfwake: ' + error.message); }
     try { xapi.Config.Audio.Input.HDMI[2].Mode.set("Off") } catch(error) { console.error('DWS: Error Setting HDMI Audio Mode: ' + error.message); }
