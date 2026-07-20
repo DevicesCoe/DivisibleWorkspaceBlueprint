@@ -30,6 +30,9 @@ SETUP_VARIABLES['SWITCH_PASSWORD']  = 'D!vi$ible1';
 
 import xapi from 'xapi';
 
+// CURRENT MACRO VERSION
+let CUR_VERSION = "0.9.9";
+
 let WIZARD_QUESTIONS = [];
 let LOADED_MACROS = [];
 let THIS_PLATFORM;
@@ -627,7 +630,7 @@ const AUTO_DUCKING = ${JSON.stringify(SETUP_VARIABLES['dws_setup_ducking'], null
 //                     **** DO NOT EDIT BELOW HERE ****                    //
 //=========================================================================*/
 
-const VERSION = '0.9.7';
+const VERSION = ${JSON.stringify(CUR_VERSION, null, 2)};
 const NWAY = ${JSON.stringify(SETUP_VARIABLES['dws_setup_nway'], null, 2)};
 const SWITCH_TYPE = ${JSON.stringify(SETUP_VARIABLES['dws_setup_switchtype'], null, 2)};
 const MACRO_LOGIN = ${JSON.stringify(SETUP_VARIABLES['dws_setup_login'], null, 2)};

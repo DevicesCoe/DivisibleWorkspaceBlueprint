@@ -1249,7 +1249,7 @@ const AUTO_DUCKING = ${JSON.stringify(DWS_ADV_DUCKING, null, 2)};
 //                     **** DO NOT EDIT BELOW HERE ****                    //
 //=========================================================================*/
 
-const VERSION = "0.9.7";
+const VERSION = ${JSON.stringify(DWS.VERSION, null, 2)};;
 const NWAY = ${JSON.stringify(DWS.NWAY, null, 2)};
 const SWITCH_TYPE = ${JSON.stringify(DWS.SWITCH_TYPE, null, 2)};
 const MACRO_LOGIN = ${JSON.stringify(DWS.MACRO_LOGIN, null, 2)};
