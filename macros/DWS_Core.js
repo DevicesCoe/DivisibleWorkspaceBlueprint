@@ -253,7 +253,7 @@ function init() {
       {
         if (i != DWS_PRESENTER_MIC_ID)
         {
-          xapi.Config.Audio.Input.Ethernet[i].Mode.set("On");
+          xapi.Command.Audio.LocalInput.AddConnector({ ConnectorId: i, ConnectorType: "Ethernet", InputId: 1 });
         }                
       }     
     }
@@ -268,10 +268,7 @@ function init() {
       // TOGGLE MUTE ON ALL ETHERNET MICROPHONES EXCEPT THE PRESENTER
       for(let i = 1; i < 9; i++)
       {
-        if (i != DWS_PRESENTER_MIC_ID)
-        {
-          xapi.Config.Audio.Input.Ethernet[i].Mode.set("Off");
-        }                
+        xapi.Command.Audio.LocalInput.RemoveConnector({ ConnectorId: i, ConnectorType: "Ethernet", InputId: 1 });              
       }   
     }
     else if (event.PanelId == 'dws_wireless_disabled')
@@ -285,11 +282,11 @@ function init() {
       // TOGGLE MUTE ON WIRELESS INPUTS BASED ON CONFIG
       if (DWS.PRESENTER_USB == "on")
       {
-        xapi.Config.Audio.Input.USBInterface[1].Mode.set("On");
+        xapi.Command.Audio.LocalInput.AddConnector({ ConnectorId: 1, ConnectorType: "USBInterface", InputId: 1 });
       }
       if (DWS.PRESENTER_ANALOG == "on")
       {
-        xapi.Config.Audio.Input.Microphone[1].Mode.set("On");
+        xapi.Command.Audio.LocalInput.AddConnector({ ConnectorId: 1, ConnectorType: "Microphone", InputId: 1 });
       }
     }
     else if (event.PanelId == 'dws_wireless_enabled')
@@ -303,11 +300,11 @@ function init() {
       // TOGGLE MUTE ON WIRELESS INPUTS BASED ON CONFIG
       if (DWS.PRESENTER_USB == "on")
       {
-        xapi.Config.Audio.Input.USBInterface[1].Mode.set("Off");
+        xapi.Command.Audio.LocalInput.RemoveConnector({ ConnectorId: 1, ConnectorType: "USBInterface", InputId: 1 });
       }
       if (DWS.PRESENTER_ANALOG == "on")
       {
-        xapi.Config.Audio.Input.Microphone[1].Mode.set("Off");
+        xapi.Command.Audio.LocalInput.RemoveConnector({ ConnectorId: 1, ConnectorType: "Microphone", InputId: 1 });
       }
     }
 
@@ -717,6 +714,10 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
         // UPDATE SAVED STATE IN CASE OF MACRO RESET / REBOOT
         setPrimaryState('Combined All');
 
+        // ENABLE MANUAL SELECTION FOR NODE CAMERAS
+        xapi.Config.Video.Input.Connector[2].InputSourceType.set('camera');
+        xapi.Config.Video.Input.Connector[3].InputSourceType.set('camera');
+
         // INITIALIZE AZM WITH A 165 DELAY
         setTimeout(() => {startAZM()}, 165000);
 
@@ -744,6 +745,9 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
 
         // UPDATE SAVED STATE IN CASE OF MACRO RESET / REBOOT
         setPrimaryState('Combined Node1');
+
+        // ENABLE MANUAL SELECTION FOR NODE CAMERAS
+        xapi.Config.Video.Input.Connector[2].InputSourceType.set('camera');
 
         // INITIALIZE AZM WITH A 165 DELAY
         setTimeout(() => {startAZM()}, 165000);
@@ -773,6 +777,9 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
         // UPDATE SAVED STATE IN CASE OF MACRO RESET / REBOOT
         setPrimaryState('Combined Node2');
 
+        // ENABLE MANUAL SELECTION FOR NODE CAMERAS
+        xapi.Config.Video.Input.Connector[3].InputSourceType.set('camera');
+
         // INITIALIZE AZM WITH A 165 DELAY
         setTimeout(() => {startAZM()}, 165000);
 
@@ -801,6 +808,9 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
 
       // UPDATE SAVED STATE IN CASE OF MACRO RESET / REBOOT
       setPrimaryState('Combined Node1');
+
+      // ENABLE MANUAL SELECTION FOR NODE CAMERAS
+      xapi.Config.Video.Input.Connector[2].InputSourceType.set('camera');
 
       // INITIALIZE AZM WITH A 165 DELAY
       setTimeout(() => {startAZM()}, 165000);
@@ -935,17 +945,25 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
     // UPDATE CURRENT STATE
     DWS_CUR_STATE = "Split";
 
-    // RESET MICROPHONE MODES TO ENSURE ACTIVE STATE 
+    // RESET MICROPHONE MODES TO ENSURE ACTIVE STATE
     try
     { 
       for(let i = 1; i < 9; i++)
       {
-        xapi.Config.Audio.Input.Ethernet[i].Mode.set("On");
+        xapi.Command.Audio.LocalInput.AddConnector({ ConnectorId: i, ConnectorType: "Ethernet", InputId: 1 });
       }   
+      if (DWS.PRESENTER_USB == "on")
+      {
+        xapi.Command.Audio.LocalInput.AddConnector({ ConnectorId: 1, ConnectorType: "USBInterface", InputId: 1 });
+      }
+      if (DWS.PRESENTER_ANALOG == "on")
+      {
+        xapi.Command.Audio.LocalInput.AddConnector({ ConnectorId: 1, ConnectorType: "Microphone", InputId: 1 });
+      }
     }
     catch(error) {
-      console.error('DWS: Error Setting Microphone Mode: ' + error.message); 
-    }  
+      console.error('DWS: Error Adding Microphones to Default InputGroup: ' + error.message); 
+    } 
 
     // STOP AZM
     AZM.Command.Zone.Monitor.Stop();
@@ -955,6 +973,10 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
 
     // UPDATE SAVED STATE IN CASE OF MACRO RESET / REBOOT
     setPrimaryState("Split");  
+
+    // DISABLE MANUAL SELECTION FOR NODE CAMERAS
+    xapi.Config.Video.Input.Connector[2].InputSourceType.set('other');
+    xapi.Config.Video.Input.Connector[3].InputSourceType.set('other');
 
     // CONFIGURE DELAY FOR AUDIO OUTPUTS
     setPrimaryDelay(0);
@@ -2123,43 +2145,40 @@ async function handleAZMZoneEvents(event)
         }
         else if (event.Zone.Label == 'PRIMARY ROOM' || event.Zone.Label == 'NODE 1 ROOM' || event.Zone.Label == 'NODE 2 ROOM')
         {
-          if (DWS_LAST_CAMERA != event.Assets.Camera.InputConnector)
+          // SET PRESENTER AND AUDIENCE PIP
+          if (DWS.TRACKING_DEBUG) {console.debug ('DWS: Setting PIP with PTZ & ' + event.Zone.Label)}
+
+          xapi.Command.Video.Input.SetMainVideoSource({
+            ConnectorId: [DWS_PRESENTER_CAM_ID, event.Assets.Camera.InputConnector],
+            Layout: 'PIP',
+            PIPPosition: 'Lowerright',
+            PIPSize: 'Large'
+          });  
+
+          // STORE LAST CAMERA 
+          DWS_LAST_CAMERA = event.Assets.Camera.InputConnector;
+
+          if (event.Zone.Label == 'PRIMARY ROOM')
           {
-            // SET PRESENTER AND AUDIENCE PIP
-            if (DWS.TRACKING_DEBUG) {console.debug ('DWS: Setting PIP with PTZ & ' + event.Zone.Label)}
-
-            xapi.Command.Video.Input.SetMainVideoSource({
-              ConnectorId: [DWS_PRESENTER_CAM_ID, event.Assets.Camera.InputConnector],
-              Layout: 'PIP',
-              PIPPosition: 'Lowerright',
-              PIPSize: 'Large'
-            });  
-
-            // STORE LAST CAMERA 
-            DWS_LAST_CAMERA = event.Assets.Camera.InputConnector;
-
-            if (event.Zone.Label == 'PRIMARY ROOM')
-            {
-              // SET PRIMARY TO "CLOSEUP"
-              xapi.Command.Cameras.SpeakerTrack.Set({ Behavior: "Closeup" });
-            }
-            else if (event.Zone.Label == 'NODE 1 ROOM')
-            {
-              // ACTIVATE REMOTE SPEAKERTRACK
-              sendMessage(DWS.NODE1_HOST, "Closeup");
-            }
-            else if (event.Zone.Label == 'NODE 2 ROOM')
-            {
-              // ACTIVATE REMOTE SPEAKERTRACK
-              sendMessage(DWS.NODE2_HOST, "Closeup");
-            }
-
-            // RESET THE DROP AUDIENCE TIME
-            DWS_DROP_AUDIENCE = DWS_CUR_TIME + (6000);
-
-            // UPDATE HOLD TIMER TO NEW TIME STAMP
-            DWS_HOLD_TIME = Date.now();
+            // SET PRIMARY TO "CLOSEUP"
+            xapi.Command.Cameras.SpeakerTrack.Set({ Behavior: "Closeup" });
           }
+          else if (event.Zone.Label == 'NODE 1 ROOM')
+          {
+            // ACTIVATE REMOTE SPEAKERTRACK
+            sendMessage(DWS.NODE1_HOST, "Closeup");
+          }
+          else if (event.Zone.Label == 'NODE 2 ROOM')
+          {
+            // ACTIVATE REMOTE SPEAKERTRACK
+            sendMessage(DWS.NODE2_HOST, "Closeup");
+          }
+
+          // RESET THE DROP AUDIENCE TIME
+          DWS_DROP_AUDIENCE = DWS_CUR_TIME + (6000);
+
+          // UPDATE HOLD TIMER TO NEW TIME STAMP
+          DWS_HOLD_TIME = Date.now();
         }
       }
       // TRIGGER FROM THE PRESENTER MICROPHONE WHEN NOT IN COMPOSED VIEW
@@ -2316,11 +2335,19 @@ async function handleCallStatus(event)
       { 
         for(let i = 1; i < 9; i++)
         {
-          xapi.Config.Audio.Input.Ethernet[i].Mode.set("On");
+          xapi.Command.Audio.LocalInput.AddConnector({ ConnectorId: i, ConnectorType: "Ethernet", InputId: 1 });
         }   
+        if (DWS.PRESENTER_USB == "on")
+        {
+          xapi.Command.Audio.LocalInput.AddConnector({ ConnectorId: 1, ConnectorType: "USBInterface", InputId: 1 });
+        }
+        if (DWS.PRESENTER_ANALOG == "on")
+        {
+          xapi.Command.Audio.LocalInput.AddConnector({ ConnectorId: 1, ConnectorType: "Microphone", InputId: 1 });
+        }
       }
       catch(error) {
-        console.error('DWS: Error Setting Microphone Mode: ' + error.message); 
+        console.error('DWS: Error Adding Microphones to Default InputGroup: ' + error.message); 
       }
 
       // STOP THE VU MONITORS WHEN CALL ENDS
