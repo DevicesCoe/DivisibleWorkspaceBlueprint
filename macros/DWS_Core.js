@@ -140,6 +140,10 @@ function init() {
 
     // INITIALIZE AZM BASED ON SAVED STATE
     startAZM();
+
+    // CONFIGURE HDMI AUDIO OUTPUT
+    try { xapi.Command.Audio.LocalOutput.RemoveConnector({ ConnectorId: 1, ConnectorType: 'HDMI', OutputId: 2 }); } catch(error) { console.error('DWS: Error removing HDMI from default group: ' + error.message); }
+    try { xapi.Command.Audio.LocalOutput.AddConnector({ ConnectorId: 1, ConnectorType: 'HDMI', OutputId: 7 }); } catch(error) { console.error('DWS: Error adding HDMI to Line output group: ' + error.message); }
     
     // CHECK FOR ACTIVE CALL THEN BUILD PANELS
     xapi.Status.Call.get()
@@ -714,6 +718,10 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
         // UPDATE SAVED STATE IN CASE OF MACRO RESET / REBOOT
         setPrimaryState('Combined All');
 
+        // CONFIGURE HDMI AUDIO OUTPUT
+        try { xapi.Command.Audio.LocalOutput.RemoveConnector({ ConnectorId: 1, ConnectorType: 'HDMI', OutputId: 2 }); } catch(error) { console.error('DWS: Error removing HDMI from default group: ' + error.message); }
+        try { xapi.Command.Audio.LocalOutput.AddConnector({ ConnectorId: 1, ConnectorType: 'HDMI', OutputId: 7 }); } catch(error) { console.error('DWS: Error adding HDMI to Line output group: ' + error.message); }
+
         // ENABLE MANUAL SELECTION FOR NODE CAMERAS
         xapi.Config.Video.Input.Connector[2].InputSourceType.set('camera');
         xapi.Config.Video.Input.Connector[3].InputSourceType.set('camera');
@@ -746,6 +754,10 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
         // UPDATE SAVED STATE IN CASE OF MACRO RESET / REBOOT
         setPrimaryState('Combined Node1');
 
+        // CONFIGURE HDMI AUDIO OUTPUT
+        try { xapi.Command.Audio.LocalOutput.RemoveConnector({ ConnectorId: 1, ConnectorType: 'HDMI', OutputId: 2 }); } catch(error) { console.error('DWS: Error removing HDMI from default group: ' + error.message); }
+        try { xapi.Command.Audio.LocalOutput.AddConnector({ ConnectorId: 1, ConnectorType: 'HDMI', OutputId: 7 }); } catch(error) { console.error('DWS: Error adding HDMI to Line output group: ' + error.message); }
+
         // ENABLE MANUAL SELECTION FOR NODE CAMERAS
         xapi.Config.Video.Input.Connector[2].InputSourceType.set('camera');
 
@@ -776,6 +788,10 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
 
         // UPDATE SAVED STATE IN CASE OF MACRO RESET / REBOOT
         setPrimaryState('Combined Node2');
+
+        // CONFIGURE HDMI AUDIO OUTPUT
+        try { xapi.Command.Audio.LocalOutput.RemoveConnector({ ConnectorId: 1, ConnectorType: 'HDMI', OutputId: 2 }); } catch(error) { console.error('DWS: Error removing HDMI from default group: ' + error.message); }
+        try { xapi.Command.Audio.LocalOutput.AddConnector({ ConnectorId: 1, ConnectorType: 'HDMI', OutputId: 7 }); } catch(error) { console.error('DWS: Error adding HDMI to Line output group: ' + error.message); }
 
         // ENABLE MANUAL SELECTION FOR NODE CAMERAS
         xapi.Config.Video.Input.Connector[3].InputSourceType.set('camera');
@@ -808,6 +824,10 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
 
       // UPDATE SAVED STATE IN CASE OF MACRO RESET / REBOOT
       setPrimaryState('Combined Node1');
+
+      // CONFIGURE HDMI AUDIO OUTPUT
+      try { xapi.Command.Audio.LocalOutput.RemoveConnector({ ConnectorId: 1, ConnectorType: 'HDMI', OutputId: 2 }); } catch(error) { console.error('DWS: Error removing HDMI from default group: ' + error.message); }
+      try { xapi.Command.Audio.LocalOutput.AddConnector({ ConnectorId: 1, ConnectorType: 'HDMI', OutputId: 7 }); } catch(error) { console.error('DWS: Error adding HDMI to Line output group: ' + error.message); }
 
       // ENABLE MANUAL SELECTION FOR NODE CAMERAS
       xapi.Config.Video.Input.Connector[2].InputSourceType.set('camera');
@@ -973,6 +993,10 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
 
     // UPDATE SAVED STATE IN CASE OF MACRO RESET / REBOOT
     setPrimaryState("Split");  
+
+    // CONFIGURE HDMI AUDIO OUTPUT
+    try { xapi.Command.Audio.LocalOutput.RemoveConnector({ ConnectorId: 1, ConnectorType: 'HDMI', OutputId: 7 }); } catch(error) { console.error('DWS: Error removing HDMI from Line Out group: ' + error.message); }
+    try { xapi.Command.Audio.LocalOutput.AddConnector({ ConnectorId: 1, ConnectorType: 'HDMI', OutputId: 2 }); } catch(error) { console.error('DWS: Error adding HDMI to default output group: ' + error.message); }
 
     // DISABLE MANUAL SELECTION FOR NODE CAMERAS
     xapi.Config.Video.Input.Connector[2].InputSourceType.set('other');
