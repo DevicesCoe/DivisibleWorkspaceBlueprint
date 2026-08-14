@@ -91,9 +91,6 @@ function init()
           // UPDATE CONFIGURATION
           setSecondaryConfig("Combined");
 
-          // ENABLE BACKGROUND SPEAKER TRACKING
-          xapi.Command.Cameras.SpeakerTrack.BackgroundMode.Activate();
-
           // UPDATE STATE MACRO
           setSecondaryState("Combined");
 
