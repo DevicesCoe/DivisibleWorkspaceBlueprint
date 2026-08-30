@@ -31,7 +31,7 @@ SETUP_VARIABLES['SWITCH_PASSWORD']  = 'D!vi$ible1';
 import xapi from 'xapi';
 
 // CURRENT MACRO VERSION
-let CUR_VERSION = "0.9.9";
+let CUR_VERSION = "0.9.10";
 
 let WIZARD_QUESTIONS = [];
 let LOADED_MACROS = [];
@@ -55,7 +55,7 @@ function init()
       return;
     }
 
-    if(THIS_PLATFORM == 'Room Kit EQ')
+    if(platform == 'Room Kit EQ')
     {
       xapi.Command.SystemUnit.OptionKey.List()
       .then (response => {

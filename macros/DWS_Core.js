@@ -252,7 +252,7 @@ function init() {
       updatePanel({PanelId: "dws_audience_enabled", Location: "CallControls"});
       updatePanel({PanelId: "dws_audience_disabled", Location: "Hidden"});
 
-      // TOGGLE MUTE ON ALL ETHERNET MICROPHONES EXCEPT THE PRESENTER
+      // ADD ETHERNET MICROPHONES TO INPUT GROUP EXCEPT PRESENTER (IF CMP)
       for(let i = 1; i < 9; i++)
       {
         if (i != DWS_PRESENTER_MIC_ID)
@@ -269,7 +269,7 @@ function init() {
       updatePanel({PanelId: "dws_audience_disabled", Location: "CallControls"});
       updatePanel({PanelId: "dws_audience_enabled", Location: "Hidden"});
 
-      // TOGGLE MUTE ON ALL ETHERNET MICROPHONES EXCEPT THE PRESENTER
+      // REMOVE ETHERNET MICROPHONES FROM INPUT GROUP EXCEPT PRESENTER (IF CMP)
       for(let i = 1; i < 9; i++)
       {
         xapi.Command.Audio.LocalInput.RemoveConnector({ ConnectorId: i, ConnectorType: "Ethernet", InputId: 1 });              
@@ -283,7 +283,7 @@ function init() {
       updatePanel({PanelId: "dws_wireless_enabled", Location: "CallControls"});
       updatePanel({PanelId: "dws_wireless_disabled", Location: "Hidden"});
 
-      // TOGGLE MUTE ON WIRELESS INPUTS BASED ON CONFIG
+      // ADD PRESENTER CONNECTOR TO INPUT GROUP
       if (DWS.PRESENTER_USB == "on")
       {
         xapi.Command.Audio.LocalInput.AddConnector({ ConnectorId: 1, ConnectorType: "USBInterface", InputId: 1 });
@@ -301,7 +301,7 @@ function init() {
       updatePanel({PanelId: "dws_wireless_disabled", Location: "CallControls"});
       updatePanel({PanelId: "dws_wireless_enabled", Location: "Hidden"});
 
-      // TOGGLE MUTE ON WIRELESS INPUTS BASED ON CONFIG
+      // REMOVE PRESENTER CONNECTOR FROM INPUT GROUP
       if (DWS.PRESENTER_USB == "on")
       {
         xapi.Command.Audio.LocalInput.RemoveConnector({ ConnectorId: 1, ConnectorType: "USBInterface", InputId: 1 });
