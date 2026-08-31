@@ -76,9 +76,45 @@ if (DWS.NODE2_NAV_SCHEDULER != undefined)
 //===========================//
 //  INITIALIZATION FUNCTION  //
 //===========================//
-function init() {
-
+function init() 
+{
   console.log ("DWS: Starting up as Primary Node.");
+
+  // CHECK PLATFORM COMPATIBILITY
+  let THIS_PLATFORM = xapi.Status.SystemUnit.ProductPlatform.get()
+  .then (platform => {    
+    if(platform != 'Codec Pro' && platform != 'Codec Pro G2' && platform != 'Room Kit EQ')
+    {    
+      xapi.Command.UserInterface.Message.Alert.Display({ Duration: '0', Title:"Unsupported Product Platform", Text: "The Divisible Workspace Blueprint is only supported on Codec Pro, Pro G2 and Codec EQ."}); 
+
+      console.error("DWS: Platform not compatible with Divisble Workspace Blueprint. Stopping Macros.");
+
+      // TURN OFF MACRO && HIDE CONTROLS
+      try { xapi.Command.Macros.Macro.Deactivate({ Name: 'DWS_Core' }); } catch(error) { console.error('DWS: Error disabling DWS Macros: ' + error.message); }
+      try { xapi.Command.UserInterface.Extensions.Panel.Remove({PanelId: 'dws_controls'}); } catch(error) { console.error('Error removing Room Controls panel: ' + error.message); }
+      try { xapi.Command.UserInterface.Extensions.Panel.Remove({PanelId: 'dws_advanced'}); } catch(error) { console.error('Error removing Advanced panel: ' + error.message); }
+      return;
+    }
+
+    if(platform == 'Room Kit EQ')
+    {
+      xapi.Command.SystemUnit.OptionKey.List()
+      .then (response => {
+        if (response.OptionKey[3].Active != 'True' && response.OptionKey[3].Installed != 'True')
+        {
+          console.error("DWS: No AV Integrator option key installed. Stopping Macros.");
+
+          xapi.Command.UserInterface.Message.Alert.Display({ Duration: '60', Title:"Error: Missing AV Integrator Option Key", Text: "The Divisible Workspace Blueprint requires the AV Integrator option key for the primary Codec EQ."}); 
+          
+          // TURN OFF MACRO && HIDE CONTROLS
+          try { xapi.Command.Macros.Macro.Deactivate({ Name: 'DWS_Core' }); } catch(error) { console.error('DWS: Error disabling DWS Macros: ' + error.message); }
+          try { xapi.Command.UserInterface.Extensions.Panel.Remove({PanelId: 'dws_controls'}); } catch(error) { console.error('Error removing Room Controls panel: ' + error.message); }
+          try { xapi.Command.UserInterface.Extensions.Panel.Remove({PanelId: 'dws_advanced'}); } catch(error) { console.error('Error removing Advanced panel: ' + error.message); }
+          return;
+        }   
+      });      
+    }
+  });
 
   // CHECK PRESENTER TRACK SETUP
   xapi.Status.Cameras.PresenterTrack.Availability.get()

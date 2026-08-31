@@ -39,55 +39,6 @@ let THIS_PLATFORM;
 
 function init()
 {
-  // PERFORM INITIAL PLATFORM SANITY CHECKS BEFORE ALLOWING THE WIZARD TO DEPLOY
-
-  // CHECK PLATFORM COMPATIBILITY
-  THIS_PLATFORM = xapi.Status.SystemUnit.ProductPlatform.get()
-  .then (platform => {    
-    if(platform != 'Codec Pro' && platform != 'Codec Pro G2' && platform != 'Room Kit EQ')
-    {    
-      xapi.Command.UserInterface.Message.Alert.Display({ Duration: '0', Title:"Unsupported Product Platform", Text: "The Divisible Workspace Blueprint is only supported on Codec Pro, Pro G2 and Codec EQ."}); 
-
-      console.error("DWS: Platform not compatible with Divisble Workspace Blueprint. Stopping installation.");
-
-      // TURN OFF MACRO
-      try { xapi.Command.Macros.Macro.Deactivate({ Name: 'DWS_Wizard' }); } catch(error) { console.error('DWS: Error disabling Wizard Macro: ' + error.message); }
-      return;
-    }
-
-    if(platform == 'Room Kit EQ')
-    {
-      xapi.Command.SystemUnit.OptionKey.List()
-      .then (response => {
-        if (response.OptionKey[3].Active != 'True' && response.OptionKey[3].Installed != 'True')
-        {
-          console.error ("DWS: No AV Integrator option key installed. Stopping installation.");
-
-          xapi.Command.UserInterface.Message.Alert.Display({ Duration: '60', Title:"Error: Missing AV Integrator Option Key", Text: "The Divisible Workspace Blueprint requires the AV Integrator option key for the primary Codec EQ."}); 
-        }   
-      });
-
-      // TURN OFF MACRO
-      try { xapi.Command.Macros.Macro.Deactivate({ Name: 'DWS_Wizard' }); } catch(error) { console.error('DWS: Error disabling Wizard Macro: ' + error.message); }
-      return;
-    }
-  });
-
-  // ENSURE ROOM TYPE IS STANDARD
-  xapi.Status.Provisioning.RoomType.get()
-  .then (roomType => {
-    if (roomType != 'Standard')
-    {
-      xapi.Command.UserInterface.Message.Alert.Display({ Duration: '0', Title:"Unsupported Room Type", Text: "The Divisible Workspace Blueprint is only supported using the Standard Room Type."}); 
-
-      console.error("DWS: Divisible Workspace Blueprint only operates in Standard Room Type. Stopping installation.");
-
-      // TURN OFF MACRO
-      try { xapi.Command.Macros.Macro.Deactivate({ Name: 'DWS_Wizard' }); } catch(error) { console.error('DWS: Error disabling Wizard Macro: ' + error.message); }
-      return;
-    }
-  })
-
   // GET AND STORE PRIMARY MICROPHONES
   xapi.Command.Peripherals.List({ Connected: 'True', Type: 'AudioMicrophone' })
   .then(response => {
@@ -1070,7 +1021,7 @@ function checkSwitch()
     const native = jsonResponse['Cisco-IOS-XE-native:native'];
     const hostname = native['hostname'];
     const version = native['version'];
-    console.log('Switch detected running IOS-XE ' + version + ' with Hostname:', hostname);
+    console.log('DWS: Switch detected running IOS-XE ' + version + ' with Hostname:', hostname);
 
     // SWITCH SOFTWARE VERSION CHECK
     if (version <= 17.14)
@@ -1110,7 +1061,7 @@ async function saveSwitch()
     console.log ('DWS: Default switch configuration saved to startup-config.');
 
     // START THE WIZARD
-    setTimeout(() => { init(), 500});
+    platformCheck();
   })
   .catch(error => {
     console.warn('DWS: Unable to save switch configuration:', error.message);
@@ -1118,5 +1069,63 @@ async function saveSwitch()
   });
 }
 
-// CHECK FOR VALID SWITCH CONNECTION 
+function platformCheck()
+{
+  // PERFORM INITIAL PLATFORM SANITY CHECKS BEFORE ALLOWING THE WIZARD TO DEPLOY
+  THIS_PLATFORM = xapi.Status.SystemUnit.ProductPlatform.get()
+  .then (platform => {    
+    if(platform != 'Codec Pro' && platform != 'Codec Pro G2' && platform != 'Room Kit EQ')
+    {    
+      xapi.Command.UserInterface.Message.Alert.Display({ Duration: '0', Title:"Unsupported Product Platform", Text: "The Divisible Workspace Blueprint is only supported on Codec Pro, Pro G2 and Codec EQ."}); 
+
+      console.error("DWS: Platform not compatible with Divisble Workspace Blueprint. Stopping installation.");
+
+      // TURN OFF MACRO
+      try { xapi.Command.Macros.Macro.Deactivate({ Name: 'DWS_Wizard' }); } catch(error) { console.error('DWS: Error disabling Wizard Macro: ' + error.message); }
+      return;
+    }
+    else if(platform == 'Room Kit EQ')
+    {
+      xapi.Command.SystemUnit.OptionKey.List()
+      .then (response => {
+        if (response.OptionKey[3].Active != 'True' && response.OptionKey[3].Installed != 'True')
+        {
+          xapi.Command.UserInterface.Message.Alert.Display({ Duration: '60', Title:"Error: AV Integrator Option Key Required", Text: "The Divisible Workspace Blueprint requires the AV Integrator option key on the primary Codec EQ."}); 
+         
+          console.error("DWS: No AV Integrator option key installed. Please contact Cisco Sales to purchase. Stopping installation.");
+
+          // TURN OFF MACRO
+          try { xapi.Command.Macros.Macro.Deactivate({ Name: 'DWS_Wizard' }); } catch(error) { console.error('DWS: Error disabling Wizard Macro: ' + error.message); }
+          return;
+        }
+        else
+        {
+          // ENSURE ROOM TYPE IS STANDARD
+          xapi.Status.Provisioning.RoomType.get()
+          .then (roomType => {
+            if (roomType != 'Standard')
+            {
+              xapi.Command.UserInterface.Message.Alert.Display({ Duration: '0', Title:"Unsupported Room Type", Text: "The Divisible Workspace Blueprint is only supported using the Standard Room Type."}); 
+
+              console.error("DWS: Divisible Workspace Blueprint only operates in Standard Room Type. Stopping installation.");
+
+              // TURN OFF MACRO
+              try { xapi.Command.Macros.Macro.Deactivate({ Name: 'DWS_Wizard' }); } catch(error) { console.error('DWS: Error disabling Wizard Macro: ' + error.message); }
+              return;
+            }
+            else
+            {
+              console.log("DWS: All platform checks passed. Proceeding with Wizard");
+
+              // CONTINUE WITH INSTALLATION
+              init()
+            }
+          })
+        }   
+      });
+    } 
+  });  
+}
+
+// BEGIN SETUP PROCESS
 checkSwitch();
