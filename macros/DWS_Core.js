@@ -81,40 +81,38 @@ function init()
   console.log ("DWS: Starting up as Primary Node.");
 
   // CHECK PLATFORM COMPATIBILITY
-  let THIS_PLATFORM = xapi.Status.SystemUnit.ProductPlatform.get()
-  .then (platform => {    
-    if(platform != 'Codec Pro' && platform != 'Codec Pro G2' && platform != 'Room Kit EQ')
-    {    
-      xapi.Command.UserInterface.Message.Alert.Display({ Duration: '0', Title:"Unsupported Product Platform", Text: "The Divisible Workspace Blueprint is only supported on Codec Pro, Pro G2 and Codec EQ."}); 
 
-      console.error("DWS: Platform not compatible with Divisble Workspace Blueprint. Stopping Macros.");
+  if(DWS.PLATFORM != 'Codec Pro' && DWS.PLATFORM != 'Codec Pro G2' && DWS.PLATFORM != 'Room Kit EQ')
+  {    
+    xapi.Command.UserInterface.Message.Alert.Display({ Duration: '0', Title:"Unsupported Product Platform", Text: "The Divisible Workspace Blueprint is only supported on Codec Pro, Pro G2 and Codec EQ."}); 
 
-      // TURN OFF MACRO && HIDE CONTROLS
-      try { xapi.Command.Macros.Macro.Deactivate({ Name: 'DWS_Core' }); } catch(error) { console.error('DWS: Error disabling DWS Macros: ' + error.message); }
-      try { xapi.Command.UserInterface.Extensions.Panel.Remove({PanelId: 'dws_controls'}); } catch(error) { console.error('Error removing Room Controls panel: ' + error.message); }
-      try { xapi.Command.UserInterface.Extensions.Panel.Remove({PanelId: 'dws_advanced'}); } catch(error) { console.error('Error removing Advanced panel: ' + error.message); }
-      return;
-    }
+    console.error("DWS: Platform not compatible with Divisble Workspace Blueprint. Stopping Macros.");
 
-    if(platform == 'Room Kit EQ')
-    {
-      xapi.Command.SystemUnit.OptionKey.List()
-      .then (response => {
-        if (response.OptionKey[3].Active != 'True' && response.OptionKey[3].Installed != 'True')
-        {
-          console.error("DWS: No AV Integrator option key installed. Stopping Macros.");
+    // TURN OFF MACRO && HIDE CONTROLS
+    try { xapi.Command.Macros.Macro.Deactivate({ Name: 'DWS_Core' }); } catch(error) { console.error('DWS: Error disabling DWS Macros: ' + error.message); }
+    try { xapi.Command.UserInterface.Extensions.Panel.Remove({PanelId: 'dws_controls'}); } catch(error) { console.error('Error removing Room Controls panel: ' + error.message); }
+    try { xapi.Command.UserInterface.Extensions.Panel.Remove({PanelId: 'dws_advanced'}); } catch(error) { console.error('Error removing Advanced panel: ' + error.message); }
+    return;
+  }
 
-          xapi.Command.UserInterface.Message.Alert.Display({ Duration: '60', Title:"Error: Missing AV Integrator Option Key", Text: "The Divisible Workspace Blueprint requires the AV Integrator option key for the primary Codec EQ."}); 
-          
-          // TURN OFF MACRO && HIDE CONTROLS
-          try { xapi.Command.Macros.Macro.Deactivate({ Name: 'DWS_Core' }); } catch(error) { console.error('DWS: Error disabling DWS Macros: ' + error.message); }
-          try { xapi.Command.UserInterface.Extensions.Panel.Remove({PanelId: 'dws_controls'}); } catch(error) { console.error('Error removing Room Controls panel: ' + error.message); }
-          try { xapi.Command.UserInterface.Extensions.Panel.Remove({PanelId: 'dws_advanced'}); } catch(error) { console.error('Error removing Advanced panel: ' + error.message); }
-          return;
-        }   
-      });      
-    }
-  });
+  if(DWS.PLATFORM == 'Room Kit EQ')
+  {
+    xapi.Command.SystemUnit.OptionKey.List()
+    .then (response => {
+      if (response.OptionKey[3].Active != 'True' && response.OptionKey[3].Installed != 'True')
+      {
+        console.error("DWS: No AV Integrator option key installed. Stopping Macros.");
+
+        xapi.Command.UserInterface.Message.Alert.Display({ Duration: '60', Title:"Error: Missing AV Integrator Option Key", Text: "The Divisible Workspace Blueprint requires the AV Integrator option key for the primary Codec EQ."}); 
+        
+        // TURN OFF MACRO && HIDE CONTROLS
+        try { xapi.Command.Macros.Macro.Deactivate({ Name: 'DWS_Core' }); } catch(error) { console.error('DWS: Error disabling DWS Macros: ' + error.message); }
+        try { xapi.Command.UserInterface.Extensions.Panel.Remove({PanelId: 'dws_controls'}); } catch(error) { console.error('Error removing Room Controls panel: ' + error.message); }
+        try { xapi.Command.UserInterface.Extensions.Panel.Remove({PanelId: 'dws_advanced'}); } catch(error) { console.error('Error removing Advanced panel: ' + error.message); }
+        return;
+      }   
+    });      
+  }
 
   // CHECK PRESENTER TRACK SETUP
   xapi.Status.Cameras.PresenterTrack.Availability.get()
@@ -135,15 +133,12 @@ function init()
     console.error("DWS: Issue getting Presenter Track configuration: ", error);
   })
 
-  // ENSURE NOISE REMOVAL IS ENABLED BY DEFAULT
-  try { xapi.Config.Audio.Microphones.NoiseRemoval.Mode.set("Enabled"); } catch(error) { console.error('DWS: Error setting Noise removal: ' + error.message); }
-
   // SET SPEAKER TRACK MODE TO CLOSE UP AS DEFAULT  
   try { xapi.Config.Cameras.SpeakerTrack.DefaultBehavior.set('Closeup'); } catch(error) { console.error('DWS: Error setting ST Default: ' + error.message); }
 
   // START LINK LOCAL SWITCH REPORTING TO CONTROL HUB
   registerLinkLocal();
-  xapi.Config.Peripherals.Profile.ControlSystems.set('1');
+  try { xapi.Config.Peripherals.Profile.ControlSystems.set('1'); } catch(error) { console.error('DWS: Error setting up control system counter: ' + error.message); }
 
   // DETERMINE ETHERNET ID OF PRESENTER MIC
   if(DWS.PRESENTER_MIC.length == 11)
@@ -181,9 +176,21 @@ function init()
     startAZM();
 
     // CONFIGURE HDMI AUDIO OUTPUT
-    try { xapi.Command.Audio.LocalOutput.RemoveConnector({ ConnectorId: 1, ConnectorType: 'HDMI', OutputId: 2 }); } catch(error) { console.error('DWS: Error removing HDMI from default group: ' + error.message); }
-    try { xapi.Command.Audio.LocalOutput.AddConnector({ ConnectorId: 1, ConnectorType: 'HDMI', OutputId: 7 }); } catch(error) { console.error('DWS: Error adding HDMI to Line output group: ' + error.message); }
-    
+    xapi.Status.Audio.Output.LocalOutput[2].get()
+    .then( response => {
+
+      if(response.Connector.includes("HDMI.1"))
+      {
+        console.debug("DWS: Configuring HDMI Connector for audio output.")
+        try { xapi.Command.Audio.LocalOutput.RemoveConnector({ ConnectorId: 1, ConnectorType: 'HDMI', OutputId: 2 }); } catch(error) { console.error('DWS: Error removing HDMI from default group: ' + error.message); }
+        try { xapi.Command.Audio.LocalOutput.AddConnector({ ConnectorId: 1, ConnectorType: 'HDMI', OutputId: 7 }); } catch(error) { console.error('DWS: Error adding HDMI to Line output group: ' + error.message); }
+      }
+      else
+      {
+        console.debug("DWS: HDMI Connector already configured for audio output.")
+      }
+    })
+      
     // CHECK FOR ACTIVE CALL THEN BUILD PANELS
     xapi.Status.Call.get()
     .then (response => {
@@ -215,17 +222,20 @@ function init()
       if (SAVED_STATE.STATE == 'Combined All')
       {
         // SET ONSCREEN TEXT BANNER 
-        xapi.Command.Video.Graphics.Text.Display({ Duration: 0, Target: 'LocalOutput', Text: "Combined with: " + DWS.NODE1_ALIAS + ", " + DWS.NODE2_ALIAS});
+        xapi.Command.Video.Graphics.Text.Display({ Duration: 0, Target: 'LocalOutput', Text: "Combined with: " + DWS.NODE1_ALIAS + ", " + DWS.NODE2_ALIAS})
+          .catch(e => console.log('Error setting screen overlay: ' + e.message));
       }
       else if (SAVED_STATE.STATE == 'Combined Node1')
       {
         // SET ONSCREEN TEXT BANNER 
-        xapi.Command.Video.Graphics.Text.Display({ Duration: 0, Target: 'LocalOutput', Text: "Combined with: " + DWS.NODE1_ALIAS});
+        xapi.Command.Video.Graphics.Text.Display({ Duration: 0, Target: 'LocalOutput', Text: "Combined with: " + DWS.NODE1_ALIAS})
+          .catch(e => console.log('Error setting screen overlay: ' + e.message));
       }
       else if (SAVED_STATE.STATE == 'Combined Node2')
       {
         // SET ONSCREEN TEXT BANNER 
-        xapi.Command.Video.Graphics.Text.Display({ Duration: 0, Target: 'LocalOutput', Text: "Combined with: " + DWS.NODE2_ALIAS});
+        xapi.Command.Video.Graphics.Text.Display({ Duration: 0, Target: 'LocalOutput', Text: "Combined with: " + DWS.NODE2_ALIAS})
+          .catch(e => console.log('Error setting screen overlay: ' + e.message));
       } 
     }       
   } 
@@ -237,15 +247,15 @@ function init()
     // DISABLE MANUAL SELECTION FOR NODE CAMERAS
     if (DWS.NWAY == 'Two Way')
     {
-      xapi.Config.Video.Input.Connector[2].InputSourceType.set('other');
+      try { xapi.Config.Video.Input.Connector[2].InputSourceType.set('other'); } catch(error) { console.error('DWS: Error setting Node 1 Visibility: ' + error.message); }    
     }
     else
     {
-      xapi.Config.Video.Input.Connector[3].InputSourceType.set('other');
+      try { xapi.Config.Video.Input.Connector[3].InputSourceType.set('other'); } catch(error) { console.error('DWS: Error setting Node 2 Visibility: ' + error.message); }    
     }
 
     // UPDATE THE PANEL TO SHOW A STATUS OF SPLIT
-    xapi.Command.UserInterface.Extensions.Widget.SetValue({WidgetId: 'dws_state', Value: 'Split'});
+    try { xapi.Command.UserInterface.Extensions.Widget.SetValue({WidgetId: 'dws_state', Value: 'Split'}); } catch(error) { console.error('DWS: Error setting panel state value: ' + error.message); }
   }
 
   console.log ("DWS: Initialization complete.")
@@ -306,7 +316,7 @@ function init()
       {
         if (i != DWS_PRESENTER_MIC_ID)
         {
-          xapi.Command.Audio.LocalInput.AddConnector({ ConnectorId: i, ConnectorType: "Ethernet", InputId: 1 });
+          try { xapi.Command.Audio.LocalInput.AddConnector({ ConnectorId: i, ConnectorType: "Ethernet", InputId: 1 }); } catch(error) { console.error('DWS: Error adding Mics to group: ' + error.message); }
         }                
       }     
     }
@@ -321,7 +331,7 @@ function init()
       // REMOVE ETHERNET MICROPHONES FROM INPUT GROUP EXCEPT PRESENTER (IF CMP)
       for(let i = 1; i < 9; i++)
       {
-        xapi.Command.Audio.LocalInput.RemoveConnector({ ConnectorId: i, ConnectorType: "Ethernet", InputId: 1 });              
+        try { xapi.Command.Audio.LocalInput.RemoveConnector({ ConnectorId: i, ConnectorType: "Ethernet", InputId: 1 }); } catch(error) { console.error('DWS: Error removing Mics from group: ' + error.message); }              
       }   
     }
     else if (event.PanelId == 'dws_wireless_disabled')
@@ -335,11 +345,11 @@ function init()
       // ADD PRESENTER CONNECTOR TO INPUT GROUP
       if (DWS.PRESENTER_USB == "on")
       {
-        xapi.Command.Audio.LocalInput.AddConnector({ ConnectorId: 1, ConnectorType: "USBInterface", InputId: 1 });
+        try { xapi.Command.Audio.LocalInput.AddConnector({ ConnectorId: 1, ConnectorType: "USBInterface", InputId: 1 }); } catch(error) { console.error('DWS: Error adding Mics to group: ' + error.message); }
       }
       if (DWS.PRESENTER_ANALOG == "on")
       {
-        xapi.Command.Audio.LocalInput.AddConnector({ ConnectorId: 1, ConnectorType: "Microphone", InputId: 1 });
+        try { xapi.Command.Audio.LocalInput.AddConnector({ ConnectorId: 1, ConnectorType: "Microphone", InputId: 1 }); } catch(error) { console.error('DWS: Error adding Mics to group: ' + error.message); }
       }
     }
     else if (event.PanelId == 'dws_wireless_enabled')
@@ -353,11 +363,11 @@ function init()
       // REMOVE PRESENTER CONNECTOR FROM INPUT GROUP
       if (DWS.PRESENTER_USB == "on")
       {
-        xapi.Command.Audio.LocalInput.RemoveConnector({ ConnectorId: 1, ConnectorType: "USBInterface", InputId: 1 });
+        try { xapi.Command.Audio.LocalInput.RemoveConnector({ ConnectorId: 1, ConnectorType: "USBInterface", InputId: 1 }); } catch(error) { console.error('DWS: Error removing Mics from group: ' + error.message); }
       }
       if (DWS.PRESENTER_ANALOG == "on")
       {
-        xapi.Command.Audio.LocalInput.RemoveConnector({ ConnectorId: 1, ConnectorType: "Microphone", InputId: 1 });
+        try { xapi.Command.Audio.LocalInput.RemoveConnector({ ConnectorId: 1, ConnectorType: "Microphone", InputId: 1 }); } catch(error) { console.error('DWS: Error removing Mics from group: ' + error.message); }
       }
     }
 
@@ -772,8 +782,8 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
         try { xapi.Command.Audio.LocalOutput.AddConnector({ ConnectorId: 1, ConnectorType: 'HDMI', OutputId: 7 }); } catch(error) { console.error('DWS: Error adding HDMI to Line output group: ' + error.message); }
 
         // ENABLE MANUAL SELECTION FOR NODE CAMERAS
-        xapi.Config.Video.Input.Connector[2].InputSourceType.set('camera');
-        xapi.Config.Video.Input.Connector[3].InputSourceType.set('camera');
+        try { xapi.Config.Video.Input.Connector[2].InputSourceType.set('camera'); } catch(error) { console.error('DWS: Error setting Node camera visibility: ' + error.message); }
+        try { xapi.Config.Video.Input.Connector[3].InputSourceType.set('camera'); } catch(error) { console.error('DWS: Error setting Node camera visibility: ' + error.message); }
 
         // INITIALIZE AZM WITH A 165 DELAY
         setTimeout(() => {startAZM()}, 165000);
@@ -808,7 +818,7 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
         try { xapi.Command.Audio.LocalOutput.AddConnector({ ConnectorId: 1, ConnectorType: 'HDMI', OutputId: 7 }); } catch(error) { console.error('DWS: Error adding HDMI to Line output group: ' + error.message); }
 
         // ENABLE MANUAL SELECTION FOR NODE CAMERAS
-        xapi.Config.Video.Input.Connector[2].InputSourceType.set('camera');
+        try { xapi.Config.Video.Input.Connector[2].InputSourceType.set('camera'); } catch(error) { console.error('DWS: Error setting Node camera visibility: ' + error.message); }
 
         // INITIALIZE AZM WITH A 165 DELAY
         setTimeout(() => {startAZM()}, 165000);
@@ -843,7 +853,7 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
         try { xapi.Command.Audio.LocalOutput.AddConnector({ ConnectorId: 1, ConnectorType: 'HDMI', OutputId: 7 }); } catch(error) { console.error('DWS: Error adding HDMI to Line output group: ' + error.message); }
 
         // ENABLE MANUAL SELECTION FOR NODE CAMERAS
-        xapi.Config.Video.Input.Connector[3].InputSourceType.set('camera');
+        try { xapi.Config.Video.Input.Connector[3].InputSourceType.set('camera'); } catch(error) { console.error('DWS: Error setting Node camera visibility: ' + error.message); }
 
         // INITIALIZE AZM WITH A 165 DELAY
         setTimeout(() => {startAZM()}, 165000);
@@ -857,7 +867,7 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
     }
     else
     {
-      console.debug("DWS: Combining Workspaces")
+      console.log("DWS: Combining Workspaces")
 
       // UPDATE CURRENT STATE
       DWS_CUR_STATE = "Combined Node1";
@@ -879,7 +889,7 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
       try { xapi.Command.Audio.LocalOutput.AddConnector({ ConnectorId: 1, ConnectorType: 'HDMI', OutputId: 7 }); } catch(error) { console.error('DWS: Error adding HDMI to Line output group: ' + error.message); }
 
       // ENABLE MANUAL SELECTION FOR NODE CAMERAS
-      xapi.Config.Video.Input.Connector[2].InputSourceType.set('camera');
+      try { xapi.Config.Video.Input.Connector[2].InputSourceType.set('camera'); } catch(error) { console.error('DWS: Error setting Node camera visibility: ' + error.message); }
 
       // INITIALIZE AZM WITH A 165 DELAY
       setTimeout(() => {startAZM()}, 165000);
@@ -1276,6 +1286,15 @@ async function setPrimaryDelay(newDelay)
       await xapi.Config.Audio.Output.Line[4].Delay.DelayMs.set(newDelay);
       await xapi.Config.Audio.Output.Line[5].Delay.DelayMs.set(newDelay);
       await xapi.Config.Audio.Output.Line[6].Delay.DelayMs.set(newDelay);
+      await xapi.Config.Audio.Output.USBInterface[1].Delay.DelayMs.set(newDelay);
+    }
+    else if (DWS.PLATFORM == 'Codec Pro G2')
+    {
+      await xapi.Config.Audio.Output.ARC[1].Delay.DelayMs.set(newDelay);
+      await xapi.Config.Audio.Output.HDMI[2].Delay.DelayMs.set(newDelay);
+      await xapi.Config.Audio.Output.HDMI[3].Delay.DelayMs.set(newDelay);
+      await xapi.Config.Audio.Output.Line[1].Delay.DelayMs.set(newDelay);
+      await xapi.Config.Audio.Output.Line[2].Delay.DelayMs.set(newDelay);
       await xapi.Config.Audio.Output.USBInterface[1].Delay.DelayMs.set(newDelay);
     }
     else if (DWS.PLATFORM == 'Room Kit EQ')
