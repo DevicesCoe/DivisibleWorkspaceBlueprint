@@ -136,7 +136,10 @@ function init()
   })
 
   // ENSURE NOISE REMOVAL IS ENABLED BY DEFAULT
-  xapi.Config.Audio.Microphones.NoiseRemoval.Mode.set("Enabled");
+  try { xapi.Config.Audio.Microphones.NoiseRemoval.Mode.set("Enabled"); } catch(error) { console.error('DWS: Error setting Noise removal: ' + error.message); }
+
+  // SET SPEAKER TRACK MODE TO CLOSE UP AS DEFAULT  
+  try { xapi.Config.Cameras.SpeakerTrack.DefaultBehavior.set('Closeup'); } catch(error) { console.error('DWS: Error setting ST Default: ' + error.message); }
 
   // START LINK LOCAL SWITCH REPORTING TO CONTROL HUB
   registerLinkLocal();
