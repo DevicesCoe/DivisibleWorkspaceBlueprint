@@ -231,6 +231,16 @@ function init()
     // SET THE DEFAULT ROOM STATE TO SPLIT
     createPanels('Split');
 
+    // DISABLE MANUAL SELECTION FOR NODE CAMERAS
+    if (DWS.NWAY == 'Two Way')
+    {
+      xapi.Config.Video.Input.Connector[2].InputSourceType.set('other');
+    }
+    else
+    {
+      xapi.Config.Video.Input.Connector[3].InputSourceType.set('other');
+    }
+
     // UPDATE THE PANEL TO SHOW A STATUS OF SPLIT
     xapi.Command.UserInterface.Extensions.Widget.SetValue({WidgetId: 'dws_state', Value: 'Split'});
   }

@@ -62,7 +62,7 @@ async function firstSetup()
       try { xapi.Config.Video.Input.Connector[1].Visibility.set('Never'); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }      
       try { xapi.Config.Video.Input.Connector[1].PresentationSelection.set("Manual"); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }      
       try { xapi.Config.Video.Input.Connector[2].Name.set('Secondary Audience'); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }
-      try { xapi.Config.Video.Input.Connector[2].InputSourceType.set('camera'); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }      
+      try { xapi.Config.Video.Input.Connector[2].InputSourceType.set('other'); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }      
       try { xapi.Config.Video.Input.Connector[2].CameraControl.Mode.set('Off'); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }      
       try { xapi.Config.Video.Input.Connector[2].Visibility.set('Never'); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }      
       try { xapi.Config.Video.Input.Connector[2].PresentationSelection.set("Manual"); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }   
@@ -90,12 +90,12 @@ async function firstSetup()
       try { xapi.Config.Video.Input.Connector[1].Visibility.set('Never'); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }      
       try { xapi.Config.Video.Input.Connector[1].PresentationSelection.set("Manual"); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }      
       try { xapi.Config.Video.Input.Connector[2].Name.set(DWS.NODE1_ALIAS + ' Audience'); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }
-      try { xapi.Config.Video.Input.Connector[2].InputSourceType.set('camera'); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }       
+      try { xapi.Config.Video.Input.Connector[2].InputSourceType.set('other'); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }       
       try { xapi.Config.Video.Input.Connector[2].CameraControl.Mode.set('Off'); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }      
       try { xapi.Config.Video.Input.Connector[2].Visibility.set('Never'); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }      
       try { xapi.Config.Video.Input.Connector[2].PresentationSelection.set("Manual"); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }   
       try { xapi.Config.Video.Input.Connector[3].Name.set(DWS.NODE2_ALIAS + ' Audience'); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }
-      try { xapi.Config.Video.Input.Connector[3].InputSourceType.set('camera'); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }         
+      try { xapi.Config.Video.Input.Connector[3].InputSourceType.set('other'); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }         
       try { xapi.Config.Video.Input.Connector[3].CameraControl.Mode.set('Off'); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }      
       try { xapi.Config.Video.Input.Connector[3].Visibility.set('Never'); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }      
       try { xapi.Config.Video.Input.Connector[3].PresentationSelection.set("Manual"); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); } 
