@@ -24,12 +24,12 @@ The Divisible Workspace Blueprint is compatible with Room OS 26!
 ---
 ## Table of Contents
 
-- [Key Terminology / Files](#key-terminology--top)
-- [Supported Hardware](#supported-hardware--top)
+- [Key Terminology / Files](#key-terminology-top)
+- [Supported Hardware](#supported-hardware-top)
+- [Bill of Materials](#bill-of-materials-top)
 - [Installation](#installation-top)
 - [User Guide](#user-guide-top)
-- [Video Tutorials](#video-tutorials-)
-- [FAQ](#faq-)
+- [FAQ](#faq-top)
   
 ---
 ## Key Terminology: [Top](#table-of-contents)
@@ -82,6 +82,20 @@ The following models (SKUs) of switches have been validated:
 - C9300-24P-E
 
 **Minimum Switch Software: IOS XE 17.15**
+
+## Bill of Materials: [Top](#table-of-contents)
+
+These Bill of Materials are provided as STARTING POINTS only. They have not been validated for cables, colors, mounting options, etc. You may be required to modify these to fit your specific requirements. Responsibility for incorrect, invalidate or incomplete orders based on these provided configurations rests solely on the end customer / partner / AV integrator. 
+
+You can import these files directly into Cisco Commerce Workspace (CCW) and modify as required.
+
+#### Bill of Material Examples
+| Codec | # of Rooms | Link to BOM | 
+|---|---|---|
+| Codec EQ | Two Way | [BOM](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/bom/2W-KitEQ.xlsx) |
+| Codec EQ | Three Way | [BOM](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/bom/3W-KitEQ.xlsx) |
+| Codec Pro G2 | Two Way | [BOM](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/bom/2W-ProG2.xlsx) |
+| Codec Pro G2 | Three Way | [BOM](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/bom/3W-ProG2.xlsx) |
 
 ## Installation: [Top](#table-of-contents)
 
