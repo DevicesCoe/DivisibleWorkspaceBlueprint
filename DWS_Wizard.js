@@ -19,10 +19,12 @@ https://cs.co/divisibleworkspaceblueprint
 //                        **** ADMIN SETTINGS ****                         //
 //=========================================================================*/
 
-// ONLY CHANGE IF YOU ARE NOT USING THE DEFAULT U:P IN USB CONFIGURATION FILE
+// REQUIRED: Set these to the admin credentials configured on YOUR network switch.
+// Do NOT reuse the sample username/password shown in the switch-configs templates -
+// those are documentation examples only and must be changed before deployment.
 let SETUP_VARIABLES = [];
-SETUP_VARIABLES['SWITCH_USERNAME'] = 'dwsadmin';
-SETUP_VARIABLES['SWITCH_PASSWORD']  = 'D!vi$ible1';
+SETUP_VARIABLES['SWITCH_USERNAME'] = '';
+SETUP_VARIABLES['SWITCH_PASSWORD']  = '';
 
 //=========================================================================//
 //                     **** DO NOT EDIT BELOW HERE ****                    //
