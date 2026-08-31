@@ -274,27 +274,6 @@ function init()
     }
   })
 
-  //======================================//
-  //  EVENT LISTENER FOR VOLUME MATCHING  //
-  //======================================//
-  let volumeTimer;
-  let newVolume;
-
-  xapi.Status.Audio.Volume.on(volume => {
-    newVolume = volume;
-
-    // RESET TIMER ON CHANGE
-    if (volumeTimer) {
-      clearTimeout(volumeTimer);
-    }
-
-    // 1 SECOND HOLD OFF
-    volumeTimer = setTimeout(() => {
-      sendToCombinedNodes("Volume:" + newVolume);
-      volumeTimer = null;
-    }, 1000); 
-  })
-
   //=======================================//
   //  EVENT LISTENER FOR IN CALL CONTROLS  //
   //=======================================//
@@ -765,12 +744,6 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
         // UPDATE CURRENT STATE
         DWS_CUR_STATE = "Combined All";
 
-        // SET VOLUME ON NODES TO MATCH
-        xapi.Status.Audio.Volume.get()
-        .then(volume => {
-          sendToCombinedNodes("Volume:"+volume);
-        })
-
         // UPDATE VLANS FOR ACCESSORIES
         setVLANs('Combined All');
 
@@ -799,13 +772,7 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
         console.log("DWS: Combining Workspaces: Only Node 1");
 
         // UPDATE CURRENT STATE
-        DWS_CUR_STATE = "Combined Node1";
-
-        // SET VOLUME ON NODES TO MATCH
-        xapi.Status.Audio.Volume.get()
-        .then(volume => {
-          sendToCombinedNodes("Volume:"+volume);
-        })        
+        DWS_CUR_STATE = "Combined Node1";     
 
         // UPDATE VLANS FOR ACCESSORIES
         setVLANs('Combined Node1');
@@ -836,12 +803,6 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
         // UPDATE CURRENT STATE
         DWS_CUR_STATE = "Combined Node2";
 
-        // SET VOLUME ON NODES TO MATCH
-        xapi.Status.Audio.Volume.get()
-        .then(volume => {
-          sendToCombinedNodes("Volume:"+volume);
-        })
-
         // UPDATE VLANS FOR ACCESSORIES
         setVLANs('Combined Node2');
 
@@ -871,12 +832,6 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
 
       // UPDATE CURRENT STATE
       DWS_CUR_STATE = "Combined Node1";
-
-      // SET VOLUME ON NODES TO MATCH
-      xapi.Status.Audio.Volume.get()
-        .then(volume => {
-          sendToCombinedNodes("Volume:"+volume);
-        })
 
       // UPDATE VLANS FOR ACCESSORIES
       setVLANs('Combined Node1');

@@ -88,6 +88,9 @@ function init()
         case 'Combine':
           console.log('DWS: Combine request received. Applying combined configuration.');
 
+          // SET VOLUME FOR ARC MATCHING
+          xapi.Command.Audio.Volume.Set({ Level: 70 });
+
           // UPDATE CONFIGURATION
           setSecondaryConfig("Combined");
 
@@ -150,15 +153,6 @@ function init()
           console.debug('DWS: Primary triggering Awake.');
           xapi.Command.Standby.Deactivate();         
           break;
-
-        //=============================//
-        //        VOLUME FUNCTIONS     //
-        //=============================//
-        case 'Volume':
-          console.debug('DWS: Matching volume to primary:'+decodeCommand[1]);
-          xapi.Command.Audio.Volume.Set({ Level: decodeCommand[1] });
-          break;
-
       }
     } 
     catch(error) { 
