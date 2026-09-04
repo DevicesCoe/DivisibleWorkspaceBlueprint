@@ -65,6 +65,10 @@ function init()
 
   if (DWS_SEC.STATE === 'Combined') {
     console.log ('DWS: Combined State detected. Re-applying combined configuration.');
+    
+    // SET VOLUME FOR ARC MATCHING
+    xapi.Command.Audio.Volume.Set({ Level: 70 });
+
     setSecondaryState("Combined");    
     setSecondaryConfig("Combined");
   }

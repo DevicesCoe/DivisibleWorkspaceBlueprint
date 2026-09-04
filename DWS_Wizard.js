@@ -345,10 +345,15 @@ function init()
 
         // AUTOMATE THE CREATION OF OPTIONS BASED ON MICROPHONE COUNT
         let COUNTER = 0;
-        SETUP_VARIABLES['dws_setup_primary_mics'].forEach(() => {
-          PANEL_PRIMARY += "<Value><Key>" + SETUP_VARIABLES['dws_setup_primary_mics'][COUNTER] + "</Key><Name>Eth " + (COUNTER+1) + ": " + SETUP_VARIABLES['dws_setup_primary_mics'][COUNTER] + "</Name></Value>";
-          COUNTER++;
-        });
+
+        // ONLY SHOW PRIMARY ETHERNET MICROPHONES IF MORE THEN ONE IS REGISTERED
+        if (SETUP_VARIABLES['dws_setup_primary_mics'].length > 1)
+        {
+          SETUP_VARIABLES['dws_setup_primary_mics'].forEach(() => {
+            PANEL_PRIMARY += "<Value><Key>" + SETUP_VARIABLES['dws_setup_primary_mics'][COUNTER] + "</Key><Name>Eth " + (COUNTER+1) + ": " + SETUP_VARIABLES['dws_setup_primary_mics'][COUNTER] + "</Name></Value>";
+            COUNTER++;
+          });
+        }
 
         PANEL_PRIMARY += `<Value><Key>USB</Key><Name>USB</Name></Value><Value><Key>Analog</Key><Name>Analog (All)</Name></Value></ValueSpace></Widget></Row><Row><Name/><Widget><WidgetId>widget_314</WidgetId><Name>Automatic Ducking allows third party microphones to be enabled for In Room Speaker Reinforcement. Only available for USB &amp; Analog inputs.</Name><Type>Text</Type><Options>size=4;fontSize=small;align=center</Options></Widget></Row><Row><Name>Automatic Microphone Ducking</Name><Widget><WidgetId>dws_setup_ducking</WidgetId><Name></Name><Type>Text</Type><Options>size=3;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_edit_ducking</WidgetId><Name>Edit</Name><Type>Button</Type><Options>size=1</Options></Widget></Row><Row><Name/><Widget><WidgetId>dws_back_primary</WidgetId><Name>Back</Name><Type>Button</Type><Options>size=2</Options></Widget><Widget><WidgetId>dws_next_primary</WidgetId><Name>Next</Name><Type>Button</Type><Options>size=2</Options></Widget></Row><PageId>setup_primary</PageId><Options/></Page></Panel></Extensions>`;
 
