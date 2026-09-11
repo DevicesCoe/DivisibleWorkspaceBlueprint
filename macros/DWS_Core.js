@@ -20,7 +20,7 @@ https://cs.co/divisibleworkspaceblueprint
 //=========================================================================*/
 
 import xapi from 'xapi';
-import { AZM } from './DWS_AZM_Lib';
+import { SAM } from './DWS_Audio';
 import DWS from './DWS_Config';
 import SAVED_STATE from './DWS_State';
 import IMAGES from './DWS_Images';
@@ -72,6 +72,8 @@ if (DWS.NODE2_NAV_SCHEDULER != undefined)
 {
   DWS_NODE2_NAVS++;
 }
+let FOUND_NAVS = 0;
+let FOUND_MICS = 0;
 
 //===========================//
 //  INITIALIZATION FUNCTION  //
@@ -80,8 +82,9 @@ function init()
 {
   console.log ("DWS: Starting up as Primary Node.");
 
-  // CHECK PLATFORM COMPATIBILITY
+  startCallListener();
 
+  // CHECK PLATFORM COMPATIBILITY
   if(DWS.PLATFORM != 'Codec Pro' && DWS.PLATFORM != 'Codec Pro G2' && DWS.PLATFORM != 'Room Kit EQ')
   {    
     xapi.Command.UserInterface.Message.Alert.Display({ Duration: '0', Title:"Unsupported Product Platform", Text: "The Divisible Workspace Blueprint is only supported on Codec Pro, Pro G2 and Codec EQ."}); 
@@ -172,9 +175,6 @@ function init()
   {
     console.log ('DWS: Combined state detected. Re-applying configuration.');
 
-    // INITIALIZE AZM BASED ON SAVED STATE
-    startAZM();
-
     // CONFIGURE HDMI AUDIO OUTPUT
     xapi.Status.Audio.Output.LocalOutput[2].get()
     .then( response => {
@@ -207,6 +207,10 @@ function init()
       {
         // SET TO IN CALL STATE
         createPanels('InCall');
+        
+        // SETUP SAM FOR STATE
+        SAM.Setup(buildSAMConfig(DWS_CUR_STATE))
+        setTimeout(() => {SAM.Start(handleSAMEvents)}, 1500)
 
         // HIDE ROOM CONTROLS PANEL
         xapi.Command.UserInterface.Extensions.Panel.Update({ PanelId: 'dws_controls', Location: 'Hidden' })
@@ -286,6 +290,9 @@ function init()
     {
       console.debug("DWS: Audience mics enabled.")
 
+      // CHANGE SAM STATE
+      SAM.Setup(buildSAMConfig(DWS_CUR_STATE));
+
       // CHANGE BUTTON STATE      
       updatePanel({PanelId: "dws_audience_enabled", Location: "CallControls"});
       updatePanel({PanelId: "dws_audience_disabled", Location: "Hidden"});
@@ -303,6 +310,9 @@ function init()
     {
       console.debug("DWS: Audience mics disabled.")
 
+      // CHANGE SAM STATE
+      SAM.Setup(buildSAMConfig('Combined No Audience'));
+
       // CHANGE BUTTON STATE
       updatePanel({PanelId: "dws_audience_disabled", Location: "CallControls"});
       updatePanel({PanelId: "dws_audience_enabled", Location: "Hidden"});
@@ -310,44 +320,77 @@ function init()
       // REMOVE ETHERNET MICROPHONES FROM INPUT GROUP EXCEPT PRESENTER (IF CMP)
       for(let i = 1; i < 9; i++)
       {
-        try { xapi.Command.Audio.LocalInput.RemoveConnector({ ConnectorId: i, ConnectorType: "Ethernet", InputId: 1 }); } catch(error) { console.error('DWS: Error removing Mics from group: ' + error.message); }              
+        if (i != DWS_PRESENTER_MIC_ID)
+        {
+          try { xapi.Command.Audio.LocalInput.RemoveConnector({ ConnectorId: i, ConnectorType: "Ethernet", InputId: 1 }); } catch(error) { console.error('DWS: Error removing Mics from group: ' + error.message); }              
+        }
       }   
     }
     else if (event.PanelId == 'dws_wireless_disabled')
     {
-      console.debug("DWS: Wireless mics enabled.")
+      console.debug("DWS: Presenter microphone enabled.")
 
       // CHANGE BUTTON STATE
       updatePanel({PanelId: "dws_wireless_enabled", Location: "CallControls"});
       updatePanel({PanelId: "dws_wireless_disabled", Location: "Hidden"});
 
-      // ADD PRESENTER CONNECTOR TO INPUT GROUP
-      if (DWS.PRESENTER_USB == "on")
-      {
-        try { xapi.Command.Audio.LocalInput.AddConnector({ ConnectorId: 1, ConnectorType: "USBInterface", InputId: 1 }); } catch(error) { console.error('DWS: Error adding Mics to group: ' + error.message); }
-      }
-      if (DWS.PRESENTER_ANALOG == "on")
-      {
-        try { xapi.Command.Audio.LocalInput.AddConnector({ ConnectorId: 1, ConnectorType: "Microphone", InputId: 1 }); } catch(error) { console.error('DWS: Error adding Mics to group: ' + error.message); }
-      }
+      // CHANGE SAM STATE
+      SAM.Setup(buildSAMConfig(DWS_CUR_STATE));
+
+      xapi.Status.Audio.Input.LocalInput[1].get()
+      .then( response => {
+        if(!response.Connector.includes("Ethernet." + DWS_PRESENTER_MIC_ID))
+        {          
+          try { xapi.Command.Audio.LocalInput.AddConnector({ ConnectorId: DWS_PRESENTER_MIC_ID, ConnectorType: "Ethernet", InputId: 1 }); } catch(error) { console.error('DWS: Error adding Mics to group: ' + error.message); }
+        } 
+        if (DWS.PRESENTER_USB == "on")
+        {
+          if(!response.Connector.includes("USBInterface.1"))
+          {
+            try { xapi.Command.Audio.LocalInput.AddConnector({ ConnectorId: 1, ConnectorType: "USBInterface", InputId: 1 }); } catch(error) { console.error('DWS: Error adding Mics to group: ' + error.message); }
+          }
+        }
+        if (DWS.PRESENTER_ANALOG == "on")
+        {
+          if(!response.Connector.includes("Microphone.1"))
+          {
+            try { xapi.Command.Audio.LocalInput.AddConnector({ ConnectorId: 1, ConnectorType: "Microphone", InputId: 1 }); } catch(error) { console.error('DWS: Error adding Mics to group: ' + error.message); }
+          }
+        }
+      });
     }
     else if (event.PanelId == 'dws_wireless_enabled')
     {
-      console.debug("DWS: Wireless mics disabled.")
+      console.debug("DWS: Presenter microphone disabled.")
 
       // CHANGE BUTTON STATE
       updatePanel({PanelId: "dws_wireless_disabled", Location: "CallControls"});
       updatePanel({PanelId: "dws_wireless_enabled", Location: "Hidden"});
 
-      // REMOVE PRESENTER CONNECTOR FROM INPUT GROUP
-      if (DWS.PRESENTER_USB == "on")
-      {
-        try { xapi.Command.Audio.LocalInput.RemoveConnector({ ConnectorId: 1, ConnectorType: "USBInterface", InputId: 1 }); } catch(error) { console.error('DWS: Error removing Mics from group: ' + error.message); }
-      }
-      if (DWS.PRESENTER_ANALOG == "on")
-      {
-        try { xapi.Command.Audio.LocalInput.RemoveConnector({ ConnectorId: 1, ConnectorType: "Microphone", InputId: 1 }); } catch(error) { console.error('DWS: Error removing Mics from group: ' + error.message); }
-      }
+      // CHANGE SAM STATE
+      SAM.Setup(buildSAMConfig(DWS_CUR_STATE + ' No Presenter'));
+
+      xapi.Status.Audio.Input.LocalInput[1].get()
+      .then( response => {
+        if(response.Connector.includes("Ethernet."+DWS_PRESENTER_MIC_ID))
+        {
+          try { xapi.Command.Audio.LocalInput.RemoveConnector({ ConnectorId: DWS_PRESENTER_MIC_ID, ConnectorType: "Ethernet", InputId: 1 }); } catch(error) { console.error('DWS: Error removing Mics from group: ' + error.message); }                 
+        } 
+        if (DWS.PRESENTER_USB == "on")
+        {
+          if(response.Connector.includes("USBInterface.1"))
+          {
+            try { xapi.Command.Audio.LocalInput.RemoveConnector({ ConnectorId: 1, ConnectorType: "USBInterface", InputId: 1 }); } catch(error) { console.error('DWS: Error removing Mics from group: ' + error.message); }
+          }
+        }
+        if (DWS.PRESENTER_ANALOG == "on")
+        {
+          if(response.Connector.includes("Microphone.1"))
+          {
+            try { xapi.Command.Audio.LocalInput.RemoveConnector({ ConnectorId: 1, ConnectorType: "Microphone", InputId: 1 }); } catch(error) { console.error('DWS: Error removing Mics from group: ' + error.message); }
+          }
+        }
+      });      
     }
 
     //============================//
@@ -758,9 +801,6 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
         try { xapi.Config.Video.Input.Connector[2].InputSourceType.set('camera'); } catch(error) { console.error('DWS: Error setting Node camera visibility: ' + error.message); }
         try { xapi.Config.Video.Input.Connector[3].InputSourceType.set('camera'); } catch(error) { console.error('DWS: Error setting Node camera visibility: ' + error.message); }
 
-        // INITIALIZE AZM WITH A 165 DELAY
-        setTimeout(() => {startAZM()}, 165000);
-
         if (DWS.COMBINED_BANNER)
         {
           // SET ONSCREEN TEXT BANNER 
@@ -787,9 +827,6 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
         // ENABLE MANUAL SELECTION FOR NODE CAMERAS
         try { xapi.Config.Video.Input.Connector[2].InputSourceType.set('camera'); } catch(error) { console.error('DWS: Error setting Node camera visibility: ' + error.message); }
 
-        // INITIALIZE AZM WITH A 165 DELAY
-        setTimeout(() => {startAZM()}, 165000);
-
         if (DWS.COMBINED_BANNER)
         {
           // SET ONSCREEN TEXT BANNER 
@@ -815,9 +852,6 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
 
         // ENABLE MANUAL SELECTION FOR NODE CAMERAS
         try { xapi.Config.Video.Input.Connector[3].InputSourceType.set('camera'); } catch(error) { console.error('DWS: Error setting Node camera visibility: ' + error.message); }
-
-        // INITIALIZE AZM WITH A 165 DELAY
-        setTimeout(() => {startAZM()}, 165000);
 
         if (DWS.COMBINED_BANNER)
         {
@@ -846,9 +880,6 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
       // ENABLE MANUAL SELECTION FOR NODE CAMERAS
       try { xapi.Config.Video.Input.Connector[2].InputSourceType.set('camera'); } catch(error) { console.error('DWS: Error setting Node camera visibility: ' + error.message); }
 
-      // INITIALIZE AZM WITH A 165 DELAY
-      setTimeout(() => {startAZM()}, 165000);
-
       if (DWS.COMBINED_BANNER)
       {
         // SET ONSCREEN TEXT BANNER 
@@ -857,8 +888,8 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
     }
 
     // UPDATE STATUS ALERT
-    updateStatus('Combine');
-    DWS_INTERVAL = setInterval(() => {updateStatus('Combine')}, 3000);
+    updateStatus();
+    DWS_INTERVAL = setInterval(() => {updateStatus()}, 3000);
 
     // CREATE COMBINED PANELS AND CLOSE CONTROL PANEL
     createPanels('Combined');
@@ -868,8 +899,8 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
     setPrimaryDelay(DWS.PRIMARY_DELAY);
 
     //RESET SECONDARY PERIPHERAL COUNT
-    let FOUND_NAVS = 0;
-    let FOUND_MICS = 0;
+    FOUND_NAVS = 0;
+    FOUND_MICS = 0;
 
     // MONITOR FOR MIGRATED DEVICES AND CONFIGURE ACCORDING TO USER SETTINGS
     const REG_DEVICES = xapi.Status.Peripherals.ConnectedDevice
@@ -877,7 +908,7 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
       if (device.Status === 'Connected') 
       {
         // MONITOR FOR TOUCH PANELS
-        if (device.Type === 'TouchPanel') 
+        if (device.Type === 'TouchPanel' && !(DWS_TEMP_NAVS.includes(device.SerialNumber))) 
         {
           if (device.ID === DWS.NODE1_NAV_CONTROL) 
           {
@@ -909,66 +940,25 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
         }
 
         // MONITOR FOR ALL SECONDARY MICS TO BE CONNECTED
-        if (device.Type === 'AudioMicrophone') 
+        if (device.Type === 'AudioMicrophone' && !(DWS_TEMP_MICS.includes(device.SerialNumber))) 
         {      
           if (DWS.NODE1_MICS.includes(device.SerialNumber) || DWS.NODE2_MICS.includes(device.SerialNumber)) 
           {
             console.debug("DWS: Discovered Microphone: " + device.SerialNumber)
 
             // STORE FOUND MIC TEMP ARRAY IN NOT ALREADY THERE
-            if (!(DWS_TEMP_MICS.includes(device.SerialNumber))) 
-            {                
-              FOUND_MICS = DWS_TEMP_MICS.push(device.SerialNumber);
-            }
+            FOUND_MICS = DWS_TEMP_MICS.push(device.SerialNumber);
           }
         }
 
-        // CHECK IF THIS IS ALL OF THE CONFIGURED PERIPHERALS 
-        if (DWS_CUR_STATE == 'Combined All')
-        {
-          if (FOUND_NAVS == (DWS_NODE1_NAVS + DWS_NODE2_NAVS) && FOUND_MICS == (DWS_NODE1_MICS + DWS_NODE2_MICS))
-          {
-            setTimeout(() => { console.debug("DWS: All Node Peripherals Migrated.") }, 2000);
-
-            // UPDATE TIMER TO SET 100% COMPLETION ON STATUS BAR
-            DWS_TIMER = 170000;
-
-            // STOP LISTENING FOR DEVICE REGISTRATION EVENTS
-            setTimeout(() => {REG_DEVICES()}, 5000);
-          }
-        }           
-        else if (DWS_CUR_STATE == 'Combined Node1')
-        {
-          if (FOUND_NAVS == DWS_NODE1_NAVS && FOUND_MICS == DWS_NODE1_MICS)
-          {
-            setTimeout(() => { console.debug("DWS: All Node Peripherals Migrated.") }, 2000);
-
-            // UPDATE TIMER TO SET 100% COMPLETION ON STATUS BAR
-            DWS_TIMER = 170000;
-
-            // STOP LISTENING FOR DEVICE REGISTRATION EVENTS
-            setTimeout(() => {REG_DEVICES()}, 5000);
-          }
-        } 
-        else if (DWS_CUR_STATE == 'Combined Node2')
-        {
-          if (FOUND_NAVS == DWS_NODE2_NAVS && FOUND_MICS == DWS_NODE2_MICS)
-          {
-            setTimeout(() => { console.debug("DWS: All Node Peripherals Migrated.") }, 2000);
-
-            // UPDATE TIMER TO SET 100% COMPLETION ON STATUS BAR
-            DWS_TIMER = 170000;
-
-            // STOP LISTENING FOR DEVICE REGISTRATION EVENTS
-            setTimeout(() => {REG_DEVICES()}, 5000);
-          }
-        }        
+        // UPDATE STATUS WINDOW WITH PERIPHERAL COUNTS
+        updateStatus();
       }      
     })
   }
   else if (value.OptionId == '1' && value.FeedbackId == 'confirmSplit') 
   { 
-    console.debug("DWS: Split action confirmed. Splitting rooms.")
+    console.log("DWS: Splitting workspaces.")
 
     // CLOSE THE DWS CONTROL PANEL
     xapi.Command.UserInterface.Extensions.Panel.Close({ Target: 'Controller' });
@@ -979,21 +969,39 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
     // UPDATE CURRENT STATE
     DWS_CUR_STATE = "Split";
 
+    //RESET SECONDARY PERIPHERAL COUNT
+    FOUND_NAVS = 0;
+    FOUND_MICS = 0;
+
     // RESET MICROPHONE MODES TO ENSURE ACTIVE STATE
     try
     { 
-      for(let i = 1; i < 9; i++)
-      {
-        xapi.Command.Audio.LocalInput.AddConnector({ ConnectorId: i, ConnectorType: "Ethernet", InputId: 1 });
-      }   
-      if (DWS.PRESENTER_USB == "on")
-      {
-        xapi.Command.Audio.LocalInput.AddConnector({ ConnectorId: 1, ConnectorType: "USBInterface", InputId: 1 });
-      }
-      if (DWS.PRESENTER_ANALOG == "on")
-      {
-        xapi.Command.Audio.LocalInput.AddConnector({ ConnectorId: 1, ConnectorType: "Microphone", InputId: 1 });
-      }
+      console.debug ("DWS: Resetting microphones to default group.");
+
+      xapi.Status.Audio.Input.LocalInput[1].get()
+      .then( response => {
+        for(let i = 1; i < 9; i++)
+        {
+          if(!response.Connector.includes("Ethernet."+i))
+          {
+            xapi.Command.Audio.LocalInput.AddConnector({ ConnectorId: i, ConnectorType: "Ethernet", InputId: 1 });
+          }
+        }   
+        if (DWS.PRESENTER_USB == "on")
+        {
+          if(!response.Connector.includes("USBInterface.1"))
+          {
+            xapi.Command.Audio.LocalInput.AddConnector({ ConnectorId: 1, ConnectorType: "USBInterface", InputId: 1 });
+          }
+        }
+        if (DWS.PRESENTER_ANALOG == "on")
+        {
+          if(!response.Connector.includes("Microphone.1"))
+          {
+            xapi.Command.Audio.LocalInput.AddConnector({ ConnectorId: 1, ConnectorType: "Microphone", InputId: 1 });
+          }
+        }
+      });
     }
     catch(error) {
       console.error('DWS: Error Adding Microphones to Default InputGroup: ' + error.message); 
@@ -1029,8 +1037,8 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
     xapi.Command.Video.Graphics.Clear({ Target: 'LocalOutput' });
 
     // UPDATE STATUS ALERT
-    updateStatus('Split');
-    DWS_INTERVAL = setInterval(() => {updateStatus('Split')}, 3000);      
+    updateStatus();
+    DWS_INTERVAL = setInterval(() => {updateStatus()}, 3000);      
   }
 
   // ADVANCED PANEL - AUTOMATION MODE TRIGGERS
@@ -1595,27 +1603,164 @@ function createPanels(panelState)
 //===============================//
 //  COMBINATION STATUS FUNCTION  //
 //===============================//
-function updateStatus(type) {
-  var percent = Math.round(DWS_TIMER / 160000 * 100);
+function updateStatus()
+{
+  var percent = Math.round(DWS_TIMER / 160000 * 100);  
 
-  // CHECK IF TIMER IS LESS THAN 165 SECONDS
-  if (DWS_TIMER < 160000) {
-    // UPDATE PROMPT WITH PERCENTAGE COMPLETE
+  if (DWS_CUR_STATE == 'Combined All')
+  {
+    if (FOUND_NAVS == (DWS_NODE1_NAVS + DWS_NODE2_NAVS) && FOUND_MICS == (DWS_NODE1_MICS + DWS_NODE2_MICS))
+    {
+      // SEND FINAL PROMPT @ 100% COMPLETION
+      xapi.Command.UserInterface.Message.Prompt.Clear({FeedbackId: '316'});
+      xapi.Command.UserInterface.Message.Prompt.Display({
+        Duration: '0', 
+        FeedbackId: '316',
+        Title: 'Combining Rooms',
+        "Option.1": 'Microphones: ' + FOUND_MICS + ' of ' + (DWS_NODE1_MICS + DWS_NODE2_MICS),
+        "Option.2": 'Room Navigators: ' + FOUND_NAVS + ' of ' + (DWS_NODE1_NAVS + DWS_NODE2_NAVS), 
+        "Option.3": '100% Complete', 
+        Text:'Operation completed successfully.'
+      });
+
+      console.log("DWS: Operation completed successfully!");
+
+      // CLEAR TIMER AND RESET INTERVAL
+      clearInterval(DWS_INTERVAL);
+      DWS_TIMER = 0;
+
+      // SETUP SAM FOR STATE
+      SAM.Setup(buildSAMConfig(DWS_CUR_STATE));
+    }
+    else
+    {
+      // HOLD PERCENTAGE @ 90 UNTIL PERIPHERALS COMPLETE
+      if (percent > 90) { percent = 90 }
+
+      // UPDATE PROMPT 
+      xapi.Command.UserInterface.Message.Prompt.Display({
+        Duration: '0', 
+        FeedbackId: '316', 
+        Title: 'Combining Rooms', 
+        Text:'Please wait while this process completes.', 
+        "Option.1": 'Microphones: ' + FOUND_MICS + ' of ' + (DWS_NODE1_MICS + DWS_NODE2_MICS),
+        "Option.2": 'Room Navigators: ' + FOUND_NAVS + ' of ' + (DWS_NODE1_NAVS + DWS_NODE2_NAVS),
+        "Option.3": percent + '% Complete'
+      });  
+
+      // INCREMENT THE TIMER 3 SECONDS
+      DWS_TIMER = DWS_TIMER + 3000;
+    }
+  }           
+  else if (DWS_CUR_STATE == 'Combined Node1')
+  {
+    if (FOUND_NAVS == DWS_NODE1_NAVS && FOUND_MICS == DWS_NODE1_MICS)
+    {
+      // SEND FINAL PROMPT @ 100% COMPLETION
+      xapi.Command.UserInterface.Message.Prompt.Clear({FeedbackId: '316'});
+      xapi.Command.UserInterface.Message.Prompt.Display({
+        Duration: '0', 
+        FeedbackId: '316',
+        Title: 'Combining Rooms',
+        "Option.1": 'Microphones: ' + FOUND_MICS + ' of ' + DWS_NODE1_MICS,
+        "Option.2": 'Room Navigators: ' + FOUND_NAVS + ' of ' + DWS_NODE1_NAVS, 
+        "Option.3": '100% Complete', 
+        Text:'Operation completed successfully.'
+      });
+      
+      console.log("DWS: Operation completed successfully!");
+
+      // CLEAR TIMER AND RESET INTERVAL
+      clearInterval(DWS_INTERVAL);
+      DWS_TIMER = 0;
+
+      // SETUP SAM FOR STATE
+      SAM.Setup(buildSAMConfig(DWS_CUR_STATE));
+    }
+    else
+    {
+      // HOLD PERCENTAGE @ 90 UNTIL PERIPHERALS COMPLETE
+      if (percent > 90) { percent = 90 }
+
+      // UPDATE PROMPT 
+      xapi.Command.UserInterface.Message.Prompt.Display({
+        Duration: '0', 
+        FeedbackId: '316', 
+        Title: 'Combining Rooms', 
+        Text:'Please wait while this process completes.', 
+        "Option.1": 'Microphones: ' + FOUND_MICS + ' of ' + DWS_NODE1_MICS,
+        "Option.2": 'Room Navigators: ' + FOUND_NAVS + ' of ' + DWS_NODE1_NAVS,
+        "Option.3": percent + '% Complete'
+      });  
+
+      // INCREMENT THE TIMER 3 SECONDS
+      DWS_TIMER = DWS_TIMER + 3000;
+    }
+  } 
+  else if (DWS_CUR_STATE == 'Combined Node2')
+  {
+    if (FOUND_NAVS == DWS_NODE2_NAVS && FOUND_MICS == DWS_NODE2_MICS)
+    {
+      // SEND FINAL PROMPT @ 100% COMPLETION
+      xapi.Command.UserInterface.Message.Prompt.Clear({FeedbackId: '316'});
+      xapi.Command.UserInterface.Message.Prompt.Display({
+        Duration: '0', 
+        FeedbackId: '316',
+        Title: 'Combining Rooms',
+        "Option.1": 'Microphones: ' + FOUND_MICS + ' of ' + DWS_NODE2_MICS,
+        "Option.2": 'Room Navigators: ' + FOUND_NAVS + ' of ' + DWS_NODE2_NAVS, 
+        "Option.3": '100% Complete', 
+        Text:'Operation completed successfully.'
+      });
+
+      console.log("DWS: Operation completed successfully!");
+
+      // CLEAR TIMER AND RESET INTERVAL
+      clearInterval(DWS_INTERVAL);
+      DWS_TIMER = 0;
+
+      // SETUP SAM FOR STATE
+      SAM.Setup(buildSAMConfig(DWS_CUR_STATE));
+    }
+    else
+    {
+      // HOLD PERCENTAGE @ 90 UNTIL PERIPHERALS COMPLETE
+      if (percent > 90) { percent = 90 }
+
+      // UPDATE PROMPT 
+      xapi.Command.UserInterface.Message.Prompt.Display({
+        Duration: '0', 
+        FeedbackId: '316', 
+        Title: 'Combining Rooms', 
+        Text:'Please wait while this process completes.', 
+        "Option.1": 'Microphones: ' + FOUND_MICS + ' of ' + DWS_NODE2_MICS,
+        "Option.2": 'Room Navigators: ' + FOUND_NAVS + ' of ' + DWS_NODE2_NAVS,
+        "Option.3": percent + '% Complete'
+      });  
+
+      // INCREMENT THE TIMER 3 SECONDS
+      DWS_TIMER = DWS_TIMER + 3000;
+    }    
+  }
+  else if (DWS_TIMER < 160000)
+  {
+    // UPDATE PROMPT 
     xapi.Command.UserInterface.Message.Prompt.Display({
       Duration: '0', 
-      FeedbackId: '65', 
-      Title: type + ' Rooms', 
+      FeedbackId: '316', 
+      Title: 'Splitting Rooms', 
       Text:'Please wait while this process completes.', 
-      "Option.1": percent+'% Complete'
-    });    
+      "Option.1": percent + '% Complete'
+    }); 
 
     // INCREMENT THE TIMER 3 SECONDS
     DWS_TIMER = DWS_TIMER + 3000;
-  } 
-  else {
+  }
+  else
+  {    
     // SEND FINAL PROMPT @ 100% COMPLETION
-    xapi.Command.UserInterface.Message.Prompt.Clear({FeedbackId: '65'});
-    xapi.Command.UserInterface.Message.Prompt.Display({Duration: '0', FeedbackId: '65',Title: type+' Rooms', "Option.1": '100% Complete', Text:'Operation completed successfully.'});
+    xapi.Command.UserInterface.Message.Prompt.Clear({FeedbackId: '316'});
+    xapi.Command.UserInterface.Message.Prompt.Display({Duration: '0', FeedbackId: '316',Title: 'Splitting Rooms', "Option.1": '100% Complete', Text:'Operation completed successfully.'});
     
     console.log("DWS: Operation completed successfully!");
 
@@ -1794,10 +1939,10 @@ function pairSecondaryNav(panelId, location, mode)
   });
 }
 
-//===========================//
-//  AZM SUPPORTED FUNCTIONS  //
-//===========================//
-function buildAZMProfile(state) 
+//=================//
+//  SAM FUNCTIONS  //
+//=================//
+function buildSAMConfig(state) 
 {
   let PRIMARY_ZONE = [];
   let NODE1_ZONE = [];
@@ -1864,18 +2009,210 @@ function buildAZMProfile(state)
       },
       MicrophoneAssignment: {
         Type: 'Ethernet',
-        Connectors: [DWS_PRESENTER_MIC_ID]
+        Connectors: [{Serial: DWS.PRESENTER_MIC, SubId: [1]}]
       },
       Assets: {
       }
     });
   }
 
-  let DWS_AZM_PROFILE = {};
+  let SAM_PROFILE = {};
 
-  if (state == 'Combined All')
+  if (state == 'Combined No Audience')
   {
-    DWS_AZM_PROFILE = {
+     SAM_PROFILE = {
+      Settings: { 
+        Sample: {
+          Size: 4,                              
+          Rate_In_Ms: 500,                      
+          Mode: 'Snapshot'                      
+        },
+        GlobalThreshold: {
+          Mode: 'Off'                              
+        },
+        VoiceActivityDetection: 'On' 
+      },
+      Zones: [
+      ...PRESENTER_ZONE
+      ]
+    }
+  }
+  else if (state == 'Combined All No Presenter')
+  {
+     SAM_PROFILE = {
+      Settings: { 
+        Sample: {
+          Size: 4,                              
+          Rate_In_Ms: 500,                      
+          Mode: 'Snapshot'                      
+        },
+        GlobalThreshold: {
+          Mode: 'Off'                              
+        },
+        VoiceActivityDetection: 'On' 
+      },
+      Zones: [
+        {
+          Label: 'PRIMARY ROOM',
+          Independent_Threshold: {
+            High: DWS.MICS_HIGH_PRI,                           
+            Low: 20                              
+          },
+          MicrophoneAssignment: {
+            Type: 'Ethernet',
+            Connectors: [...PRIMARY_ZONE]
+          },
+          Assets: {                             
+            Camera: {
+              InputConnector: 1,
+              Layout: 'Equal'
+            }
+          }
+        },
+        {
+          Label: 'NODE 1 ROOM',
+          Independent_Threshold: {
+            High: DWS.MICS_HIGH_NODE1,                           
+            Low: 20                              
+          },
+          MicrophoneAssignment: {
+            Type: 'Ethernet',                   
+            Connectors: [ ...NODE1_ZONE]
+          },
+          Assets: {                             
+            Camera: {
+              InputConnector: 2,
+              Layout: 'Equal'
+            }
+          }
+        },
+        {
+          Label: 'NODE 2 ROOM',
+          Independent_Threshold: {
+            High: DWS.MICS_HIGH_NODE2,                           
+            Low: 20                              
+          },
+          MicrophoneAssignment: {
+            Type: 'Ethernet',                   
+            Connectors: [ ...NODE2_ZONE]
+          },
+          Assets: {                             
+            Camera: {
+              InputConnector: 3,
+              Layout: 'Equal'
+            }
+          }
+        },
+      ]
+    }
+  }
+  else if (state == 'Combined Node1 No Presenter')
+  {
+     SAM_PROFILE = {
+      Settings: { 
+        Sample: {
+          Size: 4,                              
+          Rate_In_Ms: 500,                      
+          Mode: 'Snapshot'                      
+        },
+        GlobalThreshold: {
+          Mode: 'Off'                              
+        },
+        VoiceActivityDetection: 'On' 
+      },
+      Zones: [
+        {
+          Label: 'PRIMARY ROOM',
+          Independent_Threshold: {
+            High: DWS.MICS_HIGH_PRI,                           
+            Low: 20                              
+          },
+          MicrophoneAssignment: {
+            Type: 'Ethernet',
+            Connectors: [...PRIMARY_ZONE]
+          },
+          Assets: {                             
+            Camera: {
+              InputConnector: 1,
+              Layout: 'Equal'
+            }
+          }
+        },
+        {
+          Label: 'NODE 1 ROOM',
+          Independent_Threshold: {
+            High: DWS.MICS_HIGH_NODE1,                           
+            Low: 20                              
+          },
+          MicrophoneAssignment: {
+            Type: 'Ethernet',                   
+            Connectors: [ ...NODE1_ZONE]
+          },
+          Assets: {                             
+            Camera: {
+              InputConnector: 2,
+              Layout: 'Equal'
+            }
+          }
+        },
+      ]
+    }
+  }
+  else if (state == 'Combined Node2 No Presenter')
+  {
+     SAM_PROFILE = {
+      Settings: { 
+        Sample: {
+          Size: 4,                              
+          Rate_In_Ms: 500,                      
+          Mode: 'Snapshot'                      
+        },
+        GlobalThreshold: {
+          Mode: 'Off'                              
+        },
+        VoiceActivityDetection: 'On' 
+      },
+      Zones: [
+        {
+          Label: 'PRIMARY ROOM',
+          Independent_Threshold: {
+            High: DWS.MICS_HIGH_PRI,                           
+            Low: 20                              
+          },
+          MicrophoneAssignment: {
+            Type: 'Ethernet',
+            Connectors: [...PRIMARY_ZONE]
+          },
+          Assets: {                             
+            Camera: {
+              InputConnector: 1,
+              Layout: 'Equal'
+            }
+          }
+        },
+        {
+          Label: 'NODE 2 ROOM',
+          Independent_Threshold: {
+            High: DWS.MICS_HIGH_NODE2,                           
+            Low: 20                              
+          },
+          MicrophoneAssignment: {
+            Type: 'Ethernet',                   
+            Connectors: [ ...NODE2_ZONE]
+          },
+          Assets: {                             
+            Camera: {
+              InputConnector: 3,
+              Layout: 'Equal'
+            }
+          }
+        },
+      ]
+    }
+  }
+  else if (state == 'Combined All')
+  {
+    SAM_PROFILE = {
       Settings: { 
         Sample: {
           Size: 4,                              
@@ -1945,7 +2282,7 @@ function buildAZMProfile(state)
   }
   else if (state == 'Combined Node1')
   {
-    DWS_AZM_PROFILE = {
+    SAM_PROFILE = {
       Settings: { 
         Sample: {
           Size: 4,                              
@@ -1998,7 +2335,7 @@ function buildAZMProfile(state)
   }
   else if (state == 'Combined Node2')
   {
-    DWS_AZM_PROFILE = {
+    SAM_PROFILE = {
       Settings: { 
         Sample: {
           Size: 4,                              
@@ -2051,7 +2388,7 @@ function buildAZMProfile(state)
   }
   else
   {
-    DWS_AZM_PROFILE = {
+    SAM_PROFILE = {
       Settings: { 
         Sample: {
           Size: 4,                              
@@ -2066,23 +2403,10 @@ function buildAZMProfile(state)
       Zones: []
     }
   }
-  return DWS_AZM_PROFILE;
+  return SAM_PROFILE;
 }
 
-function startAZMZoneListener() 
-{
-  AZM.Event.TrackZones.on(handleAZMZoneEvents);
-  startAZMZoneListener = () => void 0;
-}
-
-function startCallListener() 
-{
-  // LISTEN TO CALL STATUS
-  xapi.Status.SystemUnit.State.NumberOfActiveCalls.on(handleCallStatus)
-  startCallListener = () => void 0;
-}
-
-async function handleAZMZoneEvents(event) 
+async function handleSAMEvents(event) 
 {
   // STORE CURRENT TIME FOR HOLD OVERS
   let DWS_CUR_TIME = Date.now();
@@ -2334,6 +2658,13 @@ async function handleAZMZoneEvents(event)
   }
 }
 
+function startCallListener() 
+{
+  // LISTEN TO CALL STATUS
+  xapi.Status.SystemUnit.State.NumberOfActiveCalls.on(handleCallStatus)
+  startCallListener = () => void 0;
+}
+
 async function handleCallStatus(event) 
 {
   let isRASession = false;
@@ -2353,13 +2684,13 @@ async function handleCallStatus(event)
     {
       if(DWS_CUR_STATE == 'Combined All' || DWS_CUR_STATE == 'Combined Node1' || DWS_CUR_STATE == 'Combined Node2')
       {
-        console.debug("DWS: Call started. Adding in call controls.")
+        console.log("DWS: Call started. Adding in call controls.")
 
         // ACTIVATE REMOTE SPEAKERTRACK
         sendToCombinedNodes("Closeup");
 
-        // START ZONE MONITORING IN AZM
-        AZM.Command.Zone.Monitor.Start();
+        // START SAM
+        SAM.Start(handleSAMEvents)
 
         // DRAW IN CALL PANEL
         createPanels ("InCall");
@@ -2380,25 +2711,41 @@ async function handleCallStatus(event)
       // RESET MICROPHONE MODES TO ENSURE ACTIVE STATE
       try
       { 
-        for(let i = 1; i < 9; i++)
-        {
-          xapi.Command.Audio.LocalInput.AddConnector({ ConnectorId: i, ConnectorType: "Ethernet", InputId: 1 });
-        }   
-        if (DWS.PRESENTER_USB == "on")
-        {
-          xapi.Command.Audio.LocalInput.AddConnector({ ConnectorId: 1, ConnectorType: "USBInterface", InputId: 1 });
-        }
-        if (DWS.PRESENTER_ANALOG == "on")
-        {
-          xapi.Command.Audio.LocalInput.AddConnector({ ConnectorId: 1, ConnectorType: "Microphone", InputId: 1 });
-        }
+        console.debug ("DWS: Resetting microphones to default group.");
+
+        xapi.Status.Audio.Input.LocalInput[1].get()
+        .then( response => {
+          for(let i = 1; i < 9; i++)
+          {
+            if(!response.Connector.includes("Ethernet."+i))
+            {
+              xapi.Command.Audio.LocalInput.AddConnector({ ConnectorId: i, ConnectorType: "Ethernet", InputId: 1 });
+            }
+          }   
+          if (DWS.PRESENTER_USB == "on")
+          {
+            if(!response.Connector.includes("USBInterface.1"))
+            {
+              xapi.Command.Audio.LocalInput.AddConnector({ ConnectorId: 1, ConnectorType: "USBInterface", InputId: 1 });
+            }
+          }
+          if (DWS.PRESENTER_ANALOG == "on")
+          {
+            if(!response.Connector.includes("Microphone.1"))
+            {
+              xapi.Command.Audio.LocalInput.AddConnector({ ConnectorId: 1, ConnectorType: "Microphone", InputId: 1 });
+            }
+          }
+        });
       }
       catch(error) {
         console.error('DWS: Error Adding Microphones to Default InputGroup: ' + error.message); 
       }
 
-      // STOP THE VU MONITORS WHEN CALL ENDS
-      AZM.Command.Zone.Monitor.Stop()
+      // STOP SAM
+      SAM.Stop()
+
+      console.log("DWS: Call ended. Removing in call controls.")
 
       // RESET VIEW TO PRIMARY ROOM QUAD TO CLEAR ANY COMPOSITION FROM PREVIOUS SELECTION
       xapi.Command.Video.Input.SetMainVideoSource({ ConnectorId: 1});
@@ -2442,14 +2789,6 @@ async function handleCallStatus(event)
       }
     }
   })   
-}
-
-async function startAZM() {
-  let configurationProfile = buildAZMProfile(DWS_CUR_STATE);
-  await AZM.Command.Zone.Setup(configurationProfile);
-  startAZMZoneListener();
-  startCallListener();
-  await AZM.Command.Zone.Monitor.Stop();
 }
 
 function sendToCombinedNodes(message) {
