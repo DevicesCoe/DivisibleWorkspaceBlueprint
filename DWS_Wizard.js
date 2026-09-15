@@ -738,12 +738,12 @@ async function loadMacros()
   let setupMacro = '';
   let coreLoaded = false;
   let coreMacro = '';
-  let azmLoaded = false;
-  let azmMacro = '';
+  let samLoaded = false;
+  let samMacro = '';
   let imagesLoaded = false;
   let imagesMacro = '';
 
-  if(LOADED_MACROS.includes('DWS_Setup') && LOADED_MACROS.includes('DWS_Core') && LOADED_MACROS.includes('DWS_AZM_Lib') && LOADED_MACROS.includes('DWS_Images'))
+  if(LOADED_MACROS.includes('DWS_Setup') && LOADED_MACROS.includes('DWS_Core') && LOADED_MACROS.includes('DWS_Audio') && LOADED_MACROS.includes('DWS_Images'))
   {
     console.log("DWS: All required Macro files present. Performing local install.")
     return true;
@@ -785,18 +785,18 @@ async function loadMacros()
       console.warn('DWS: Core Macro URL not found.');
     });
 
-    // LOAD AZM MACRO FROM GITHUB
-    const getAZM = await xapi.Command.HttpClient.Get({ Url: 'https://raw.githubusercontent.com/DevicesCoe/DivisibleWorkspaceBlueprint/refs/heads/main/macros/DWS_AZM_Lib.js' })
+    // LOAD SAM MACRO FROM GITHUB
+    const getSAM = await xapi.Command.HttpClient.Get({ Url: 'https://raw.githubusercontent.com/DevicesCoe/DivisibleWorkspaceBlueprint/refs/heads/main/macros/DWS_Audio.js' })
     .then( result => {
-      console.debug("DWS: AZM Macro Downloaded Successfully.");
-      azmMacro = result.Body;
-      azmLoaded = true;
+      console.debug("DWS: SAM Macro Downloaded Successfully.");
+      samMacro = result.Body;
+      samLoaded = true;
     })
     .catch (e => {
-      console.warn('DWS: AZM Macro URL not found.');
+      console.warn('DWS: SAM Macro URL not found.');
     });
 
-    if (setupLoaded && coreLoaded && azmLoaded && imagesLoaded)
+    if (setupLoaded && coreLoaded && samLoaded && imagesLoaded)
     {
       console.log("DWS: All Macros Downloaded Successfully from GitHub.");
 
@@ -818,10 +818,10 @@ async function loadMacros()
         console.debug ("DWS: Core Macro saved to Primary successfully.");
       })
 
-      // LOAD THE AZM LIB MACRO
-      xapi.Command.Macros.Macro.Save({ Name: 'DWS_AZM_Lib', Overwrite: 'True' }, azmMacro)
+      // LOAD THE SIMPLE AUDIO MANAGER MACRO
+      xapi.Command.Macros.Macro.Save({ Name: 'DWS_Audio', Overwrite: 'True' }, samMacro)
       .then (() => {
-        console.debug ("DWS: AZM Lib Macro saved to Primary successfully.");
+        console.debug ("DWS: SAM Macro saved to Primary successfully.");
       })
 
       return true;
