@@ -1007,8 +1007,8 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
       console.error('DWS: Error Adding Microphones to Default InputGroup: ' + error.message); 
     } 
 
-    // STOP AZM
-    AZM.Command.Zone.Monitor.Stop();
+    // STOP SAM MONITORING
+    SAM.Stop();
 
     // UPDATE VLANS FOR ACCESSORIES
     setVLANs('Split');
@@ -2470,7 +2470,7 @@ async function handleSAMEvents(event)
     }
   }
 
-  // CHECK DWS CAMERA MODE & ONLY SET THE CAMERA BASED ON AZM PROFILE IF IN "AUTOMATIC"
+  // CHECK DWS CAMERA MODE & ONLY SET THE CAMERA BASED ON SAM PROFILE IF IN "AUTOMATIC"
   if ((DWS_AUTOMODE_STATE == 'on' || DWS_AUTOMODE_STATE == 'On') && event.Zone.State == 'High') 
   {
     // CHECK IF 2.5 SECONDS HAVE PASSED BEFORE TRIGGERING VIDEO CHANGES
