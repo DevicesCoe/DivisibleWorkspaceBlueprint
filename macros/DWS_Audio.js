@@ -20,7 +20,7 @@ https://cs.co/divisibleworkspaceblueprint
 //=========================================================================*/
 import xapi from 'xapi';
 
-const allowedTypes = ['Ethernet', 'USBInterface', 'Analog'];
+const allowedTypes = ['Ethernet', 'USBInterface', 'Microphone'];
 
 const SAM = {
   Status: { Audio: { Zone: {} }, VoiceActivity: false }
@@ -58,7 +58,7 @@ function canonicalType(type) {
   const value = String(type || '').toLowerCase();
   if (value == 'ethernet') return 'Ethernet';
   if (value == 'usbinterface') return 'USBInterface';
-  if (value == 'analog') return 'Analog';
+  if (value == 'microphone') return 'Microphone';
   fail(`Unsupported microphone type [${type}]. Allowed types: ${allowedTypes.join(', ')}`);
 }
 
@@ -470,10 +470,10 @@ function subscribeInputs() {
       if (active()) SAM.Setup(runtime.config);
     });
   }
-  if (types.has('Analog')) {
+  if (types.has('Microphone')) {
     subscribe(xapi.Event.Audio.Input.Connectors.Microphone, event => {
       if (!active()) return;
-      (runtime.buckets.get(inputKey('Analog', event.id)) || []).forEach(bucket => runStandardBucket(bucket, event));
+      (runtime.buckets.get(inputKey('Microphone', event.id)) || []).forEach(bucket => runStandardBucket(bucket, event));
     });
   }
   if (types.has('USBInterface')) {

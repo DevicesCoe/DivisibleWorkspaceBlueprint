@@ -1103,32 +1103,33 @@ function platformCheck()
           try { xapi.Command.Macros.Macro.Deactivate({ Name: 'DWS_Wizard' }); } catch(error) { console.error('DWS: Error disabling Wizard Macro: ' + error.message); }
           return;
         }
+           
+      });
+    }
+    else
+    {
+      // ENSURE ROOM TYPE IS STANDARD
+      xapi.Status.Provisioning.RoomType.get()
+      .then (roomType => {
+        if (roomType != 'Standard')
+        {
+          xapi.Command.UserInterface.Message.Alert.Display({ Duration: '0', Title:"Unsupported Room Type", Text: "The Divisible Workspace Blueprint is only supported using the Standard Room Type."}); 
+
+          console.error("DWS: Divisible Workspace Blueprint only operates in Standard Room Type. Stopping installation.");
+
+          // TURN OFF MACRO
+          try { xapi.Command.Macros.Macro.Deactivate({ Name: 'DWS_Wizard' }); } catch(error) { console.error('DWS: Error disabling Wizard Macro: ' + error.message); }
+          return;
+        }
         else
         {
-          // ENSURE ROOM TYPE IS STANDARD
-          xapi.Status.Provisioning.RoomType.get()
-          .then (roomType => {
-            if (roomType != 'Standard')
-            {
-              xapi.Command.UserInterface.Message.Alert.Display({ Duration: '0', Title:"Unsupported Room Type", Text: "The Divisible Workspace Blueprint is only supported using the Standard Room Type."}); 
-
-              console.error("DWS: Divisible Workspace Blueprint only operates in Standard Room Type. Stopping installation.");
-
-              // TURN OFF MACRO
-              try { xapi.Command.Macros.Macro.Deactivate({ Name: 'DWS_Wizard' }); } catch(error) { console.error('DWS: Error disabling Wizard Macro: ' + error.message); }
-              return;
-            }
-            else
-            {
-              console.log("DWS: All platform checks passed. Proceeding with Wizard");
-
-              // CONTINUE WITH INSTALLATION
-              init()
-            }
-          })
-        }   
-      });
-    } 
+          console.log("DWS: All platform checks passed. Proceeding with Wizard");
+          
+          // CONTINUE WITH INSTALLATION
+          init()
+        }             
+      })
+    }    
   });  
 }
 

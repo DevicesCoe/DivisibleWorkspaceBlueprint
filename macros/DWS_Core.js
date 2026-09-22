@@ -1973,7 +1973,7 @@ function buildSAMConfig(state)
       },
       Independent_Rate: 200,
       MicrophoneAssignment: {
-        Type: 'USB',                   
+        Type: 'USBInterface',                   
         Connectors: [{Id: 1}]
       },
       Assets: {
