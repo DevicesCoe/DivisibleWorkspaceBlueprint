@@ -58,7 +58,7 @@ let DWS_NODE1_MICS = DWS.NODE1_MICS.length;
 
 if (DWS.NWAY == 'Three Way')
 {
-  let DWS_NODE2_MICS = DWS.NODE2_MICS.length;
+  DWS_NODE2_MICS = DWS.NODE2_MICS.length;
 }
 
 let DWS_NODE1_NAVS = 1;
