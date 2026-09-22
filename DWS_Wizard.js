@@ -801,25 +801,25 @@ async function loadMacros()
       console.log("DWS: All Macros Downloaded Successfully from GitHub.");
 
       // LOAD THE SETUP MACRO
-      xapi.Command.Macros.Macro.Save({ Name: 'DWS_Setup', Overwrite: 'True' }, setupMacro)
+      await xapi.Command.Macros.Macro.Save({ Name: 'DWS_Setup', Overwrite: 'True' }, setupMacro)
       .then (() => {
         console.debug ("DWS: Setup Macro saved to Primary successfully.");
       })
 
       // LOAD THE SETUP MACRO
-      xapi.Command.Macros.Macro.Save({ Name: 'DWS_Images', Overwrite: 'True' }, imagesMacro)
+      await xapi.Command.Macros.Macro.Save({ Name: 'DWS_Images', Overwrite: 'True' }, imagesMacro)
       .then (() => {
         console.debug ("DWS: Images Macro saved to Primary successfully.");
       })
 
       // LOAD THE CORE MACRO
-      xapi.Command.Macros.Macro.Save({ Name: 'DWS_Core', Overwrite: 'True' }, coreMacro)
+      await xapi.Command.Macros.Macro.Save({ Name: 'DWS_Core', Overwrite: 'True' }, coreMacro)
       .then (() => {
         console.debug ("DWS: Core Macro saved to Primary successfully.");
       })
 
       // LOAD THE SIMPLE AUDIO MANAGER MACRO
-      xapi.Command.Macros.Macro.Save({ Name: 'DWS_Audio', Overwrite: 'True' }, samMacro)
+      await xapi.Command.Macros.Macro.Save({ Name: 'DWS_Audio', Overwrite: 'True' }, samMacro)
       .then (() => {
         console.debug ("DWS: SAM Macro saved to Primary successfully.");
       })
