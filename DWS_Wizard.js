@@ -1103,7 +1103,13 @@ function platformCheck()
           try { xapi.Command.Macros.Macro.Deactivate({ Name: 'DWS_Wizard' }); } catch(error) { console.error('DWS: Error disabling Wizard Macro: ' + error.message); }
           return;
         }
-           
+        else
+        {
+          console.log("DWS: All platform checks passed. Proceeding with Wizard");
+          
+          // CONTINUE WITH INSTALLATION
+          init()
+        }           
       });
     }
     else
