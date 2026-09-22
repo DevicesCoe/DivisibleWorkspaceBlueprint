@@ -922,6 +922,7 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
             console.debug("DWS: Discovered Navigator: " + device.SerialNumber + " / " + device.ID)
             // PAIR FOUND NAV AFTER 1500 MS DELAY
             setTimeout(() => {pairSecondaryNav(device.ID, 'OutsideRoom', 'RoomScheduler')}, 1500);
+            FOUND_NAVS = DWS_TEMP_NAVS.push(device.SerialNumber);
           }
           if (device.ID === DWS.NODE2_NAV_CONTROL) 
           {
