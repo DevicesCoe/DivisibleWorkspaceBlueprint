@@ -782,13 +782,13 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
     {
       if (DWS_COMBINE_NODE1 == 'on' && DWS_COMBINE_NODE2 == 'on')
       {
-        console.log("DWS: Combining Workspaces: All Nodes");
+        console.log("DWS: Combining Workspaces: All Nodes");      
+
+        // UPDATE VLANS FOR ACCESSORIES
+        if(!(await setVLANs('Combined All'))) { return };
 
         // UPDATE CURRENT STATE
         DWS_CUR_STATE = "Combined All";
-
-        // UPDATE VLANS FOR ACCESSORIES
-        setVLANs('Combined All');
 
         // UPDATE SAVED STATE IN CASE OF MACRO RESET / REBOOT
         setPrimaryState('Combined All');
@@ -809,13 +809,13 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
       }
       else if (DWS_COMBINE_NODE1 == 'on' && DWS_COMBINE_NODE2 == 'off')
       {
-        console.log("DWS: Combining Workspaces: Only Node 1");
-
-        // UPDATE CURRENT STATE
-        DWS_CUR_STATE = "Combined Node1";     
+        console.log("DWS: Combining Workspaces: Only Node 1");           
 
         // UPDATE VLANS FOR ACCESSORIES
-        setVLANs('Combined Node1');
+        if(!(await setVLANs('Combined Node1'))) { return };
+
+        // UPDATE CURRENT STATE
+        DWS_CUR_STATE = "Combined Node1";  
 
         // UPDATE SAVED STATE IN CASE OF MACRO RESET / REBOOT
         setPrimaryState('Combined Node1');
@@ -837,14 +837,11 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
       {
         console.log("DWS: Combining Workspaces: Only Node 2");
 
-        // UPDATE CURRENT STATE
-        DWS_CUR_STATE = "Combined Node2";
-
         // UPDATE VLANS FOR ACCESSORIES
-        setVLANs('Combined Node2');
+        if(!(await setVLANs('Combined Node2'))) { return };
 
-        // UPDATE SAVED STATE IN CASE OF MACRO RESET / REBOOT
-        setPrimaryState('Combined Node2');
+        // UPDATE CURRENT STATE
+        DWS_CUR_STATE = "Combined Node2";  
 
         // CONFIGURE HDMI AUDIO OUTPUT
         try { xapi.Command.Audio.LocalOutput.RemoveConnector({ ConnectorId: 1, ConnectorType: 'HDMI', OutputId: 2 }); } catch(error) { console.error('DWS: Error removing HDMI from default group: ' + error.message); }
@@ -864,11 +861,11 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
     {
       console.log("DWS: Combining Workspaces")
 
-      // UPDATE CURRENT STATE
-      DWS_CUR_STATE = "Combined Node1";
-
       // UPDATE VLANS FOR ACCESSORIES
-      setVLANs('Combined Node1');
+      if(!(await setVLANs('Combined Node1'))) { return };
+
+      // UPDATE CURRENT STATE
+      DWS_CUR_STATE = "Combined Node1";  
 
       // UPDATE SAVED STATE IN CASE OF MACRO RESET / REBOOT
       setPrimaryState('Combined Node1');
@@ -961,14 +958,17 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
   { 
     console.log("DWS: Splitting workspaces.")
 
+    // UPDATE VLANS FOR ACCESSORIES
+    if(!(await setVLANs('Split'))) { return };
+
+    // UPDATE CURRENT STATE
+    DWS_CUR_STATE = "Split";
+
     // CLOSE THE DWS CONTROL PANEL
     xapi.Command.UserInterface.Extensions.Panel.Close({ Target: 'Controller' });
 
     // RESET ANY COMPOSITIONS FOR MAIN VIDEO SOURCE
     xapi.Command.Video.Input.SetMainVideoSource({ ConnectorId: 1});
-
-    // UPDATE CURRENT STATE
-    DWS_CUR_STATE = "Split";
 
     //RESET SECONDARY PERIPHERAL COUNT
     FOUND_NAVS = 0;
@@ -1010,9 +1010,6 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
 
     // STOP SAM MONITORING
     SAM.Stop();
-
-    // UPDATE VLANS FOR ACCESSORIES
-    setVLANs('Split');
 
     // UPDATE SAVED STATE IN CASE OF MACRO RESET / REBOOT
     setPrimaryState("Split");  
@@ -1842,53 +1839,67 @@ function buildVlanPayload(portGroups)
 // THEN NOTIFY EACH AFFECTED NODE OF ITS NEW COMBINE / SPLIT STATE
 async function setVLANs(state)
 {
-  const PORTS = DWS_SWITCH_PORTS[DWS.SWITCH_TYPE];
-
-  if (PORTS == undefined) { return; }
-
-  let portGroups;
-  let nodeMessages;
-  // 3-ROOM METHODS
-  if (DWS.NWAY == 'Three Way' && DWS.SWITCH_TYPE != 'C9K-8P')
+  try
   {
-    switch (state)
-    {
-      case 'Combined All':
-        portGroups = [[PORTS.NODE1, DWS.PRIMARY_VLAN], [PORTS.NODE2, DWS.PRIMARY_VLAN]];
-        nodeMessages = [[DWS.NODE1_HOST, "Combine"], [DWS.NODE2_HOST, "Combine"]];
-        break;
+    const PORTS = DWS_SWITCH_PORTS[DWS.SWITCH_TYPE];
 
-      case 'Combined Node1':
-        portGroups = [[PORTS.NODE1, DWS.PRIMARY_VLAN]];
-        nodeMessages = [[DWS.NODE1_HOST, "Combine"]];
-        break;
-
-      case 'Combined Node2':
-        portGroups = [[PORTS.NODE2, DWS.PRIMARY_VLAN]];
-        nodeMessages = [[DWS.NODE2_HOST, "Combine"]];
-        break;
-
-      default: // SPLIT
-        portGroups = [[PORTS.NODE1, DWS.NODE1_VLAN], [PORTS.NODE2, DWS.NODE2_VLAN]];
-        nodeMessages = [[DWS.NODE1_HOST, "Split"], [DWS.NODE2_HOST, "Split"]];
+    if (PORTS == undefined) 
+    { 
+      throw new Error('Unsupported Switch Type');
     }
-  }
-  // 2-ROOM METHODS
-  else if (state == 'Combined Node1')
-  {
-    portGroups = [[PORTS.TWO_WAY, DWS.PRIMARY_VLAN]];
-    nodeMessages = [[DWS.NODE1_HOST, "Combine"]];
-  }
-  else // SPLIT
-  {
-    portGroups = [[PORTS.TWO_WAY, DWS.NODE1_VLAN]];
-    nodeMessages = [[DWS.NODE1_HOST, "Split"]];
-  }
 
-  await submitRESTCONF(buildVlanPayload(portGroups));
+    let portGroups;
+    // 3-ROOM METHODS
+    if (DWS.NWAY == 'Three Way' && DWS.SWITCH_TYPE != 'C9K-8P')
+    {
+      switch (state)
+      {
+        case 'Combined All':
+          portGroups = [[PORTS.NODE1, DWS.PRIMARY_VLAN], [PORTS.NODE2, DWS.PRIMARY_VLAN]];
+          break;
 
-  // SET SECONDARY STATE FOR COMBINE / SPLIT OPERATION AFTER LAST VLAN CHANGE
-  nodeMessages.forEach(([host, message]) => sendMessage(host, message));
+        case 'Combined Node1':
+          portGroups = [[PORTS.NODE1, DWS.PRIMARY_VLAN]];
+          break;
+
+        case 'Combined Node2':
+          portGroups = [[PORTS.NODE2, DWS.PRIMARY_VLAN]];
+          break;
+
+        default: // SPLIT
+          portGroups = [[PORTS.NODE1, DWS.NODE1_VLAN], [PORTS.NODE2, DWS.NODE2_VLAN]];
+      }
+    }
+    // 2-ROOM METHODS
+    else if (state == 'Combined Node1')
+    {
+      portGroups = [[PORTS.TWO_WAY, DWS.PRIMARY_VLAN]];
+
+    }
+    else // SPLIT
+    {
+      portGroups = [[PORTS.TWO_WAY, DWS.NODE1_VLAN]];
+    }
+
+    await submitRESTCONF(buildVlanPayload(portGroups));
+
+    // SET SECONDARY STATE FOR COMBINE / SPLIT OPERATION AFTER LAST VLAN CHANGE
+    if(state == 'Split')
+    {
+      sendToCombinedNodes("Split");
+    }
+    else
+    {
+      sendToCombinedNodes("Combine");
+    }
+
+    return true;
+  }
+  catch (error)
+  {
+    console.error("DWS: Workspace action failed during VLAN change:" + error);
+    return false;
+  }
 }
 
 async function submitRESTCONF(payload) {
