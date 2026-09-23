@@ -1008,9 +1008,6 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(async value => {
       console.error('DWS: Error Adding Microphones to Default InputGroup: ' + error.message); 
     } 
 
-    // STOP SAM MONITORING
-    SAM.Stop();
-
     // UPDATE SAVED STATE IN CASE OF MACRO RESET / REBOOT
     setPrimaryState("Split");  
 
@@ -1884,14 +1881,7 @@ async function setVLANs(state)
     await submitRESTCONF(buildVlanPayload(portGroups));
 
     // SET SECONDARY STATE FOR COMBINE / SPLIT OPERATION AFTER LAST VLAN CHANGE
-    if(state == 'Split')
-    {
-      sendToCombinedNodes("Split");
-    }
-    else
-    {
-      sendToCombinedNodes("Combine");
-    }
+    sendToCombinedNodes(state);
 
     return true;
   }
