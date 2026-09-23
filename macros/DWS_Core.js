@@ -774,7 +774,7 @@ xapi.Event.UserInterface.Extensions.Event.PageClosed
 //===========================================//
 //   SPLIT / COMBINE CONFIRMATION TRIGGERS   //
 //===========================================//
-xapi.Event.UserInterface.Message.Prompt.Response.on(value => {
+xapi.Event.UserInterface.Message.Prompt.Response.on(async value => {
   if (value.OptionId == "1" && value.FeedbackId == 'confirmCombine') 
   {  
     // CHECK NWAY SETTING THEN PERFORM TRIGGERS
