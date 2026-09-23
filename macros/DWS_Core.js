@@ -790,6 +790,9 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(async value => {
         // UPDATE CURRENT STATE
         DWS_CUR_STATE = "Combined All";
 
+        // UPDATE NODE STATE
+        sendToCombinedNodes(DWS_CUR_STATE);
+
         // UPDATE SAVED STATE IN CASE OF MACRO RESET / REBOOT
         setPrimaryState('Combined All');
 
@@ -815,7 +818,10 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(async value => {
         if(!(await setVLANs('Combined Node1'))) { return };
 
         // UPDATE CURRENT STATE
-        DWS_CUR_STATE = "Combined Node1";  
+        DWS_CUR_STATE = "Combined Node1";
+
+        // UPDATE NODE STATE
+        sendToCombinedNodes(DWS_CUR_STATE);  
 
         // UPDATE SAVED STATE IN CASE OF MACRO RESET / REBOOT
         setPrimaryState('Combined Node1');
@@ -841,7 +847,13 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(async value => {
         if(!(await setVLANs('Combined Node2'))) { return };
 
         // UPDATE CURRENT STATE
-        DWS_CUR_STATE = "Combined Node2";  
+        DWS_CUR_STATE = "Combined Node2";
+
+        // UPDATE NODE STATE
+        sendToCombinedNodes(DWS_CUR_STATE);  
+
+        // UPDATE SAVED STATE IN CASE OF MACRO RESET / REBOOT
+        setPrimaryState('Combined Node2');
 
         // CONFIGURE HDMI AUDIO OUTPUT
         try { xapi.Command.Audio.LocalOutput.RemoveConnector({ ConnectorId: 1, ConnectorType: 'HDMI', OutputId: 2 }); } catch(error) { console.error('DWS: Error removing HDMI from default group: ' + error.message); }
@@ -865,7 +877,10 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(async value => {
       if(!(await setVLANs('Combined Node1'))) { return };
 
       // UPDATE CURRENT STATE
-      DWS_CUR_STATE = "Combined Node1";  
+      DWS_CUR_STATE = "Combined Node1";
+
+      // UPDATE NODE STATE
+      sendToCombinedNodes(DWS_CUR_STATE);  
 
       // UPDATE SAVED STATE IN CASE OF MACRO RESET / REBOOT
       setPrimaryState('Combined Node1');
@@ -964,6 +979,12 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(async value => {
     // UPDATE CURRENT STATE
     DWS_CUR_STATE = "Split";
 
+    // UPDATE NODE STATE
+    sendToCombinedNodes(DWS_CUR_STATE);
+
+    // UPDATE SAVED STATE IN CASE OF MACRO RESET / REBOOT
+    setPrimaryState("Split");
+
     // CLOSE THE DWS CONTROL PANEL
     xapi.Command.UserInterface.Extensions.Panel.Close({ Target: 'Controller' });
 
@@ -1006,10 +1027,7 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(async value => {
     }
     catch(error) {
       console.error('DWS: Error Adding Microphones to Default InputGroup: ' + error.message); 
-    } 
-
-    // UPDATE SAVED STATE IN CASE OF MACRO RESET / REBOOT
-    setPrimaryState("Split");  
+    }   
 
     // CONFIGURE HDMI AUDIO OUTPUT
     try { xapi.Command.Audio.LocalOutput.RemoveConnector({ ConnectorId: 1, ConnectorType: 'HDMI', OutputId: 7 }); } catch(error) { console.error('DWS: Error removing HDMI from Line Out group: ' + error.message); }
