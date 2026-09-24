@@ -109,6 +109,8 @@ function init()
         case 'Split':
           console.log('DWS: Split request received. Applying split configuration.');
 
+          xapi.Command.UserInterface.Message.Alert.Display({ Duration: '165', Target: "OSD", Title:"Splitting Rooms", Text: "Please wait while this process completes."});
+
           // UPDATE CONFIGURATION
           setSecondaryConfig("Split");
 

@@ -1641,6 +1641,7 @@ function updateStatus()
       // CLEAR TIMER AND RESET INTERVAL
       clearInterval(DWS_INTERVAL);
       DWS_TIMER = 0;
+      DWS_INTERVAL();
 
       // SETUP SAM FOR STATE
       SAM.Setup(buildSAMConfig(DWS_CUR_STATE));
@@ -1658,8 +1659,10 @@ function updateStatus()
         Text:'Please wait while this process completes.', 
         "Option.1": 'Microphones: ' + FOUND_MICS + ' of ' + (DWS_NODE1_MICS + DWS_NODE2_MICS),
         "Option.2": 'Room Navigators: ' + FOUND_NAVS + ' of ' + (DWS_NODE1_NAVS + DWS_NODE2_NAVS),
-        "Option.3": percent + '% Complete'
+        "Option.3": percent + '% complete'
       });  
+
+      xapi.Command.UserInterface.Message.Alert.Display({ Duration: '4', Target: "OSD", Title:"Combining Rooms", Text: "Please wait while this process completes."});
 
       // INCREMENT THE TIMER 3 SECONDS
       DWS_TIMER = DWS_TIMER + 3000;
@@ -1706,6 +1709,8 @@ function updateStatus()
         "Option.3": percent + '% Complete'
       });  
 
+      xapi.Command.UserInterface.Message.Alert.Display({ Duration: '4', Target: "OSD", Title:"Combining Rooms", Text: "Please wait while this process completes."});
+
       // INCREMENT THE TIMER 3 SECONDS
       DWS_TIMER = DWS_TIMER + 3000;
     }
@@ -1751,6 +1756,8 @@ function updateStatus()
         "Option.3": percent + '% Complete'
       });  
 
+      xapi.Command.UserInterface.Message.Alert.Display({ Duration: '4', Target: "OSD", Title:"Combining Rooms", Text: "Please wait while this process completes."});
+
       // INCREMENT THE TIMER 3 SECONDS
       DWS_TIMER = DWS_TIMER + 3000;
     }    
@@ -1765,6 +1772,8 @@ function updateStatus()
       Text:'Please wait while this process completes.', 
       "Option.1": percent + '% Complete'
     }); 
+
+    xapi.Command.UserInterface.Message.Alert.Display({ Duration: '4', Target: "OSD", Title:"Splitting Rooms", Text: "Please wait while this process completes."});
 
     // INCREMENT THE TIMER 3 SECONDS
     DWS_TIMER = DWS_TIMER + 3000;
