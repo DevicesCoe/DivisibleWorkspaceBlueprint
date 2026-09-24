@@ -2699,10 +2699,10 @@ async function handleCallStatus(event)
       console.debug("DWS: Ignoring Remote Access triggered call.")
     }
 
-    // CHECK FOR NON-RA CALL INSTANCE
-    if (event > 0 && isRASession != true) 
+    if(DWS_CUR_STATE == 'Combined All' || DWS_CUR_STATE == 'Combined Node1' || DWS_CUR_STATE == 'Combined Node2')
     {
-      if(DWS_CUR_STATE == 'Combined All' || DWS_CUR_STATE == 'Combined Node1' || DWS_CUR_STATE == 'Combined Node2')
+      // CHECK FOR NON-RA CALL INSTANCE
+      if (event > 0 && isRASession != true) 
       {
         console.log("DWS: Call started. Adding in call controls.")
 
@@ -2721,91 +2721,91 @@ async function handleCallStatus(event)
 
         // REMOVE ONSCREEN BANNER
         xapi.Command.Video.Graphics.Clear({ Target: 'LocalOutput' });
-      }
-    } 
-    else 
-    {
-      // DEACTIVATE REMOTE SPEAKERTRACK
-      sendToCombinedNodes("EndCall");
-
-      // RESET MICROPHONE MODES TO ENSURE ACTIVE STATE
-      try
-      { 
-        console.debug ("DWS: Resetting microphones to default group.");
-
-        xapi.Status.Audio.Input.LocalInput[1].get()
-        .then( response => {
-          for(let i = 1; i < 9; i++)
-          {
-            if(!response.Connector.includes("Ethernet."+i))
-            {
-              xapi.Command.Audio.LocalInput.AddConnector({ ConnectorId: i, ConnectorType: "Ethernet", InputId: 1 });
-            }
-          }   
-          if (DWS.PRESENTER_USB == "on")
-          {
-            if(!response.Connector.includes("USBInterface.1"))
-            {
-              xapi.Command.Audio.LocalInput.AddConnector({ ConnectorId: 1, ConnectorType: "USBInterface", InputId: 1 });
-            }
-          }
-          if (DWS.PRESENTER_ANALOG == "on")
-          {
-            if(!response.Connector.includes("Microphone.1"))
-            {
-              xapi.Command.Audio.LocalInput.AddConnector({ ConnectorId: 1, ConnectorType: "Microphone", InputId: 1 });
-            }
-          }
-        });
-      }
-      catch(error) {
-        console.error('DWS: Error Adding Microphones to Default InputGroup: ' + error.message); 
-      }
-
-      // STOP SAM
-      SAM.Stop()
-
-      console.log("DWS: Call ended. Removing in call controls.")
-
-      // RESET VIEW TO PRIMARY ROOM QUAD TO CLEAR ANY COMPOSITION FROM PREVIOUS SELECTION
-      xapi.Command.Video.Input.SetMainVideoSource({ ConnectorId: 1});
-
-      // TURN OFF PERSISTENT PRESENTER TRACK
-      xapi.Command.Cameras.PresenterTrack.Set({ Mode: 'Off' });
-
-      // REMOVE IN CALL CONTROLS
-      createPanels ("HideCall");
-
-      // SHOW ROOM CONTROLS PANEL
-      xapi.Command.UserInterface.Extensions.Panel.Update({ PanelId: 'dws_controls', Location: 'HomeScreen' })
-        .catch(e => console.log('Error showing Room Controls panel: ' + e.message));
-
-      if (DWS.COMBINED_BANNER)
-      {
-        if (DWS_CUR_STATE == 'Combined All')
-        {
-          // SET ONSCREEN TEXT BANNER 
-          xapi.Command.Video.Graphics.Text.Display({ Duration: 0, Target: 'LocalOutput', Text: "Combined with: " + DWS.NODE1_ALIAS + ", " + DWS.NODE2_ALIAS});
-        }
-        else if (DWS_CUR_STATE == 'Combined Node1')
-        {
-          // SET ONSCREEN TEXT BANNER 
-          xapi.Command.Video.Graphics.Text.Display({ Duration: 0, Target: 'LocalOutput', Text: "Combined with: " + DWS.NODE1_ALIAS});
-        }
-        else if (DWS_CUR_STATE == 'Combined Node2')
-        {
-          // SET ONSCREEN TEXT BANNER 
-          xapi.Command.Video.Graphics.Text.Display({ Duration: 0, Target: 'LocalOutput', Text: "Combined with: " + DWS.NODE2_ALIAS});
-        }
-      }
-
-      if(DWS_CUR_STATE == 'Combined All' || DWS_CUR_STATE == 'Combined Node1' || DWS_CUR_STATE == 'Combined Node2')
-      {
-        createPanels ("Combined");      
-      }
+      } 
       else
       {
-        createPanels ("Split");
+        // DEACTIVATE REMOTE SPEAKERTRACK
+        sendToCombinedNodes("EndCall");
+
+        // RESET MICROPHONE MODES TO ENSURE ACTIVE STATE
+        try
+        { 
+          console.debug ("DWS: Resetting microphones to default group.");
+
+          xapi.Status.Audio.Input.LocalInput[1].get()
+          .then( response => {
+            for(let i = 1; i < 9; i++)
+            {
+              if(!response.Connector.includes("Ethernet."+i))
+              {
+                xapi.Command.Audio.LocalInput.AddConnector({ ConnectorId: i, ConnectorType: "Ethernet", InputId: 1 });
+              }
+            }   
+            if (DWS.PRESENTER_USB == "on")
+            {
+              if(!response.Connector.includes("USBInterface.1"))
+              {
+                xapi.Command.Audio.LocalInput.AddConnector({ ConnectorId: 1, ConnectorType: "USBInterface", InputId: 1 });
+              }
+            }
+            if (DWS.PRESENTER_ANALOG == "on")
+            {
+              if(!response.Connector.includes("Microphone.1"))
+              {
+                xapi.Command.Audio.LocalInput.AddConnector({ ConnectorId: 1, ConnectorType: "Microphone", InputId: 1 });
+              }
+            }
+          });
+        }
+        catch(error) {
+          console.error('DWS: Error Adding Microphones to Default InputGroup: ' + error.message); 
+        }
+
+        // STOP SAM
+        SAM.Stop()
+
+        console.log("DWS: Call ended. Removing in call controls.")
+
+        // RESET VIEW TO PRIMARY ROOM QUAD TO CLEAR ANY COMPOSITION FROM PREVIOUS SELECTION
+        xapi.Command.Video.Input.SetMainVideoSource({ ConnectorId: 1});
+
+        // TURN OFF PERSISTENT PRESENTER TRACK
+        xapi.Command.Cameras.PresenterTrack.Set({ Mode: 'Off' });
+
+        // REMOVE IN CALL CONTROLS
+        createPanels ("HideCall");
+
+        // SHOW ROOM CONTROLS PANEL
+        xapi.Command.UserInterface.Extensions.Panel.Update({ PanelId: 'dws_controls', Location: 'HomeScreen' })
+          .catch(e => console.log('Error showing Room Controls panel: ' + e.message));
+
+        if (DWS.COMBINED_BANNER)
+        {
+          if (DWS_CUR_STATE == 'Combined All')
+          {
+            // SET ONSCREEN TEXT BANNER 
+            xapi.Command.Video.Graphics.Text.Display({ Duration: 0, Target: 'LocalOutput', Text: "Combined with: " + DWS.NODE1_ALIAS + ", " + DWS.NODE2_ALIAS});
+          }
+          else if (DWS_CUR_STATE == 'Combined Node1')
+          {
+            // SET ONSCREEN TEXT BANNER 
+            xapi.Command.Video.Graphics.Text.Display({ Duration: 0, Target: 'LocalOutput', Text: "Combined with: " + DWS.NODE1_ALIAS});
+          }
+          else if (DWS_CUR_STATE == 'Combined Node2')
+          {
+            // SET ONSCREEN TEXT BANNER 
+            xapi.Command.Video.Graphics.Text.Display({ Duration: 0, Target: 'LocalOutput', Text: "Combined with: " + DWS.NODE2_ALIAS});
+          }
+        }
+
+        if(DWS_CUR_STATE == 'Combined All' || DWS_CUR_STATE == 'Combined Node1' || DWS_CUR_STATE == 'Combined Node2')
+        {
+          createPanels ("Combined");      
+        }
+        else
+        {
+          createPanels ("Split");
+        }
       }
     }
   })   
