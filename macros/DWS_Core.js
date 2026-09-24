@@ -791,7 +791,7 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(async value => {
         DWS_CUR_STATE = "Combined All";
 
         // UPDATE NODE STATE
-        sendToCombinedNodes(DWS_CUR_STATE);
+        sendToCombinedNodes("Combine");
 
         // UPDATE SAVED STATE IN CASE OF MACRO RESET / REBOOT
         setPrimaryState('Combined All');
@@ -821,7 +821,7 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(async value => {
         DWS_CUR_STATE = "Combined Node1";
 
         // UPDATE NODE STATE
-        sendToCombinedNodes(DWS_CUR_STATE);  
+        sendToCombinedNodes("Combine");  
 
         // UPDATE SAVED STATE IN CASE OF MACRO RESET / REBOOT
         setPrimaryState('Combined Node1');
@@ -850,7 +850,7 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(async value => {
         DWS_CUR_STATE = "Combined Node2";
 
         // UPDATE NODE STATE
-        sendToCombinedNodes(DWS_CUR_STATE);  
+        sendToCombinedNodes("Combine");  
 
         // UPDATE SAVED STATE IN CASE OF MACRO RESET / REBOOT
         setPrimaryState('Combined Node2');
@@ -880,7 +880,7 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(async value => {
       DWS_CUR_STATE = "Combined Node1";
 
       // UPDATE NODE STATE
-      sendToCombinedNodes(DWS_CUR_STATE);  
+      sendToCombinedNodes("Combine");  
 
       // UPDATE SAVED STATE IN CASE OF MACRO RESET / REBOOT
       setPrimaryState('Combined Node1');
@@ -980,7 +980,7 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(async value => {
     DWS_CUR_STATE = "Split";
 
     // UPDATE NODE STATE
-    sendToCombinedNodes(DWS_CUR_STATE);
+    sendToCombinedNodes("Split");
 
     // UPDATE SAVED STATE IN CASE OF MACRO RESET / REBOOT
     setPrimaryState("Split");
