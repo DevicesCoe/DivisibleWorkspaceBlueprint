@@ -31,7 +31,7 @@ SETUP_VARIABLES['SWITCH_PASSWORD']  = 'D!vi$ible1';
 import xapi from 'xapi';
 
 // CURRENT MACRO VERSION
-let CUR_VERSION = "0.9.10";
+let CUR_VERSION = "0.10.1";
 
 let WIZARD_QUESTIONS = [];
 let LOADED_MACROS = [];
