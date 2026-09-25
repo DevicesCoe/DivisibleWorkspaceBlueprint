@@ -45,7 +45,7 @@ The Divisible Workspace Blueprint is compatible with Room OS 26!
 
 | **File** | **Purpose** |
 |---|---|
-| DWS_AZM_Lib.js | The Audio Zone Manager Library macro. This library contains the logic needed for clean audio based events. |
+| DWS_Audio.js | This library contains the logic needed for handling audio based events. |
 | DWS_Wizard.js | The initial setup wizard functionality loaded onto the Primary Codec. |
 | DWS_Setup.js | A background macro that handles the installation and base configuration. |
 | DWS_Core.js | The "main" macro that handles all logic. Runs on Primary Codec. |

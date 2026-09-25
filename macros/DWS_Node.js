@@ -65,6 +65,10 @@ function init()
 
   if (DWS_SEC.STATE === 'Combined') {
     console.log ('DWS: Combined State detected. Re-applying combined configuration.');
+    
+    // SET VOLUME FOR ARC MATCHING
+    xapi.Command.Audio.Volume.Set({ Level: 70 });
+
     setSecondaryState("Combined");    
     setSecondaryConfig("Combined");
   }
@@ -88,11 +92,11 @@ function init()
         case 'Combine':
           console.log('DWS: Combine request received. Applying combined configuration.');
 
+          // SET VOLUME FOR ARC MATCHING
+          xapi.Command.Audio.Volume.Set({ Level: 70 });
+
           // UPDATE CONFIGURATION
           setSecondaryConfig("Combined");
-
-          // ENABLE BACKGROUND SPEAKER TRACKING
-          xapi.Command.Cameras.SpeakerTrack.BackgroundMode.Activate();
 
           // UPDATE STATE MACRO
           setSecondaryState("Combined");
@@ -104,6 +108,8 @@ function init()
         //===========================//
         case 'Split':
           console.log('DWS: Split request received. Applying split configuration.');
+
+          xapi.Command.UserInterface.Message.Alert.Display({ Duration: '165', Target: "OSD", Title:"Splitting Rooms", Text: "Please wait while this process completes."});
 
           // UPDATE CONFIGURATION
           setSecondaryConfig("Split");
@@ -153,15 +159,6 @@ function init()
           console.debug('DWS: Primary triggering Awake.');
           xapi.Command.Standby.Deactivate();         
           break;
-
-        //=============================//
-        //        VOLUME FUNCTIONS     //
-        //=============================//
-        case 'Volume':
-          console.debug('DWS: Matching volume to primary:'+decodeCommand[1]);
-          xapi.Command.Audio.Volume.Set({ Level: decodeCommand[1] });
-          break;
-
       }
     } 
     catch(error) { 

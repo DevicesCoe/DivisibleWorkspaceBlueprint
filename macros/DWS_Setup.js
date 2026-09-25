@@ -40,11 +40,8 @@ async function firstSetup()
     try { xapi.Config.Video.Output.Connector[2].Resolution.set("1920_1080_60");} catch(error) { console.error('DWS: Error setting HDMI 2 resolution: ' + error.message); }
   }
 
-  // SET SPEAKER TRACK MODE TO CLOSE UP AS DEFAULT  
-  try { xapi.Config.Cameras.SpeakerTrack.DefaultBehavior.set('Closeup'); } catch(error) { console.error('DWS: Error setting ST Default: ' + error.message); }
-
   // ENABLE AUDIO CONSOLE / MANUAL AUDIO ROUTING
-  try { xapi.Config.Audio.Output.ConnectorSetup.set("Manual"); } catch(error) { console.error('DWS: Error setting ConnectorSetup: ' + error.message); }
+  try { console.log ("DWS: Enabling Audio Console APIs"); xapi.Config.Audio.ConnectorSetup.set("Manual"); } catch(error) { console.error('DWS: Error setting ConnectorSetup: ' + error.message); }
   
   console.log("DWS: Checking for Correct Inputs and Outputs.");
   if(DWS.NWAY == 'Two Way')
@@ -62,7 +59,7 @@ async function firstSetup()
       try { xapi.Config.Video.Input.Connector[1].Visibility.set('Never'); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }      
       try { xapi.Config.Video.Input.Connector[1].PresentationSelection.set("Manual"); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }      
       try { xapi.Config.Video.Input.Connector[2].Name.set('Secondary Audience'); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }
-      try { xapi.Config.Video.Input.Connector[2].InputSourceType.set('camera'); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }      
+      try { xapi.Config.Video.Input.Connector[2].InputSourceType.set('other'); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }      
       try { xapi.Config.Video.Input.Connector[2].CameraControl.Mode.set('Off'); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }      
       try { xapi.Config.Video.Input.Connector[2].Visibility.set('Never'); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }      
       try { xapi.Config.Video.Input.Connector[2].PresentationSelection.set("Manual"); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }   
@@ -90,12 +87,12 @@ async function firstSetup()
       try { xapi.Config.Video.Input.Connector[1].Visibility.set('Never'); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }      
       try { xapi.Config.Video.Input.Connector[1].PresentationSelection.set("Manual"); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }      
       try { xapi.Config.Video.Input.Connector[2].Name.set(DWS.NODE1_ALIAS + ' Audience'); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }
-      try { xapi.Config.Video.Input.Connector[2].InputSourceType.set('camera'); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }       
+      try { xapi.Config.Video.Input.Connector[2].InputSourceType.set('other'); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }       
       try { xapi.Config.Video.Input.Connector[2].CameraControl.Mode.set('Off'); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }      
       try { xapi.Config.Video.Input.Connector[2].Visibility.set('Never'); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }      
       try { xapi.Config.Video.Input.Connector[2].PresentationSelection.set("Manual"); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }   
       try { xapi.Config.Video.Input.Connector[3].Name.set(DWS.NODE2_ALIAS + ' Audience'); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }
-      try { xapi.Config.Video.Input.Connector[3].InputSourceType.set('camera'); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }         
+      try { xapi.Config.Video.Input.Connector[3].InputSourceType.set('other'); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }         
       try { xapi.Config.Video.Input.Connector[3].CameraControl.Mode.set('Off'); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }      
       try { xapi.Config.Video.Input.Connector[3].Visibility.set('Never'); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); }      
       try { xapi.Config.Video.Input.Connector[3].PresentationSelection.set("Manual"); } catch(error) { console.error('DWS: Error setting Labels and Visibility: ' + error.message); } 

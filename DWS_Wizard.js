@@ -31,7 +31,7 @@ SETUP_VARIABLES['SWITCH_PASSWORD']  = 'D!vi$ible1';
 import xapi from 'xapi';
 
 // CURRENT MACRO VERSION
-let CUR_VERSION = "0.9.9";
+let CUR_VERSION = "0.10.1";
 
 let WIZARD_QUESTIONS = [];
 let LOADED_MACROS = [];
@@ -39,55 +39,6 @@ let THIS_PLATFORM;
 
 function init()
 {
-  // PERFORM INITIAL PLATFORM SANITY CHECKS BEFORE ALLOWING THE WIZARD TO DEPLOY
-
-  // CHECK PLATFORM COMPATIBILITY
-  THIS_PLATFORM = xapi.Status.SystemUnit.ProductPlatform.get()
-  .then (platform => {    
-    if(platform != 'Codec Pro' && platform != 'Codec Pro G2' && platform != 'Room Kit EQ')
-    {    
-      xapi.Command.UserInterface.Message.Alert.Display({ Duration: '0', Title:"Unsupported Product Platform", Text: "The Divisible Workspace Blueprint is only supported on Codec Pro, Pro G2 and Codec EQ."}); 
-
-      console.error("DWS: Platform not compatible with Divisble Workspace Blueprint. Stopping installation.");
-
-      // TURN OFF MACRO
-      try { xapi.Command.Macros.Macro.Deactivate({ Name: 'DWS_Wizard' }); } catch(error) { console.error('DWS: Error disabling Wizard Macro: ' + error.message); }
-      return;
-    }
-
-    if(THIS_PLATFORM == 'Room Kit EQ')
-    {
-      xapi.Command.SystemUnit.OptionKey.List()
-      .then (response => {
-        if (response.OptionKey[3].Active != 'True' && response.OptionKey[3].Installed != 'True')
-        {
-          console.error ("DWS: No AV Integrator option key installed. Stopping installation.");
-
-          xapi.Command.UserInterface.Message.Alert.Display({ Duration: '60', Title:"Error: Missing AV Integrator Option Key", Text: "The Divisible Workspace Blueprint requires the AV Integrator option key for the primary Codec EQ."}); 
-        }   
-      });
-
-      // TURN OFF MACRO
-      try { xapi.Command.Macros.Macro.Deactivate({ Name: 'DWS_Wizard' }); } catch(error) { console.error('DWS: Error disabling Wizard Macro: ' + error.message); }
-      return;
-    }
-  });
-
-  // ENSURE ROOM TYPE IS STANDARD
-  xapi.Status.Provisioning.RoomType.get()
-  .then (roomType => {
-    if (roomType != 'Standard')
-    {
-      xapi.Command.UserInterface.Message.Alert.Display({ Duration: '0', Title:"Unsupported Room Type", Text: "The Divisible Workspace Blueprint is only supported using the Standard Room Type."}); 
-
-      console.error("DWS: Divisible Workspace Blueprint only operates in Standard Room Type. Stopping installation.");
-
-      // TURN OFF MACRO
-      try { xapi.Command.Macros.Macro.Deactivate({ Name: 'DWS_Wizard' }); } catch(error) { console.error('DWS: Error disabling Wizard Macro: ' + error.message); }
-      return;
-    }
-  })
-
   // GET AND STORE PRIMARY MICROPHONES
   xapi.Command.Peripherals.List({ Connected: 'True', Type: 'AudioMicrophone' })
   .then(response => {
@@ -394,10 +345,15 @@ function init()
 
         // AUTOMATE THE CREATION OF OPTIONS BASED ON MICROPHONE COUNT
         let COUNTER = 0;
-        SETUP_VARIABLES['dws_setup_primary_mics'].forEach(() => {
-          PANEL_PRIMARY += "<Value><Key>" + SETUP_VARIABLES['dws_setup_primary_mics'][COUNTER] + "</Key><Name>Eth " + (COUNTER+1) + ": " + SETUP_VARIABLES['dws_setup_primary_mics'][COUNTER] + "</Name></Value>";
-          COUNTER++;
-        });
+
+        // ONLY SHOW PRIMARY ETHERNET MICROPHONES IF MORE THEN ONE IS REGISTERED
+        if (SETUP_VARIABLES['dws_setup_primary_mics'].length > 1)
+        {
+          SETUP_VARIABLES['dws_setup_primary_mics'].forEach(() => {
+            PANEL_PRIMARY += "<Value><Key>" + SETUP_VARIABLES['dws_setup_primary_mics'][COUNTER] + "</Key><Name>Eth " + (COUNTER+1) + ": " + SETUP_VARIABLES['dws_setup_primary_mics'][COUNTER] + "</Name></Value>";
+            COUNTER++;
+          });
+        }
 
         PANEL_PRIMARY += `<Value><Key>USB</Key><Name>USB</Name></Value><Value><Key>Analog</Key><Name>Analog (All)</Name></Value></ValueSpace></Widget></Row><Row><Name/><Widget><WidgetId>widget_314</WidgetId><Name>Automatic Ducking allows third party microphones to be enabled for In Room Speaker Reinforcement. Only available for USB &amp; Analog inputs.</Name><Type>Text</Type><Options>size=4;fontSize=small;align=center</Options></Widget></Row><Row><Name>Automatic Microphone Ducking</Name><Widget><WidgetId>dws_setup_ducking</WidgetId><Name></Name><Type>Text</Type><Options>size=3;fontSize=normal;align=center</Options></Widget><Widget><WidgetId>dws_edit_ducking</WidgetId><Name>Edit</Name><Type>Button</Type><Options>size=1</Options></Widget></Row><Row><Name/><Widget><WidgetId>dws_back_primary</WidgetId><Name>Back</Name><Type>Button</Type><Options>size=2</Options></Widget><Widget><WidgetId>dws_next_primary</WidgetId><Name>Next</Name><Type>Button</Type><Options>size=2</Options></Widget></Row><PageId>setup_primary</PageId><Options/></Page></Panel></Extensions>`;
 
@@ -782,12 +738,12 @@ async function loadMacros()
   let setupMacro = '';
   let coreLoaded = false;
   let coreMacro = '';
-  let azmLoaded = false;
-  let azmMacro = '';
+  let samLoaded = false;
+  let samMacro = '';
   let imagesLoaded = false;
   let imagesMacro = '';
 
-  if(LOADED_MACROS.includes('DWS_Setup') && LOADED_MACROS.includes('DWS_Core') && LOADED_MACROS.includes('DWS_AZM_Lib') && LOADED_MACROS.includes('DWS_Images'))
+  if(LOADED_MACROS.includes('DWS_Setup') && LOADED_MACROS.includes('DWS_Core') && LOADED_MACROS.includes('DWS_Audio') && LOADED_MACROS.includes('DWS_Images'))
   {
     console.log("DWS: All required Macro files present. Performing local install.")
     return true;
@@ -829,43 +785,43 @@ async function loadMacros()
       console.warn('DWS: Core Macro URL not found.');
     });
 
-    // LOAD AZM MACRO FROM GITHUB
-    const getAZM = await xapi.Command.HttpClient.Get({ Url: 'https://raw.githubusercontent.com/DevicesCoe/DivisibleWorkspaceBlueprint/refs/heads/main/macros/DWS_AZM_Lib.js' })
+    // LOAD SAM MACRO FROM GITHUB
+    const getSAM = await xapi.Command.HttpClient.Get({ Url: 'https://raw.githubusercontent.com/DevicesCoe/DivisibleWorkspaceBlueprint/refs/heads/main/macros/DWS_Audio.js' })
     .then( result => {
-      console.debug("DWS: AZM Macro Downloaded Successfully.");
-      azmMacro = result.Body;
-      azmLoaded = true;
+      console.debug("DWS: SAM Macro Downloaded Successfully.");
+      samMacro = result.Body;
+      samLoaded = true;
     })
     .catch (e => {
-      console.warn('DWS: AZM Macro URL not found.');
+      console.warn('DWS: SAM Macro URL not found.');
     });
 
-    if (setupLoaded && coreLoaded && azmLoaded && imagesLoaded)
+    if (setupLoaded && coreLoaded && samLoaded && imagesLoaded)
     {
       console.log("DWS: All Macros Downloaded Successfully from GitHub.");
 
       // LOAD THE SETUP MACRO
-      xapi.Command.Macros.Macro.Save({ Name: 'DWS_Setup', Overwrite: 'True' }, setupMacro)
+      await xapi.Command.Macros.Macro.Save({ Name: 'DWS_Setup', Overwrite: 'True' }, setupMacro)
       .then (() => {
         console.debug ("DWS: Setup Macro saved to Primary successfully.");
       })
 
       // LOAD THE SETUP MACRO
-      xapi.Command.Macros.Macro.Save({ Name: 'DWS_Images', Overwrite: 'True' }, imagesMacro)
+      await xapi.Command.Macros.Macro.Save({ Name: 'DWS_Images', Overwrite: 'True' }, imagesMacro)
       .then (() => {
         console.debug ("DWS: Images Macro saved to Primary successfully.");
       })
 
       // LOAD THE CORE MACRO
-      xapi.Command.Macros.Macro.Save({ Name: 'DWS_Core', Overwrite: 'True' }, coreMacro)
+      await xapi.Command.Macros.Macro.Save({ Name: 'DWS_Core', Overwrite: 'True' }, coreMacro)
       .then (() => {
         console.debug ("DWS: Core Macro saved to Primary successfully.");
       })
 
-      // LOAD THE AZM LIB MACRO
-      xapi.Command.Macros.Macro.Save({ Name: 'DWS_AZM_Lib', Overwrite: 'True' }, azmMacro)
+      // LOAD THE SIMPLE AUDIO MANAGER MACRO
+      await xapi.Command.Macros.Macro.Save({ Name: 'DWS_Audio', Overwrite: 'True' }, samMacro)
       .then (() => {
-        console.debug ("DWS: AZM Lib Macro saved to Primary successfully.");
+        console.debug ("DWS: SAM Macro saved to Primary successfully.");
       })
 
       return true;
@@ -1070,7 +1026,7 @@ function checkSwitch()
     const native = jsonResponse['Cisco-IOS-XE-native:native'];
     const hostname = native['hostname'];
     const version = native['version'];
-    console.log('Switch detected running IOS-XE ' + version + ' with Hostname:', hostname);
+    console.log('DWS: Switch detected running IOS-XE ' + version + ' with Hostname:', hostname);
 
     // SWITCH SOFTWARE VERSION CHECK
     if (version <= 17.14)
@@ -1110,7 +1066,7 @@ async function saveSwitch()
     console.log ('DWS: Default switch configuration saved to startup-config.');
 
     // START THE WIZARD
-    setTimeout(() => { init(), 500});
+    platformCheck();
   })
   .catch(error => {
     console.warn('DWS: Unable to save switch configuration:', error.message);
@@ -1118,5 +1074,70 @@ async function saveSwitch()
   });
 }
 
-// CHECK FOR VALID SWITCH CONNECTION 
+function platformCheck()
+{
+  // PERFORM INITIAL PLATFORM SANITY CHECKS BEFORE ALLOWING THE WIZARD TO DEPLOY
+  THIS_PLATFORM = xapi.Status.SystemUnit.ProductPlatform.get()
+  .then (platform => {    
+    if(platform != 'Codec Pro' && platform != 'Codec Pro G2' && platform != 'Room Kit EQ')
+    {    
+      xapi.Command.UserInterface.Message.Alert.Display({ Duration: '0', Title:"Unsupported Product Platform", Text: "The Divisible Workspace Blueprint is only supported on Codec Pro, Pro G2 and Codec EQ."}); 
+
+      console.error("DWS: Platform not compatible with Divisble Workspace Blueprint. Stopping installation.");
+
+      // TURN OFF MACRO
+      try { xapi.Command.Macros.Macro.Deactivate({ Name: 'DWS_Wizard' }); } catch(error) { console.error('DWS: Error disabling Wizard Macro: ' + error.message); }
+      return;
+    }
+    else if(platform == 'Room Kit EQ')
+    {
+      xapi.Command.SystemUnit.OptionKey.List()
+      .then (response => {
+        if (response.OptionKey[3].Active != 'True' && response.OptionKey[3].Installed != 'True')
+        {
+          xapi.Command.UserInterface.Message.Alert.Display({ Duration: '60', Title:"Error: AV Integrator Option Key Required", Text: "The Divisible Workspace Blueprint requires the AV Integrator option key on the primary Codec EQ."}); 
+         
+          console.error("DWS: No AV Integrator option key installed. Please contact Cisco Sales to purchase. Stopping installation.");
+
+          // TURN OFF MACRO
+          try { xapi.Command.Macros.Macro.Deactivate({ Name: 'DWS_Wizard' }); } catch(error) { console.error('DWS: Error disabling Wizard Macro: ' + error.message); }
+          return;
+        }
+        else
+        {
+          console.log("DWS: All platform checks passed. Proceeding with Wizard");
+          
+          // CONTINUE WITH INSTALLATION
+          init()
+        }           
+      });
+    }
+    else
+    {
+      // ENSURE ROOM TYPE IS STANDARD
+      xapi.Status.Provisioning.RoomType.get()
+      .then (roomType => {
+        if (roomType != 'Standard')
+        {
+          xapi.Command.UserInterface.Message.Alert.Display({ Duration: '0', Title:"Unsupported Room Type", Text: "The Divisible Workspace Blueprint is only supported using the Standard Room Type."}); 
+
+          console.error("DWS: Divisible Workspace Blueprint only operates in Standard Room Type. Stopping installation.");
+
+          // TURN OFF MACRO
+          try { xapi.Command.Macros.Macro.Deactivate({ Name: 'DWS_Wizard' }); } catch(error) { console.error('DWS: Error disabling Wizard Macro: ' + error.message); }
+          return;
+        }
+        else
+        {
+          console.log("DWS: All platform checks passed. Proceeding with Wizard");
+          
+          // CONTINUE WITH INSTALLATION
+          init()
+        }             
+      })
+    }    
+  });  
+}
+
+// BEGIN SETUP PROCESS
 checkSwitch();
