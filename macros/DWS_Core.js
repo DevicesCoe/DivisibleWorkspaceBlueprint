@@ -42,13 +42,14 @@ let DWS_ADV_AUTO_DEFAULT = DWS.AUTOMODE_DEFAULT;
 let DWS_ADV_DUCKING = DWS.AUTO_DUCKING;
 let DWS_PRESENTER_MIC_ID;
 let DWS_PRESENTER_CAM_ID;
+let DWS_PRESENTER_DETECTED;
 let DWS_COMBINE_NODE1 = 'off';
 let DWS_COMBINE_NODE2 = 'off';
 let DWS_TEMP_MICS = [];
 let DWS_TEMP_NAVS = [];
 let DWS_NODE2_MICS = 0;
 let DWS_HOLD_TIME;
-let DWS_LAST_CAMERA;
+let DWS_CUR_CAMERA;
 let DWS_DUCK_STATE = 'Unducked';
 let SWITCH_MODEL;
 let SWITCH_SERIAL;
@@ -130,6 +131,9 @@ function init()
       .then (response => {
         DWS_PRESENTER_CAM_ID = response;
       });
+
+      // START MONITORING PRESENTER AREA
+      xapi.Status.Cameras.PresenterTrack.PresenterDetected.on(value => DWS_PRESENTER_DETECTED = value);
     }
   })
   .catch(error => {
@@ -198,6 +202,9 @@ function init()
       {
         // SET TO OUT OF CALL STATE
         createPanels('Combined');
+
+        // SETUP SAM FOR STATE
+        SAM.Setup(buildSAMConfig(DWS_CUR_STATE))
 
         // SHOW ROOM CONTROLS PANEL
         xapi.Command.UserInterface.Extensions.Panel.Update({ PanelId: 'dws_controls', Location: 'HomeScreen' })
@@ -917,7 +924,7 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(async value => {
     // MONITOR FOR MIGRATED DEVICES AND CONFIGURE ACCORDING TO USER SETTINGS
     const REG_DEVICES = xapi.Status.Peripherals.ConnectedDevice
     .on(device => {
-      if (device.Status === 'Connected') 
+      if (device.Status === 'Connected' && (device.Type === 'AudioMicrophone' || device.Type === 'TouchPanel'))
       {
         // MONITOR FOR TOUCH PANELS
         if (device.Type === 'TouchPanel' && !(DWS_TEMP_NAVS.includes(device.SerialNumber))) 
@@ -2505,13 +2512,10 @@ async function handleSAMEvents(event)
     // CHECK IF 2.5 SECONDS HAVE PASSED BEFORE TRIGGERING VIDEO CHANGES
     if ((DWS_CUR_TIME - DWS_HOLD_TIME) >= 2500)
     {
-      // STORE CURRENT CAMERA / COMPOSITION
-      let DWS_CUR_CAMERA = await xapi.Status.Video.Input.MainVideoSource.get();
-
       // CHECK FOR ALREADY IN PRESENTER AND AUDIENCE PIP
-      if (DWS_CUR_CAMERA == 'Composed')
+      if (DWS_PRESENTER_DETECTED == 'True' && DWS_CUR_CAMERA == 'Composed')
       {
-        if (event.Zone.Label == 'PRESENTER USB' || event.Zone.Label == 'PRESENTER ANALOG')
+        if (event.Zone.Label == 'PRESENTER USB' || event.Zone.Label == 'PRESENTER ANALOG' || event.Zone.Label == 'PRESENTER ETHERNET')
         {
           // CHECK FOR ALREADY IN PRESENTER AND AUDIENCE PIP
           if ((DWS_CUR_TIME - DWS_DROP_AUDIENCE) >= 6000)
@@ -2525,19 +2529,8 @@ async function handleSAMEvents(event)
               Layout: 'Equal'
             });
 
-            // UPDATE HOLD TIMER TO NEW TIME STAMP
-            DWS_HOLD_TIME = Date.now();
-          }
-          else
-          {
-            if (DWS.TRACKING_DEBUG) {console.debug ('DWS: Presenter microphone triggered. Showing Presenter PTZ.')};
-
-            // ACTIVATE PRESENTER MODE
-            xapi.Command.Cameras.PresenterTrack.Set({ Mode: 'Persistent' });
-            xapi.Command.Video.Input.SetMainVideoSource({
-              ConnectorId: DWS_PRESENTER_CAM_ID,
-              Layout: 'Equal'
-            });
+            // STORE CURRENT CAMERA AS PRESENTER
+            DWS_CUR_CAMERA = DWS_PRESENTER_CAM_ID
 
             // UPDATE HOLD TIMER TO NEW TIME STAMP
             DWS_HOLD_TIME = Date.now();
@@ -2555,8 +2548,8 @@ async function handleSAMEvents(event)
             PIPSize: 'Large'
           });  
 
-          // STORE LAST CAMERA 
-          DWS_LAST_CAMERA = event.Assets.Camera.InputConnector;
+          // STORE CURRENT CAMERA AS COMPOSITION
+          DWS_CUR_CAMERA = "Composed";
 
           if (event.Zone.Label == 'PRIMARY ROOM')
           {
@@ -2581,10 +2574,46 @@ async function handleSAMEvents(event)
           DWS_HOLD_TIME = Date.now();
         }
       }
-      // TRIGGER FROM THE PRESENTER MICROPHONE WHEN NOT IN COMPOSED VIEW
-      else if (event.Zone.Label == 'PRESENTER USB' || event.Zone.Label == 'PRESENTER ANALOG')
+      else if (DWS_PRESENTER_DETECTED == 'False' && DWS_CUR_CAMERA == 'Composed')
       {
-        if (DWS.TRACKING_DEBUG) {console.debug ('DWS: Presenter microphone triggered. Showing Presenter PTZ.')};
+        // TRIGGER FOR AUDIENCE ONLY SWITCHING - NO PRESENTER DETECTED
+        if (event.Zone.Label == 'PRIMARY ROOM' || event.Zone.Label == 'NODE 1 ROOM' || event.Zone.Label == 'NODE 2 ROOM')
+        {
+          // SET CAMERA TO AUDIENCE BASED ON MICROPHONE
+          if (DWS.TRACKING_DEBUG) {console.debug ('DWS: Microphone activity detected. Switching to ' + event.Zone.Label)}
+
+          xapi.Command.Video.Input.SetMainVideoSource({
+            ConnectorId: event.Assets.Camera.InputConnector,
+            Layout: event.Assets.Camera.Layout
+          });
+
+          // STORE CURRENT CAMERA
+          DWS_CUR_CAMERA = event.Assets.Camera.InputConnector
+
+          if (event.Zone.Label == 'PRIMARY ROOM')
+          {
+            // SET PRIMARY TO "CLOSEUP"
+            xapi.Command.Cameras.SpeakerTrack.Set({ Behavior: "Closeup" });            
+          }
+          else if (event.Zone.Label == 'NODE 1 ROOM')
+          {
+            // ACTIVATE REMOTE SPEAKERTRACK
+            sendMessage(DWS.NODE1_HOST, "Closeup");
+          }
+          else if (event.Zone.Label == 'NODE 2 ROOM')
+          {
+            // ACTIVATE REMOTE SPEAKERTRACK
+            sendMessage(DWS.NODE2_HOST, "Closeup");
+          }
+
+          // UPDATE HOLD TIMER TO NEW TIME STAMP
+          DWS_HOLD_TIME = Date.now();
+        }
+      }
+      // TRIGGER FROM THE PRESENTER MICROPHONE WHEN NOT IN COMPOSED VIEW
+      else if (DWS_PRESENTER_DETECTED == 'True' && (event.Zone.Label == 'PRESENTER USB' || event.Zone.Label == 'PRESENTER ANALOG' || event.Zone.Label == 'PRESENTER ETHERNET'))
+      {
+        if (DWS.TRACKING_DEBUG) {console.debug ('DWS: Presenter microphone triggered & presenter detected. Showing Presenter PTZ.')};
 
         // ACTIVATE PRESENTER MODE
         xapi.Command.Cameras.PresenterTrack.Set({ Mode: 'Persistent' });
@@ -2593,50 +2622,48 @@ async function handleSAMEvents(event)
           Layout: 'Equal'
         });
 
+        // STORE CURRENT CAMERA AS PRESENTER
+        DWS_CUR_CAMERA = DWS_PRESENTER_CAM_ID
+
         // UPDATE HOLD TIMER TO NEW TIME STAMP
         DWS_HOLD_TIME = Date.now();
       }
-      else if ((DWS_CUR_CAMERA == DWS_PRESENTER_CAM_ID) && (event.Zone.Label == 'PRIMARY ROOM' || event.Zone.Label == 'NODE 1 ROOM' || event.Zone.Label == 'NODE 2 ROOM'))
+      else if (DWS_PRESENTER_DETECTED == 'True' && DWS_CUR_CAMERA == DWS_PRESENTER_CAM_ID && (event.Zone.Label == 'PRIMARY ROOM' || event.Zone.Label == 'NODE 1 ROOM' || event.Zone.Label == 'NODE 2 ROOM'))
       {
-        if (DWS_LAST_CAMERA != event.Assets.Camera.InputConnector)
+        // SET PRESENTER AND AUDIENCE PIP
+        if (DWS.TRACKING_DEBUG) {console.debug ('DWS: Setting PIP with PTZ & ' + event.Zone.Label)}
+
+        xapi.Command.Video.Input.SetMainVideoSource({
+          ConnectorId: [DWS_PRESENTER_CAM_ID, event.Assets.Camera.InputConnector],
+          Layout: 'PIP',
+          PIPPosition: 'Lowerright',
+          PIPSize: 'Large'
+        });  
+
+        // STORE CURRENT CAMERA AS COMPOSITION
+        DWS_CUR_CAMERA = "Composed";
+
+        if (event.Zone.Label == 'PRIMARY ROOM')
         {
-          // SET PRESENTER AND AUDIENCE PIP
-          if (DWS.TRACKING_DEBUG) {console.debug ('DWS: Setting PIP with PTZ & ' + event.Zone.Label)}
-
-          xapi.Command.Video.Input.SetMainVideoSource({
-            ConnectorId: [DWS_PRESENTER_CAM_ID, event.Assets.Camera.InputConnector],
-            Layout: 'PIP',
-            PIPPosition: 'Lowerright',
-            PIPSize: 'Large'
-          });  
-
-          // STORE LAST CAMERA 
-          DWS_LAST_CAMERA = event.Assets.Camera.InputConnector;
-
-          DWS_CUR_CAMERA = 'Composed';
-
-          if (event.Zone.Label == 'PRIMARY ROOM')
-          {
-            // SET PRIMARY TO "CLOSEUP"
-            xapi.Command.Cameras.SpeakerTrack.Set({ Behavior: "Closeup" });
-          }
-          else if (event.Zone.Label == 'NODE 1 ROOM')
-          {
-            // ACTIVATE REMOTE SPEAKERTRACK
-            sendMessage(DWS.NODE1_HOST, "Closeup");
-          }
-          else if (event.Zone.Label == 'NODE 2 ROOM')
-          {
-            // ACTIVATE REMOTE SPEAKERTRACK
-            sendMessage(DWS.NODE2_HOST, "Closeup");
-          }
-
-          // RESET THE DROP AUDIENCE TIME
-          DWS_DROP_AUDIENCE = DWS_CUR_TIME + (6000);
-
-          // UPDATE HOLD TIMER TO NEW TIME STAMP
-          DWS_HOLD_TIME = Date.now();
+          // SET PRIMARY TO "CLOSEUP"
+          xapi.Command.Cameras.SpeakerTrack.Set({ Behavior: "Closeup" });
         }
+        else if (event.Zone.Label == 'NODE 1 ROOM')
+        {
+          // ACTIVATE REMOTE SPEAKERTRACK
+          sendMessage(DWS.NODE1_HOST, "Closeup");
+        }
+        else if (event.Zone.Label == 'NODE 2 ROOM')
+        {
+          // ACTIVATE REMOTE SPEAKERTRACK
+          sendMessage(DWS.NODE2_HOST, "Closeup");
+        }
+
+        // RESET THE DROP AUDIENCE TIME
+        DWS_DROP_AUDIENCE = DWS_CUR_TIME + (6000);
+
+        // UPDATE HOLD TIMER TO NEW TIME STAMP
+        DWS_HOLD_TIME = Date.now();
       }
       else 
       {
@@ -2652,6 +2679,9 @@ async function handleSAMEvents(event)
               ConnectorId: event.Assets.Camera.InputConnector,
               Layout: event.Assets.Camera.Layout
             });
+
+            // STORE CURRENT CAMERA
+            DWS_CUR_CAMERA = event.Assets.Camera.InputConnector
 
             if (event.Zone.Label == 'PRIMARY ROOM')
             {
