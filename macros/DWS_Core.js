@@ -920,6 +920,8 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(async value => {
     //RESET SECONDARY PERIPHERAL COUNT
     FOUND_NAVS = 0;
     FOUND_MICS = 0;
+    DWS_TEMP_NAVS = [];
+    DWS_TEMP_MICS = [];
 
     // MONITOR FOR MIGRATED DEVICES AND CONFIGURE ACCORDING TO USER SETTINGS
     const REG_DEVICES = xapi.Status.Peripherals.ConnectedDevice
@@ -1001,6 +1003,8 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(async value => {
     //RESET SECONDARY PERIPHERAL COUNT
     FOUND_NAVS = 0;
     FOUND_MICS = 0;
+    DWS_TEMP_NAVS = [];
+    DWS_TEMP_MICS = [];
 
     // RESET MICROPHONE MODES TO ENSURE ACTIVE STATE
     try
