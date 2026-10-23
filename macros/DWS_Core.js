@@ -2749,6 +2749,16 @@ async function handleCallStatus(event)
       {
         console.log("DWS: Call started. Adding in call controls.")
 
+        // DETERMINE IF PRESENTER TRACK CAMERA IS ACTIVE
+        xapi.Status.Video.Input.MainVideoSource.get()
+        .then (response => {
+          if (response == DWS_PRESENTER_CAM_ID)
+          {
+            xapi.Command.Cameras.PresenterTrack.Set({ Mode: 'Persistent' });
+          }
+        })
+        .catch(e => console.log('Error enabling Presenter Track: ' + e.message));
+
         // ACTIVATE REMOTE SPEAKERTRACK
         sendToCombinedNodes("Closeup");
 
