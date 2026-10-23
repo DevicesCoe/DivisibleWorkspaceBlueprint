@@ -31,7 +31,7 @@ SETUP_VARIABLES['SWITCH_PASSWORD']  = 'D!vi$ible1';
 import xapi from 'xapi';
 
 // CURRENT MACRO VERSION
-let CUR_VERSION = "0.10.1";
+let CUR_VERSION = "0.10.2";
 
 let WIZARD_QUESTIONS = [];
 let LOADED_MACROS = [];
@@ -60,8 +60,6 @@ function init()
     let filteredDevices = JSON.parse(response);
 
     filteredDevices.Device.forEach(device => {
-      if(device.SerialNumber)
-      {
         devicesArray.push({
             SerialNumber: device.SerialNumber || null,
             ID: device.ID || null,
@@ -69,7 +67,6 @@ function init()
         });
 
         serialArray.push(device.SerialNumber);
-      }
     });
     
     for (let i = 0; i < 4; i++)
@@ -874,7 +871,7 @@ function connectNode(node,host)
       filteredDevices.forEach(device => {       
 
         // AGGREGATE MICROPHONE SERIALS
-        if (device.Type == 'AudioMicrophone')
+        if (device.Type == 'AudioMicrophone' && device.SerialNumber != null)
         {
           NODE1_MICS.push(JSON.stringify(device.SerialNumber,null,2));
         }
@@ -887,7 +884,7 @@ function connectNode(node,host)
           updateWidget('dws_setup_node1_control', device.ID);
         }
         // STORE SCHEDULER MAC ADDRESS
-        else if (device.Type == 'RoomScheduler' && device.Role == 'Scheduler')
+        else if (device.Type == 'TouchPanel' && device.Role == 'RoomScheduler')
         {
           SETUP_VARIABLES['dws_setup_node1_scheduler'] = device.ID;
 
@@ -907,7 +904,7 @@ function connectNode(node,host)
       filteredDevices.forEach(device => {
 
         // AGGREGATE MICROPHONE SERIALS
-        if (device.Type == 'AudioMicrophone')
+        if (device.Type == 'AudioMicrophone' && device.SerialNumber != null)
         {
           NODE2_MICS.push(JSON.stringify(device.SerialNumber,null,2));
         }
@@ -920,7 +917,7 @@ function connectNode(node,host)
           updateWidget('dws_setup_node2_control', device.ID);
         }
         // STORE SCHEDULER MAC ADDRESS
-        else if (device.Type == 'RoomScheduler' && device.Role == 'Scheduler')
+        else if (device.Type == 'TouchPanel' && device.Role == 'RoomScheduler')
         {
           SETUP_VARIABLES['dws_setup_node2_scheduler'] = device.ID;
 
