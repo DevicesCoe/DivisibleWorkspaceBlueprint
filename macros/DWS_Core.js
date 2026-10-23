@@ -1673,7 +1673,7 @@ function updateStatus()
         "Option.3": percent + '% complete'
       });  
 
-      xapi.Command.UserInterface.Message.Alert.Display({ Duration: '4', Target: "OSD", Title:"Combining Rooms", Text: "Please wait while this process completes."});
+      xapi.Command.UserInterface.Message.Alert.Display({ Duration: '4', Target: "OSD", Title:"Combining Rooms", Text: "Please wait while this process completes. Peripherals migrating:"});
 
       // INCREMENT THE TIMER 3 SECONDS
       DWS_TIMER = DWS_TIMER + 3000;
@@ -1720,7 +1720,7 @@ function updateStatus()
         "Option.3": percent + '% Complete'
       });  
 
-      xapi.Command.UserInterface.Message.Alert.Display({ Duration: '4', Target: "OSD", Title:"Combining Rooms", Text: "Please wait while this process completes."});
+      xapi.Command.UserInterface.Message.Alert.Display({ Duration: '4', Target: "OSD", Title:"Combining Rooms", Text: "Please wait while this process completes. Peripherals migrating:"});
 
       // INCREMENT THE TIMER 3 SECONDS
       DWS_TIMER = DWS_TIMER + 3000;
@@ -1767,7 +1767,7 @@ function updateStatus()
         "Option.3": percent + '% Complete'
       });  
 
-      xapi.Command.UserInterface.Message.Alert.Display({ Duration: '4', Target: "OSD", Title:"Combining Rooms", Text: "Please wait while this process completes."});
+      xapi.Command.UserInterface.Message.Alert.Display({ Duration: '4', Target: "OSD", Title:"Combining Rooms", Text: "Please wait while this process completes. Peripherals migrating:"});
 
       // INCREMENT THE TIMER 3 SECONDS
       DWS_TIMER = DWS_TIMER + 3000;
