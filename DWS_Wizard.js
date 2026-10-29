@@ -60,6 +60,8 @@ function init()
     let filteredDevices = JSON.parse(response);
 
     filteredDevices.Device.forEach(device => {
+      if(device.SerialNumber)
+      {
         devicesArray.push({
             SerialNumber: device.SerialNumber || null,
             ID: device.ID || null,
@@ -67,6 +69,7 @@ function init()
         });
 
         serialArray.push(device.SerialNumber);
+      }
     });
     
     for (let i = 0; i < 4; i++)
