@@ -887,7 +887,7 @@ function connectNode(node,host)
           updateWidget('dws_setup_node1_control', device.ID);
         }
         // STORE SCHEDULER MAC ADDRESS
-        else if (device.Type == 'TouchPanel' && device.Role == 'RoomScheduler')
+        else if (device.Type == 'RoomScheduler' && device.Role == 'Scheduler')
         {
           SETUP_VARIABLES['dws_setup_node1_scheduler'] = device.ID;
 
@@ -920,7 +920,7 @@ function connectNode(node,host)
           updateWidget('dws_setup_node2_control', device.ID);
         }
         // STORE SCHEDULER MAC ADDRESS
-        else if (device.Type == 'TouchPanel' && device.Role == 'RoomScheduler')
+        else if (device.Type == 'RoomScheduler' && device.Role == 'Scheduler')
         {
           SETUP_VARIABLES['dws_setup_node2_scheduler'] = device.ID;
 
