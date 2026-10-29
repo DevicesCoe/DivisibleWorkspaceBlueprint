@@ -103,11 +103,9 @@ You can import these files directly into Cisco Commerce Workspace (CCW) and modi
 
 Follow the installation documentation that matches your network access and registration type:
 
-Cloud & Hybrid (Control Hub) registration **with network access** to GitHub: [Cloud Install Guide](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/CloudInstallationGuide.pdf)
+Cloud & Hybrid (Control Hub) registration: [Cloud Install Guide](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/CloudInstallationGuide.pdf)
 
-On-premise registration (CUCM or Expressway) **with network access** to GitHub: [Premise Install Guide](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/PremiseInstallationGuide.pdf)
-
-Any registration <ins>**without**</ins> network access to GitHub: [Network Restricted Install Guide](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/NetworkRestrictedInstallationGuide.pdf)
+On-premise registration (CUCM or Expressway): [Premise Install Guide](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/PremiseInstallationGuide.pdf)
 
 ### Wire Diagrams
 These tables provides the supported combinations of codecs and number of secondary displays and their respective wiring diagram.
