@@ -67,7 +67,6 @@ The following Cameras have been validated:
 - Cisco Quad Camera
 - Cisco Room Vision PTZ
 - Cisco PTZ4K
-- Cisco P60
 
 The following Microphones have been validated:
 - Cisco Table Microphone Pro
@@ -108,23 +107,25 @@ Cloud & Hybrid (Control Hub) registration: [Cloud Install Guide](https://github.
 On-premise registration (CUCM or Expressway): [Premise Install Guide](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/PremiseInstallationGuide.pdf)
 
 ### Wire Diagrams
-These tables provides the supported combinations of codecs and number of secondary displays and their respective wiring diagram.
+These tables provides the supported combinations of codecs based on Switch Port capacity. Note, all of these example diagrams include two displays and some peripherals. For single displays simply ignore the second display output / HDMI Distribution Amplifiers and scale the perpherial connections to match your configuration. 
 
 #### Two Way Wiring Diagrams
-| Codec | # of Displays | Vison PTZ | PTZ4K/P60 | 
-|---|---|---|---|
-| Codec EQ | Single | [Diagram](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/wire-diagrams/2W-1S-EQ-RV.png) | [Diagram](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/wire-diagrams/2W-1S-EQ-4K.png) |
-| Codec EQ | Dual | [Diagram](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/wire-diagrams/2W-2S-EQ-RV.png) | Not Supported |
-| Codec Pro | Single | [Diagram](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/wire-diagrams/2W-1S-Pro-RV.png) | [Diagram](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/wire-diagrams/2W-1S-Pro-RV.png) | 
-| Codec Pro | Dual | [Diagram](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/wire-diagrams/2W-2S-Pro-RV.png) | [Diagram](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/wire-diagrams/2W-2S-Pro-RV.png) |
+| Codec | Port Count | Diagram |
+|---|---|---|
+| Codec EQ | 8 Port | [Diagram](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/wire-diagrams/2W-EQ-8P.pdf) |
+| Codec EQ | 12 Port | [Diagram](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/wire-diagrams/2W-EQ-12P.pdf) |
+| Codec EQ | 24 Port | [Diagram](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/wire-diagrams/2W-EQ-24P.pdf) | 
+| Codec Pro G2 | 8 Port | [Diagram](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/wire-diagrams/2W-G2-8P.pdf) |
+| Codec Pro G2 | 12 Port | [Diagram](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/wire-diagrams/2W-G2-12P.pdf) |
+| Codec Pro G2 | 24 Port | [Diagram](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/wire-diagrams/2W-G2-24P.pdf) |
 
 #### Three Way Wiring Diagrams
-| Codec | # of Displays | Vison PTZ | PTZ4K/P60 | 
-|---|---|---|---|
-| Codec EQ | Single | [Diagram](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/wire-diagrams/3W-1S-EQ-RV.png) | Not Supported |
-| Codec EQ | Dual | [Diagram](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/wire-diagrams/3W-2S-EQ-RV.png) | Not Supported |
-| Codec Pro | Single | [Diagram](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/wire-diagrams/3W-1S-Pro-RV.png) | [Diagram](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/wire-diagrams/3W-1S-Pro-RV.png) | 
-| Codec Pro | Dual | [Diagram](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/wire-diagrams/3W-2S-Pro-RV.png) | [Diagram](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/wire-diagrams/3W-2S-Pro-RV.png) |
+| Codec | Port Count | Diagram |
+|---|---|---|
+| Codec EQ | 12 Port | [Diagram](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/wire-diagrams/3W-EQ-12P.pdf) |
+| Codec EQ | 24 Port | [Diagram](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/wire-diagrams/3W-EQ-24P.pdf) | 
+| Codec Pro G2 | 12 Port | [Diagram](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/wire-diagrams/3W-G2-12P.pdf) |
+| Codec Pro G2 | 24 Port | [Diagram](https://github.com/DevicesCoe/DivisibleWorkspace/blob/main/wire-diagrams/3W-G2-24P.pdf) |
 
 ### Switch Configuration Files
 Download the switch configuration based on your design: 
