@@ -1652,7 +1652,6 @@ function updateStatus()
       // CLEAR TIMER AND RESET INTERVAL
       clearInterval(DWS_INTERVAL);
       DWS_TIMER = 0;
-      DWS_INTERVAL();
 
       // SETUP SAM FOR STATE
       SAM.Setup(buildSAMConfig(DWS_CUR_STATE));
